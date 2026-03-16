@@ -3085,11 +3085,9 @@
       // feBlend composites SourceGraphic over the goo output.
       // In merge zones the goo output (blurred+thresholded = same lava color) shows,
       // giving seamless color continuity where blobs connect.
-      var fBlend = document.createElementNS(ns, 'feBlend');
-      fBlend.setAttribute('in', 'SourceGraphic');
-      fBlend.setAttribute('in2', 'goo');
-
-      filt.appendChild(fBlur); filt.appendChild(fMat); filt.appendChild(fBlend);
+      // No feBlend/feComposite -- pure blur+threshold output.
+      // With same-hue blobs, neck zones stay orange; simplest and most reliable.
+      filt.appendChild(fBlur); filt.appendChild(fMat);
       defs.appendChild(filt);
 
       // Single shared gradient for ALL rising blobs -- uniform color = seamless merging.
@@ -3097,7 +3095,7 @@
       var blobGrad = document.createElementNS(ns, 'radialGradient');
       blobGrad.setAttribute('id', 'lg');
       blobGrad.setAttribute('cx', '38%'); blobGrad.setAttribute('cy', '32%'); blobGrad.setAttribute('r', '65%');
-      [['0%','#ffe8b0'],['25%','#ffaa30'],['60%','#e85000'],['100%','#8c1a00']].forEach(function(s){
+      [['0%','#fff6d0'],['20%','#ffcc60'],['55%','#ff6800'],['85%','#e83800'],['100%','#d02800']].forEach(function(s){
         var st = document.createElementNS(ns, 'stop');
         st.setAttribute('offset', s[0]); st.setAttribute('stop-color', s[1]);
         blobGrad.appendChild(st);
@@ -3108,7 +3106,7 @@
       var poolGrad = document.createElementNS(ns, 'radialGradient');
       poolGrad.setAttribute('id', 'pg');
       poolGrad.setAttribute('cx', '50%'); poolGrad.setAttribute('cy', '25%'); poolGrad.setAttribute('r', '60%');
-      [['0%','#ffcc70'],['35%','#ff7000'],['75%','#c83800'],['100%','#701200']].forEach(function(s){
+      [['0%','#ffe090'],['30%','#ffaa40'],['65%','#ff6200'],['100%','#d03000']].forEach(function(s){
         var st = document.createElementNS(ns, 'stop');
         st.setAttribute('offset', s[0]); st.setAttribute('stop-color', s[1]);
         poolGrad.appendChild(st);
@@ -3171,14 +3169,14 @@
       // Spread cx across full tube width so blobs are sometimes isolated,
       // sometimes merging -- more like a real lava lamp.
       var blobDefs = [
-        {cx:0.28*VW, rx:27, ry:29, dur:75000,  delay:0,       lat:7},
-        {cx:0.62*VW, rx:34, ry:36, dur:92000,  delay:-23000,  lat:-9},
-        {cx:0.44*VW, rx:30, ry:32, dur:83000,  delay:-50000,  lat:8},
-        {cx:0.74*VW, rx:24, ry:26, dur:102000, delay:-14000,  lat:-6},
-        {cx:0.36*VW, rx:32, ry:34, dur:88000,  delay:-64000,  lat:9},
-        {cx:0.56*VW, rx:26, ry:28, dur:97000,  delay:-37000,  lat:-7},
-        {cx:0.20*VW, rx:28, ry:30, dur:112000, delay:-80000,  lat:6},
-        {cx:0.50*VW, rx:36, ry:38, dur:79000,  delay:-30000,  lat:10},
+        {cx:0.30*VW, rx:30, ry:32, dur:52000,  delay:0,       lat:8},
+        {cx:0.44*VW, rx:34, ry:36, dur:65000,  delay:-18000,  lat:-10},
+        {cx:0.52*VW, rx:28, ry:30, dur:58000,  delay:-40000,  lat:9},
+        {cx:0.64*VW, rx:32, ry:34, dur:72000,  delay:-10000,  lat:-8},
+        {cx:0.38*VW, rx:36, ry:38, dur:62000,  delay:-52000,  lat:11},
+        {cx:0.56*VW, rx:26, ry:28, dur:78000,  delay:-28000,  lat:-7},
+        {cx:0.22*VW, rx:28, ry:30, dur:85000,  delay:-62000,  lat:7},
+        {cx:0.48*VW, rx:38, ry:40, dur:55000,  delay:-32000,  lat:12},
       ];
 
       var baseY  = VH - 22; // resting y (half-submerged in pool)
