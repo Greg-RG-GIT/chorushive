@@ -3068,38 +3068,20 @@
       // in the neck zone as they merge, producing natural organic blending.
       var filt = document.createElementNS(ns, 'filter');
       filt.setAttribute('id', 'lgoo');
-      filt.setAttribute('x', '-40%'); filt.setAttribute('y', '-25%');
-      filt.setAttribute('width', '180%'); filt.setAttribute('height', '150%');
+      filt.setAttribute('x', '-60%'); filt.setAttribute('y', '-40%');
+      filt.setAttribute('width', '220%'); filt.setAttribute('height', '180%');
       filt.setAttribute('color-interpolation-filters', 'sRGB');
 
-      // feTurbulence warps each blob's silhouette through a static noise field.
-      // As blobs move through it their shape morphs continuously -- lava, not bubbles.
-      var fTurb = document.createElementNS(ns, 'feTurbulence');
-      fTurb.setAttribute('type', 'turbulence');
-      fTurb.setAttribute('baseFrequency', '0.025 0.04');
-      fTurb.setAttribute('numOctaves', '2');
-      fTurb.setAttribute('seed', '12');
-      fTurb.setAttribute('result', 'noise');
-
-      var fDisp = document.createElementNS(ns, 'feDisplacementMap');
-      fDisp.setAttribute('in', 'SourceGraphic');
-      fDisp.setAttribute('in2', 'noise');
-      fDisp.setAttribute('scale', '18');
-      fDisp.setAttribute('xChannelSelector', 'R');
-      fDisp.setAttribute('yChannelSelector', 'G');
-      fDisp.setAttribute('result', 'warped');
-
       var fBlur = document.createElementNS(ns, 'feGaussianBlur');
-      fBlur.setAttribute('in', 'warped');
-      fBlur.setAttribute('stdDeviation', '9');
+      fBlur.setAttribute('in', 'SourceGraphic');
+      fBlur.setAttribute('stdDeviation', '10');
       fBlur.setAttribute('result', 'blur');
 
       var fMat = document.createElementNS(ns, 'feColorMatrix');
       fMat.setAttribute('in', 'blur'); fMat.setAttribute('type', 'matrix');
-      fMat.setAttribute('values', '1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 20 -8');
+      fMat.setAttribute('values', '1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -7');
       fMat.setAttribute('result', 'goo');
 
-      filt.appendChild(fTurb); filt.appendChild(fDisp);
       filt.appendChild(fBlur); filt.appendChild(fMat);
       defs.appendChild(filt);
 
@@ -3182,27 +3164,40 @@
       // Spread cx across full tube width so blobs are sometimes isolated,
       // sometimes merging -- more like a real lava lamp.
       var blobDefs = [
-        {cx:0.30*VW, rx:30, ry:32, dur:52000,  delay:0,       lat:8},
-        {cx:0.44*VW, rx:34, ry:36, dur:65000,  delay:-18000,  lat:-10},
-        {cx:0.52*VW, rx:28, ry:30, dur:58000,  delay:-40000,  lat:9},
-        {cx:0.64*VW, rx:32, ry:34, dur:72000,  delay:-10000,  lat:-8},
-        {cx:0.38*VW, rx:36, ry:38, dur:62000,  delay:-52000,  lat:11},
-        {cx:0.56*VW, rx:26, ry:28, dur:78000,  delay:-28000,  lat:-7},
-        {cx:0.22*VW, rx:28, ry:30, dur:85000,  delay:-62000,  lat:7},
-        {cx:0.48*VW, rx:38, ry:40, dur:55000,  delay:-32000,  lat:12},
+        {cx:0.30*VW, rx:30, ry:32, dur:52000,  delay:0,       lat:8,  off:0.3},
+        {cx:0.44*VW, rx:34, ry:36, dur:65000,  delay:-18000,  lat:-10,off:-0.35},
+        {cx:0.52*VW, rx:28, ry:30, dur:58000,  delay:-40000,  lat:9,  off:0.28},
+        {cx:0.64*VW, rx:32, ry:34, dur:72000,  delay:-10000,  lat:-8, off:-0.3},
+        {cx:0.38*VW, rx:36, ry:38, dur:62000,  delay:-52000,  lat:11, off:0.32},
+        {cx:0.56*VW, rx:26, ry:28, dur:78000,  delay:-28000,  lat:-7, off:-0.26},
+        {cx:0.22*VW, rx:28, ry:30, dur:85000,  delay:-62000,  lat:7,  off:0.28},
+        {cx:0.48*VW, rx:38, ry:40, dur:55000,  delay:-32000,  lat:12, off:-0.33},
       ];
 
       var baseY  = VH - 22; // resting y (half-submerged in pool)
       var travel = VH - 70; // distance each blob rises (SVG units)
 
+      // Each blob is a cluster of 2 overlapping circles slightly offset from each other.
+      // The goo filter merges them into an organic irregular shape -- not a perfect bubble.
+      // The secondary circle is ~70% size, offset by ~40% of primary radius.
       var blobEls = blobDefs.map(function(b){
-        var e = document.createElementNS(ns, 'ellipse');
-        e.setAttribute('cx', b.cx.toFixed(1));
-        e.setAttribute('cy', baseY);
-        e.setAttribute('rx', b.rx); e.setAttribute('ry', b.ry);
-        e.setAttribute('fill', 'url(#lg)');
-        gooG.appendChild(e);
-        return e;
+        var r = Math.round((b.rx + b.ry) / 2);
+        var r2 = Math.round(r * 0.72);
+        // Primary circle
+        var e1 = document.createElementNS(ns, 'circle');
+        e1.setAttribute('cx', b.cx.toFixed(1));
+        e1.setAttribute('cy', baseY);
+        e1.setAttribute('r', r);
+        e1.setAttribute('fill', 'url(#lg)');
+        gooG.appendChild(e1);
+        // Secondary circle -- offset gives the irregular lava-drop shape
+        var e2 = document.createElementNS(ns, 'circle');
+        e2.setAttribute('cx', (b.cx + r * b.off).toFixed(1));
+        e2.setAttribute('cy', (baseY + r * 0.35).toFixed(1));
+        e2.setAttribute('r', r2);
+        e2.setAttribute('fill', 'url(#lg)');
+        gooG.appendChild(e2);
+        return [e1, e2];
       });
 
       svg.appendChild(gooG);
@@ -3237,10 +3232,18 @@
           var mid = 4*yNorm*(1-yNorm);
           var scX = 1.0 + 0.08*(1-mid) - 0.05*mid;
           var scY = 1.0 - 0.05*(1-mid) + 0.10*mid;
-          blobEls[i].setAttribute('cx', (b.cx + xOff).toFixed(1));
-          blobEls[i].setAttribute('cy', (baseY - travel*yNorm).toFixed(1));
-          blobEls[i].setAttribute('rx', (b.rx*scX).toFixed(1));
-          blobEls[i].setAttribute('ry', (b.ry*scY).toFixed(1));
+          var r = Math.round((b.rx + b.ry) / 2);
+          var r2 = Math.round(r * 0.72);
+          var cx = b.cx + xOff;
+          var cy = baseY - travel*yNorm;
+          // Primary circle
+          blobEls[i][0].setAttribute('cx', cx.toFixed(1));
+          blobEls[i][0].setAttribute('cy', cy.toFixed(1));
+          blobEls[i][0].setAttribute('r', (r * (0.97 + 0.06*scX)).toFixed(1));
+          // Secondary circle -- maintains offset, grows/shrinks inversely
+          blobEls[i][1].setAttribute('cx', (cx + r*b.off).toFixed(1));
+          blobEls[i][1].setAttribute('cy', (cy + r*0.35*scY).toFixed(1));
+          blobEls[i][1].setAttribute('r', (r2 * scY).toFixed(1));
         });
         _lavaRaf = requestAnimationFrame(tick);
       }
