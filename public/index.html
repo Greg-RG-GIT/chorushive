@@ -2083,7 +2083,7 @@
           <!-- Secondary layer — counter-rotates at different speed, creates organic movement -->
           <div class="preview-bg-secondary" id="previewBg2" style="background: url(&quot;https://is1-ssl.mzstatic.com/image/thumb/Music122/v4/6b/dd/ee/6bddee52-12c7-8029-ee36-080386973af5/605.jpg/600x600bb.jpg&quot;) center center / cover no-repeat;"></div>
           <!-- FX overlay — controlled by JS for alternate background modes -->
-          <div id="previewFx"><div class="lava-container"><div class="lava-goo-layer"><div class="lava-blob-track" style="left: calc(30% - 55px); width: 110px; animation-duration: 80s; animation-delay: 0s;"><div class="lava-blob" style="width: 110px; height: 138px; background: rgb(255, 61, 0); animation-name: lavaBlobMorph; animation-duration: 80s; animation-delay: 0s;"></div></div><div class="lava-blob-track" style="left: calc(58% - 40px); width: 80px; animation-duration: 68s; animation-delay: -20s;"><div class="lava-blob" style="width: 80px; height: 100px; background: rgb(232, 54, 0); animation-name: lavaBlobMorphB; animation-duration: 68s; animation-delay: -20s;"></div></div><div class="lava-blob-track" style="left: calc(14% - 70px); width: 140px; animation-duration: 95s; animation-delay: -35s;"><div class="lava-blob" style="width: 140px; height: 175px; background: rgb(204, 46, 0); animation-name: lavaBlobMorph; animation-duration: 95s; animation-delay: -35s;"></div></div><div class="lava-blob-track" style="left: calc(72% - 32px); width: 64px; animation-duration: 62s; animation-delay: -12s;"><div class="lava-blob" style="width: 64px; height: 80px; background: rgb(255, 72, 0); animation-name: lavaBlobMorphB; animation-duration: 62s; animation-delay: -12s;"></div></div><div class="lava-blob-track" style="left: calc(44% - 49px); width: 98px; animation-duration: 86s; animation-delay: -52s;"><div class="lava-blob" style="width: 98px; height: 122px; background: rgb(212, 50, 0); animation-name: lavaBlobMorph; animation-duration: 86s; animation-delay: -52s;"></div></div><div class="lava-blob-track" style="left: calc(8% - 38px); width: 76px; animation-duration: 74s; animation-delay: -27s;"><div class="lava-blob" style="width: 76px; height: 96px; background: rgb(240, 57, 0); animation-name: lavaBlobMorphB; animation-duration: 74s; animation-delay: -27s;"></div></div><div class="lava-blob-track" style="left: calc(64% - 45px); width: 90px; animation-duration: 82s; animation-delay: -60s;"><div class="lava-blob" style="width: 90px; height: 112px; background: rgb(191, 42, 0); animation-name: lavaBlobMorph; animation-duration: 82s; animation-delay: -60s;"></div></div><div class="lava-blob-track" style="left: calc(36% - 34px); width: 68px; animation-duration: 70s; animation-delay: -16s;"><div class="lava-blob" style="width: 68px; height: 86px; background: rgb(224, 53, 0); animation-name: lavaBlobMorphB; animation-duration: 70s; animation-delay: -16s;"></div></div><div class="lava-pool-blob" style="left: calc(16% - 85px); bottom: -32px; width: 170px; height: 105px; background: rgb(168, 36, 0); animation-duration: 50s; animation-delay: 0s;"></div><div class="lava-pool-blob" style="left: calc(48% - 65px); bottom: -26px; width: 130px; height: 88px; background: rgb(196, 44, 0); animation-duration: 56s; animation-delay: -16s;"></div><div class="lava-pool-blob" style="left: calc(68% - 77.5px); bottom: -29px; width: 155px; height: 98px; background: rgb(184, 40, 0); animation-duration: 46s; animation-delay: -28s;"></div></div><div class="lava-heat"></div><div class="lava-top-shadow"></div></div></div>
+          <div id="previewFx"><div class="lava-container"></div></div>
           <!-- Centered lyrics -->
           <div class="mock-lyrics-stage" style="opacity: 1; transform: translateY(0px);">
             <div class="mock-line mock-prev">It doesn't hurt me</div>
@@ -3068,25 +3068,38 @@
       // in the neck zone as they merge, producing natural organic blending.
       var filt = document.createElementNS(ns, 'filter');
       filt.setAttribute('id', 'lgoo');
-      filt.setAttribute('x', '-60%'); filt.setAttribute('y', '-30%');
-      filt.setAttribute('width', '220%'); filt.setAttribute('height', '160%');
+      filt.setAttribute('x', '-40%'); filt.setAttribute('y', '-25%');
+      filt.setAttribute('width', '180%'); filt.setAttribute('height', '150%');
       filt.setAttribute('color-interpolation-filters', 'sRGB');
 
+      // feTurbulence warps each blob's silhouette through a static noise field.
+      // As blobs move through it their shape morphs continuously -- lava, not bubbles.
+      var fTurb = document.createElementNS(ns, 'feTurbulence');
+      fTurb.setAttribute('type', 'turbulence');
+      fTurb.setAttribute('baseFrequency', '0.025 0.04');
+      fTurb.setAttribute('numOctaves', '2');
+      fTurb.setAttribute('seed', '12');
+      fTurb.setAttribute('result', 'noise');
+
+      var fDisp = document.createElementNS(ns, 'feDisplacementMap');
+      fDisp.setAttribute('in', 'SourceGraphic');
+      fDisp.setAttribute('in2', 'noise');
+      fDisp.setAttribute('scale', '18');
+      fDisp.setAttribute('xChannelSelector', 'R');
+      fDisp.setAttribute('yChannelSelector', 'G');
+      fDisp.setAttribute('result', 'warped');
+
       var fBlur = document.createElementNS(ns, 'feGaussianBlur');
-      fBlur.setAttribute('in', 'SourceGraphic');
-      fBlur.setAttribute('stdDeviation', '10');
+      fBlur.setAttribute('in', 'warped');
+      fBlur.setAttribute('stdDeviation', '9');
       fBlur.setAttribute('result', 'blur');
 
       var fMat = document.createElementNS(ns, 'feColorMatrix');
       fMat.setAttribute('in', 'blur'); fMat.setAttribute('type', 'matrix');
-      fMat.setAttribute('values', '1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -7');
+      fMat.setAttribute('values', '1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 20 -8');
       fMat.setAttribute('result', 'goo');
 
-      // feBlend composites SourceGraphic over the goo output.
-      // In merge zones the goo output (blurred+thresholded = same lava color) shows,
-      // giving seamless color continuity where blobs connect.
-      // No feBlend/feComposite -- pure blur+threshold output.
-      // With same-hue blobs, neck zones stay orange; simplest and most reliable.
+      filt.appendChild(fTurb); filt.appendChild(fDisp);
       filt.appendChild(fBlur); filt.appendChild(fMat);
       defs.appendChild(filt);
 
