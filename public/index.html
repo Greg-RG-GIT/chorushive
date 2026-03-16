@@ -1720,6 +1720,97 @@
       .hiw-step:last-child { border-bottom: none; }
       .hiw-step:not(:first-child) { padding-left: 0; }
     }
+
+    /* ── PRO LOCK OVERLAYS ── */
+    [data-pro] { position: relative; }
+    .pro-lock-overlay {
+      position: absolute; inset: 0; z-index: 10;
+      background: rgba(0,0,0,0.55);
+      display: flex; align-items: flex-start; justify-content: flex-end;
+      padding: 10px; border-radius: inherit;
+      opacity: 0; transition: opacity 0.2s ease;
+      pointer-events: none;
+      cursor: pointer;
+    }
+    [data-pro]:hover .pro-lock-overlay { opacity: 1; pointer-events: all; }
+    [data-pro].locked .pro-lock-overlay { opacity: 1; pointer-events: all; }
+    .pro-lock-badge {
+      font-family: var(--font-mono); font-size: 10px; font-weight: 700;
+      letter-spacing: 0.15em; color: #000;
+      background: var(--green); padding: 4px 10px; border-radius: 2px;
+    }
+    .pro-lock-badge::before { content: '🔒  '; }
+
+    /* ── UPGRADE MODAL ── */
+    .upgrade-overlay {
+      position: fixed; inset: 0; z-index: 1000;
+      background: rgba(0,0,0,0.8); backdrop-filter: blur(12px);
+      display: none; align-items: center; justify-content: center;
+      padding: 24px;
+    }
+    .upgrade-overlay.open { display: flex; }
+    .upgrade-modal {
+      background: #0d0d0d; border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 4px; padding: 48px; max-width: 480px; width: 100%;
+      position: relative;
+    }
+    .upgrade-close {
+      position: absolute; top: 16px; right: 20px;
+      background: none; border: none; color: var(--dim); font-size: 22px;
+      cursor: pointer; line-height: 1;
+    }
+    .upgrade-close:hover { color: #fff; }
+    .upgrade-eyebrow {
+      font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.2em;
+      text-transform: uppercase; color: var(--green); margin-bottom: 16px;
+    }
+    .upgrade-headline {
+      font-family: var(--font-display); font-size: 32px; font-weight: 800;
+      letter-spacing: -0.03em; color: #fff; line-height: 1.1; margin-bottom: 12px;
+    }
+    .upgrade-sub {
+      font-family: var(--font-body); font-size: 15px; color: var(--off);
+      line-height: 1.6; margin-bottom: 28px;
+    }
+    .plan-toggle {
+      display: flex; background: rgba(255,255,255,0.06);
+      border-radius: 2px; margin-bottom: 24px; overflow: hidden;
+    }
+    .plan-btn {
+      flex: 1; padding: 10px; font-family: var(--font-mono);
+      font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase;
+      background: none; border: none; color: var(--dim); cursor: pointer;
+      transition: all 0.15s;
+    }
+    .plan-btn.active { background: var(--green); color: #000; font-weight: 700; }
+    .plan-price {
+      font-family: var(--font-display); font-size: 42px; font-weight: 800;
+      color: #fff; letter-spacing: -0.03em; margin-bottom: 4px;
+    }
+    .plan-price span { font-size: 18px; font-weight: 400; color: var(--dim); }
+    .plan-note { font-family: var(--font-body); font-size: 13px; color: var(--green); margin-bottom: 24px; }
+    .upgrade-perks {
+      list-style: none; margin-bottom: 28px;
+    }
+    .upgrade-perks li {
+      font-family: var(--font-body); font-size: 14px; color: var(--off);
+      padding: 5px 0; display: flex; gap: 10px; align-items: center;
+    }
+    .upgrade-perks li::before { content: '✓'; color: var(--green); font-weight: 700; flex-shrink: 0; }
+    .btn-upgrade {
+      display: block; width: 100%; padding: 16px;
+      background: var(--green); color: #000;
+      font-family: var(--font-mono); font-size: 13px; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      border: none; border-radius: 2px; cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+      box-shadow: 0 8px 24px rgba(29,185,84,0.25);
+    }
+    .btn-upgrade:hover { background: #1ed760; transform: translateY(-1px); }
+    .upgrade-fine {
+      font-family: var(--font-body); font-size: 12px; color: var(--dim);
+      text-align: center; margin-top: 12px;
+    }
   </style>
 </head>
 <body>
@@ -2077,7 +2168,8 @@
       </div>
 
       <!-- Aurora Borealis -->
-      <div class="effect-card effect-aurora" data-fx="aurora">
+      <div class="effect-card effect-aurora" data-pro="true">
+        <div class="pro-lock-overlay fx-lock"><span class="pro-lock-badge">PRO</span></div> data-fx="aurora">
         <div class="effect-card-bg"></div>
         <div class="effect-card-overlay"></div>
         <div class="effect-card-content">
@@ -2088,7 +2180,8 @@
       </div>
 
       <!-- Pixel Dissolve -->
-      <div class="effect-card effect-pixel" data-fx="pixel">
+      <div class="effect-card effect-pixel" data-pro="true">
+        <div class="pro-lock-overlay fx-lock"><span class="pro-lock-badge">PRO</span></div> data-fx="pixel">
         <div class="effect-card-bg">
           <div class="effect-pixel-mosaic" id="pixelMosaic" style="grid-template-columns: repeat(14, 1fr); grid-template-rows: repeat(11, 1fr);"><span style="background: rgb(194, 24, 91); opacity: 0.52;"></span><span style="background: rgb(124, 58, 237); opacity: 0.73;"></span><span style="background: rgb(232, 121, 249); opacity: 0.59;"></span><span style="background: rgb(255, 79, 160); opacity: 0.76;"></span><span style="background: rgb(76, 29, 149); opacity: 0.64;"></span><span style="background: rgb(232, 121, 249); opacity: 0.78;"></span><span style="background: rgb(56, 189, 248); opacity: 0.48;"></span><span style="background: rgb(255, 79, 160); opacity: 0.62;"></span><span style="background: rgb(76, 29, 149); opacity: 0.76;"></span><span style="background: rgb(6, 182, 212); opacity: 0.32;"></span><span style="background: rgb(6, 182, 212); opacity: 0.48;"></span><span style="background: rgb(6, 182, 212); opacity: 0.54;"></span><span style="background: rgb(168, 85, 247); opacity: 0.76;"></span><span style="background: rgb(109, 40, 217); opacity: 0.41;"></span><span style="background: rgb(30, 64, 175); opacity: 0.84;"></span><span style="background: rgb(255, 79, 160); opacity: 0.65;"></span><span style="background: rgb(56, 189, 248); opacity: 0.85;"></span><span style="background: rgb(109, 40, 217); opacity: 0.56;"></span><span style="background: rgb(194, 24, 91); opacity: 0.44;"></span><span style="background: rgb(168, 85, 247); opacity: 0.45;"></span><span style="background: rgb(14, 116, 144); opacity: 0.45;"></span><span style="background: rgb(109, 40, 217); opacity: 0.45;"></span><span style="background: rgb(255, 79, 160); opacity: 0.39;"></span><span style="background: rgb(156, 0, 50); opacity: 0.5;"></span><span style="background: rgb(109, 40, 217); opacity: 0.45;"></span><span style="background: rgb(156, 0, 50); opacity: 0.38;"></span><span style="background: rgb(232, 121, 249); opacity: 0.31;"></span><span style="background: rgb(76, 29, 149); opacity: 0.8;"></span><span style="background: rgb(124, 58, 237); opacity: 0.41;"></span><span style="background: rgb(56, 189, 248); opacity: 0.87;"></span><span style="background: rgb(194, 24, 91); opacity: 0.64;"></span><span style="background: rgb(255, 45, 120); opacity: 0.44;"></span><span style="background: rgb(56, 189, 248); opacity: 0.32;"></span><span style="background: rgb(6, 182, 212); opacity: 0.66;"></span><span style="background: rgb(255, 45, 120); opacity: 0.82;"></span><span style="background: rgb(56, 189, 248); opacity: 0.37;"></span><span style="background: rgb(14, 116, 144); opacity: 0.39;"></span><span style="background: rgb(30, 64, 175); opacity: 0.46;"></span><span style="background: rgb(76, 29, 149); opacity: 0.63;"></span><span style="background: rgb(124, 58, 237); opacity: 0.52;"></span><span style="background: rgb(109, 40, 217); opacity: 0.61;"></span><span style="background: rgb(30, 64, 175); opacity: 0.44;"></span><span style="background: rgb(255, 45, 120); opacity: 0.5;"></span><span style="background: rgb(8, 145, 178); opacity: 0.75;"></span><span style="background: rgb(3, 105, 161); opacity: 0.55;"></span><span style="background: rgb(124, 58, 237); opacity: 0.77;"></span><span style="background: rgb(156, 0, 50); opacity: 0.72;"></span><span style="background: rgb(124, 58, 237); opacity: 0.4;"></span><span style="background: rgb(3, 105, 161); opacity: 0.54;"></span><span style="background: rgb(194, 24, 91); opacity: 0.64;"></span><span style="background: rgb(232, 121, 249); opacity: 0.45;"></span><span style="background: rgb(8, 145, 178); opacity: 0.86;"></span><span style="background: rgb(194, 24, 91); opacity: 0.77;"></span><span style="background: rgb(14, 116, 144); opacity: 0.38;"></span><span style="background: rgb(255, 79, 160); opacity: 0.48;"></span><span style="background: rgb(168, 85, 247); opacity: 0.5;"></span><span style="background: rgb(56, 189, 248); opacity: 0.88;"></span><span style="background: rgb(14, 116, 144); opacity: 0.89;"></span><span style="background: rgb(8, 145, 178); opacity: 0.77;"></span><span style="background: rgb(109, 40, 217); opacity: 0.85;"></span><span style="background: rgb(8, 145, 178); opacity: 0.49;"></span><span style="background: rgb(14, 116, 144); opacity: 0.53;"></span><span style="background: rgb(76, 29, 149); opacity: 0.65;"></span><span style="background: rgb(255, 79, 160); opacity: 0.9;"></span><span style="background: rgb(30, 64, 175); opacity: 0.46;"></span><span style="background: rgb(3, 105, 161); opacity: 0.5;"></span><span style="background: rgb(232, 121, 249); opacity: 0.8;"></span><span style="background: rgb(109, 40, 217); opacity: 0.77;"></span><span style="background: rgb(124, 58, 237); opacity: 0.65;"></span><span style="background: rgb(156, 0, 50); opacity: 0.32;"></span><span style="background: rgb(30, 64, 175); opacity: 0.87;"></span><span style="background: rgb(76, 29, 149); opacity: 0.59;"></span><span style="background: rgb(255, 45, 120); opacity: 0.56;"></span><span style="background: rgb(14, 116, 144); opacity: 0.55;"></span><span style="background: rgb(156, 0, 50); opacity: 0.48;"></span><span style="background: rgb(109, 40, 217); opacity: 0.71;"></span><span style="background: rgb(168, 85, 247); opacity: 0.75;"></span><span style="background: rgb(255, 79, 160); opacity: 0.71;"></span><span style="background: rgb(124, 58, 237); opacity: 0.64;"></span><span style="background: rgb(56, 189, 248); opacity: 0.56;"></span><span style="background: rgb(30, 64, 175); opacity: 0.75;"></span><span style="background: rgb(232, 121, 249); opacity: 0.36;"></span><span style="background: rgb(232, 121, 249); opacity: 0.54;"></span><span style="background: rgb(109, 40, 217); opacity: 0.64;"></span><span style="background: rgb(14, 116, 144); opacity: 0.61;"></span><span style="background: rgb(6, 182, 212); opacity: 0.84;"></span><span style="background: rgb(156, 0, 50); opacity: 0.75;"></span><span style="background: rgb(194, 24, 91); opacity: 0.73;"></span><span style="background: rgb(8, 145, 178); opacity: 0.79;"></span><span style="background: rgb(76, 29, 149); opacity: 0.32;"></span><span style="background: rgb(109, 40, 217); opacity: 0.32;"></span><span style="background: rgb(8, 145, 178); opacity: 0.37;"></span><span style="background: rgb(156, 0, 50); opacity: 0.64;"></span><span style="background: rgb(8, 145, 178); opacity: 0.45;"></span><span style="background: rgb(56, 189, 248); opacity: 0.43;"></span><span style="background: rgb(14, 116, 144); opacity: 0.69;"></span><span style="background: rgb(255, 79, 160); opacity: 0.72;"></span><span style="background: rgb(76, 29, 149); opacity: 0.65;"></span><span style="background: rgb(14, 116, 144); opacity: 0.46;"></span><span style="background: rgb(30, 64, 175); opacity: 0.55;"></span><span style="background: rgb(156, 0, 50); opacity: 0.61;"></span><span style="background: rgb(3, 105, 161); opacity: 0.49;"></span><span style="background: rgb(14, 116, 144); opacity: 0.66;"></span><span style="background: rgb(3, 105, 161); opacity: 0.36;"></span><span style="background: rgb(232, 121, 249); opacity: 0.54;"></span><span style="background: rgb(14, 116, 144); opacity: 0.32;"></span><span style="background: rgb(14, 116, 144); opacity: 0.57;"></span><span style="background: rgb(255, 79, 160); opacity: 0.86;"></span><span style="background: rgb(124, 58, 237); opacity: 0.56;"></span><span style="background: rgb(30, 64, 175); opacity: 0.33;"></span><span style="background: rgb(255, 79, 160); opacity: 0.66;"></span><span style="background: rgb(156, 0, 50); opacity: 0.62;"></span><span style="background: rgb(3, 105, 161); opacity: 0.38;"></span><span style="background: rgb(156, 0, 50); opacity: 0.57;"></span><span style="background: rgb(8, 145, 178); opacity: 0.56;"></span><span style="background: rgb(30, 64, 175); opacity: 0.42;"></span><span style="background: rgb(255, 45, 120); opacity: 0.49;"></span><span style="background: rgb(194, 24, 91); opacity: 0.55;"></span><span style="background: rgb(8, 145, 178); opacity: 0.53;"></span><span style="background: rgb(109, 40, 217); opacity: 0.71;"></span><span style="background: rgb(109, 40, 217); opacity: 0.9;"></span><span style="background: rgb(30, 64, 175); opacity: 0.48;"></span><span style="background: rgb(168, 85, 247); opacity: 0.63;"></span><span style="background: rgb(30, 64, 175); opacity: 0.89;"></span><span style="background: rgb(56, 189, 248); opacity: 0.34;"></span><span style="background: rgb(255, 79, 160); opacity: 0.44;"></span><span style="background: rgb(76, 29, 149); opacity: 0.53;"></span><span style="background: rgb(255, 45, 120); opacity: 0.77;"></span><span style="background: rgb(156, 0, 50); opacity: 0.51;"></span><span style="background: rgb(255, 45, 120); opacity: 0.84;"></span><span style="background: rgb(3, 105, 161); opacity: 0.54;"></span><span style="background: rgb(6, 182, 212); opacity: 0.57;"></span><span style="background: rgb(255, 45, 120); opacity: 0.76;"></span><span style="background: rgb(124, 58, 237); opacity: 0.71;"></span><span style="background: rgb(30, 64, 175); opacity: 0.67;"></span><span style="background: rgb(109, 40, 217); opacity: 0.84;"></span><span style="background: rgb(194, 24, 91); opacity: 0.51;"></span><span style="background: rgb(255, 45, 120); opacity: 0.89;"></span><span style="background: rgb(8, 145, 178); opacity: 0.74;"></span><span style="background: rgb(255, 79, 160); opacity: 0.87;"></span><span style="background: rgb(30, 64, 175); opacity: 0.31;"></span><span style="background: rgb(255, 45, 120); opacity: 0.45;"></span><span style="background: rgb(76, 29, 149); opacity: 0.7;"></span><span style="background: rgb(56, 189, 248); opacity: 0.59;"></span><span style="background: rgb(156, 0, 50); opacity: 0.69;"></span><span style="background: rgb(109, 40, 217); opacity: 0.85;"></span><span style="background: rgb(124, 58, 237); opacity: 0.46;"></span><span style="background: rgb(194, 24, 91); opacity: 0.32;"></span><span style="background: rgb(30, 64, 175); opacity: 0.53;"></span><span style="background: rgb(6, 182, 212); opacity: 0.38;"></span><span style="background: rgb(124, 58, 237); opacity: 0.74;"></span><span style="background: rgb(156, 0, 50); opacity: 0.33;"></span><span style="background: rgb(255, 79, 160); opacity: 0.46;"></span><span style="background: rgb(109, 40, 217); opacity: 0.48;"></span></div>
         </div>
@@ -2101,7 +2194,8 @@
       </div>
 
       <!-- Neon Haze -->
-      <div class="effect-card effect-neon-haze" data-fx="neon-haze">
+      <div class="effect-card effect-neon-haze" data-pro="true">
+        <div class="pro-lock-overlay fx-lock"><span class="pro-lock-badge">PRO</span></div> data-fx="neon-haze">
         <div class="effect-card-bg"></div>
         <div class="effect-card-overlay"></div>
         <div class="effect-card-content">
@@ -3020,5 +3114,176 @@
     </defs>
   </svg>
 
+
+
+  <!-- Upgrade Modal -->
+  <div class="upgrade-overlay" id="upgradeOverlay">
+    <div class="upgrade-modal">
+      <button class="upgrade-close" id="upgradeClose" aria-label="Close">×</button>
+      <div class="upgrade-eyebrow">Chorushive Pro</div>
+      <h2 class="upgrade-headline">Unlock every room.</h2>
+      <p class="upgrade-sub">Get all 8 themes, all 6 backgrounds, and typography control. The full experience, for less than a coffee a month.</p>
+      <div class="plan-toggle">
+        <button class="plan-btn active" id="planMonthly">Monthly</button>
+        <button class="plan-btn" id="planAnnual">Annual — save 52%</button>
+      </div>
+      <div class="plan-price" id="planPrice">$4.99<span>/mo</span></div>
+      <div class="plan-note" id="planNote">Cancel anytime</div>
+      <ul class="upgrade-perks">
+        <li>All 8 visual themes (6 more than free)</li>
+        <li>All 6 background modes (4 more than free)</li>
+        <li>Full typography control</li>
+        <li>Saved preferences across sessions</li>
+      </ul>
+      <button class="btn-upgrade" id="upgradeBtn">Get Chorushive Pro</button>
+      <p class="upgrade-fine">No commitment · Cancel anytime · Works with Free &amp; Premium Spotify</p>
+    </div>
+  </div>
+
+  <script>
+  (function() {
+    // ── Session ──────────────────────────────────────────────────────────────
+    let session = null;
+    let isPro = false;
+    let activePlan = 'monthly';
+
+    function loadSession() {
+      try {
+        const hash = window.location.hash;
+        const m = hash.match(/[#&]s=([^&]+)/);
+        if (m) {
+          session = JSON.parse(atob(decodeURIComponent(m[1])));
+          sessionStorage.setItem('ch_session', JSON.stringify(session));
+          // Clean hash from URL
+          history.replaceState(null, '', window.location.pathname + window.location.search);
+        } else {
+          const stored = sessionStorage.getItem('ch_session');
+          if (stored) session = JSON.parse(stored);
+        }
+      } catch(e) { session = null; }
+    }
+
+    // ── Subscription check ───────────────────────────────────────────────────
+    async function checkSubscription() {
+      if (!session?.spotify_id) return;
+      try {
+        const r = await fetch(`/api/subscription-status?spotify_id=${encodeURIComponent(session.spotify_id)}`);
+        const data = await r.json();
+        isPro = data.isPro === true;
+      } catch(e) { isPro = false; }
+      applyPaywall();
+    }
+
+    // ── Upgraded success ─────────────────────────────────────────────────────
+    function checkUpgradeSuccess() {
+      if (window.location.search.includes('upgraded=true')) {
+        isPro = true;
+        applyPaywall();
+        history.replaceState(null, '', '/');
+        // Show brief success toast
+        const t = document.createElement('div');
+        t.style.cssText = 'position:fixed;bottom:32px;left:50%;transform:translateX(-50%);background:#1db954;color:#000;font-family:monospace;font-size:13px;font-weight:700;padding:12px 24px;border-radius:2px;z-index:9999;letter-spacing:0.08em';
+        t.textContent = '🎉  PRO UNLOCKED — ENJOY EVERY ROOM';
+        document.body.appendChild(t);
+        setTimeout(() => t.remove(), 4000);
+      }
+    }
+
+    // ── Apply lock/unlock UI ─────────────────────────────────────────────────
+    function applyPaywall() {
+      const proEls = document.querySelectorAll('[data-pro]');
+      proEls.forEach(el => {
+        if (isPro) {
+          el.classList.remove('locked');
+          el.querySelectorAll('.pro-lock-overlay').forEach(o => o.style.display = 'none');
+        } else {
+          el.classList.add('locked');
+        }
+      });
+    }
+
+    // ── Upgrade modal ─────────────────────────────────────────────────────────
+    function openUpgrade() {
+      document.getElementById('upgradeOverlay').classList.add('open');
+    }
+    function closeUpgrade() {
+      document.getElementById('upgradeOverlay').classList.remove('open');
+    }
+
+    function updatePlanUI() {
+      const monthly = activePlan === 'monthly';
+      document.getElementById('planMonthly').classList.toggle('active', monthly);
+      document.getElementById('planAnnual').classList.toggle('active', !monthly);
+      document.getElementById('planPrice').innerHTML = monthly
+        ? '$4.99<span>/mo</span>'
+        : '$2.42<span>/mo</span>';
+      document.getElementById('planNote').textContent = monthly
+        ? 'Cancel anytime'
+        : '$29 billed annually — save $30/yr';
+    }
+
+    async function startCheckout() {
+      const btn = document.getElementById('upgradeBtn');
+      btn.textContent = 'Redirecting...';
+      btn.disabled = true;
+      try {
+        const r = await fetch('/api/create-checkout-session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            spotify_id: session?.spotify_id || 'guest',
+            email: null,
+            plan: activePlan,
+          }),
+        });
+        const data = await r.json();
+        if (data.url) window.location.href = data.url;
+        else throw new Error(data.error || 'No URL');
+      } catch(e) {
+        btn.textContent = 'Get Chorushive Pro';
+        btn.disabled = false;
+        console.error('Checkout error:', e);
+      }
+    }
+
+    // ── Wire up events ────────────────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', function() {
+      // Close modal
+      document.getElementById('upgradeClose').addEventListener('click', closeUpgrade);
+      document.getElementById('upgradeOverlay').addEventListener('click', function(e) {
+        if (e.target === this) closeUpgrade();
+      });
+
+      // Plan toggle
+      document.getElementById('planMonthly').addEventListener('click', () => {
+        activePlan = 'monthly'; updatePlanUI();
+      });
+      document.getElementById('planAnnual').addEventListener('click', () => {
+        activePlan = 'annual'; updatePlanUI();
+      });
+
+      // Checkout
+      document.getElementById('upgradeBtn').addEventListener('click', startCheckout);
+
+      // Clicks on locked items
+      document.addEventListener('click', function(e) {
+        const proEl = e.target.closest('[data-pro].locked');
+        if (proEl) {
+          e.preventDefault(); e.stopPropagation();
+          openUpgrade();
+        }
+      });
+
+      // Run
+      loadSession();
+      checkUpgradeSuccess();
+      if (session?.spotify_id) {
+        checkSubscription();
+      } else {
+        applyPaywall(); // lock everything for non-authed
+      }
+    });
+  })();
+  </script>
 
 </body></html>

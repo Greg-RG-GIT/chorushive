@@ -1,0 +1,9 @@
+{
+  "name": "chorushive",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "node-fetch": "^2.6.7",
+    "stripe": "^14.25.0"
+  }
+}
