@@ -1,7 +1,7 @@
 <html lang="en"><head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Chorushive — Karaoke for Your Spotify</title>
+  <title>Chorushive — Where the Whole Room Sings</title>
   <meta name="description" content="Turn any screen into a karaoke stage. Connect Spotify, pick a theme, and sing along with real-time word-by-word lyrics. Free. No install. Millions of songs.">
   <meta property="og:title" content="Chorushive — Where the Whole Room Sings">
   <meta property="og:description" content="Eight visual themes. Six background modes. Your entire Spotify library. The karaoke experience you actually want.">
@@ -90,7 +90,7 @@
     .hero-outer { display: block; }
     .hero {
       display: grid;
-      grid-template-columns: 44fr 56fr;
+      grid-template-columns: 30fr 70fr;
       gap: 0;
       align-items: stretch;
       min-height: calc(100vh - 90px);
@@ -1417,15 +1417,18 @@
       opacity: 1;
       background: #02000a;
     }
-    /* Lyric readability mask — dark oval behind text, only in pixel mode */
-    .preview-body.fx-pixel .mock-lyrics-stage::before {
+    /* Lyric readability mask — dark oval over the pixel canvas, anchored to previewFx
+       which never animates, so it stays continuous through lyric transitions          */
+    .preview-body.fx-pixel #previewFx::after {
       content: '';
       position: absolute;
-      inset: -22px -44px;
-      background: radial-gradient(ellipse at 50% 50%, rgba(2,0,10,0.78) 30%, rgba(2,0,10,0.50) 65%, transparent 100%);
-      filter: blur(8px);
-      border-radius: 6px;
-      z-index: -1;
+      /* previewFx has inset:-20%, so 20% here clips back to the actual preview bounds */
+      top: 20%; left: 20%; right: 20%; bottom: 20%;
+      background: radial-gradient(ellipse at 50% 52%,
+        rgba(2,0,10,0.84) 0%,
+        rgba(2,0,10,0.62) 32%,
+        rgba(2,0,10,0.22) 58%,
+        transparent 76%);
       pointer-events: none;
     }
     .preview-fx-pixel-grid {
@@ -1752,7 +1755,7 @@
   <div class="hero-outer">
   <header class="hero">
     <div class="hero-left">
-      <div class="hero-label">Karaoke for your Spotify</div>
+      <div class="hero-label">Every song. Every screen. Everyone sings.</div>
     <h1 class="hero-headline">
       Where the <span class="fade">whole</span><br>
       <span class="green-word">room sings.</span>
@@ -2609,7 +2612,7 @@
       delete el.dataset.built;
 
       const canvas = document.createElement('canvas');
-      canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated;';
+      canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated;filter:blur(3px);';
       el.appendChild(canvas);
 
       const pb = document.getElementById('previewBody');
@@ -2619,7 +2622,7 @@
       canvas.height = H;
       const ctx = canvas.getContext('2d');
 
-      const BLOCK = 48; // large chunky pixels
+      const BLOCK = 68; // large chunky pixels
       const cols  = Math.ceil(W / BLOCK);
       const rows  = Math.ceil(H / BLOCK);
       const total = cols * rows;
@@ -2853,10 +2856,16 @@
       const activeBtn = document.querySelector('.fx-btn[data-mode="' + mode + '"]');
       if (activeBtn) activeBtn.classList.add('active');
 
-      // Leaving pixel mode: stop scrambler
+      // Leaving pixel mode: stop scrambler rAF loop
       if (mode !== 'pixel' && fxEl) {
         var oldCanvas = fxEl.querySelector('canvas');
         if (oldCanvas && oldCanvas.__stopScramble) oldCanvas.__stopScramble();
+      }
+
+      // Leaving lava mode: remove overlay blob (lives on previewBodyEl, not fxEl)
+      if (mode !== 'lava' && previewBodyEl) {
+        var oldOverlay = previewBodyEl.querySelector('.lava-overlay');
+        if (oldOverlay) oldOverlay.remove();
       }
 
       // Clear injected content from previous mode if it used fxEl
