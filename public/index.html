@@ -473,18 +473,18 @@
     }
     .mock-line.mock-prev,
     .mock-line.mock-next {
-      color: rgba(255,255,255,0.40);
-      font-size: clamp(14px, 1.8vw, 20px);
+      color: rgba(255,255,255,0.65);
+      font-size: clamp(17px, 2.2vw, 22px);
       font-weight: 500;
       letter-spacing: -0.01em;
-      text-shadow: 0 1px 12px rgba(0,0,0,0.9);
+      text-shadow: 0 1px 8px rgba(0,0,0,0.98), 0 0 20px rgba(0,0,0,0.75);
     }
     .mock-line.mock-active {
-      font-size: clamp(36px, 5.6vw, 72px);
+      font-size: clamp(44px, 6vw, 78px);
       color: #fff;
       font-weight: 800;
       letter-spacing: -0.03em;
-      text-shadow: 0 2px 32px rgba(0,0,0,0.6), 0 0 60px rgba(0,0,0,0.3);
+      text-shadow: 0 2px 6px rgba(0,0,0,0.98), 0 4px 28px rgba(0,0,0,0.9), 0 0 50px rgba(0,0,0,0.5);
       animation: lineEnter 0.3s ease forwards;
     }
     @keyframes lineEnter {
@@ -567,7 +567,7 @@
       font-family: 'Syne', system-ui, sans-serif;
       font-weight: 800; text-transform: uppercase;
       letter-spacing: -0.01em;
-      font-size: clamp(20px, 3vw, 36px);
+      font-size: clamp(30px, 4.5vw, 46px);
     }
     .preview-body.theme-rave .mock-line.mock-prev,
     .preview-body.theme-rave .mock-line.mock-next {
@@ -1284,47 +1284,47 @@
     /* Float: Y translation + lateral sway + squash-and-stretch (fat blob physics) */
     @keyframes lavaBlobFloat {
       0%   { transform: translateY(0%)     translateX(0px)   scaleX(1.10) scaleY(0.92); }
-      8%   { transform: translateY(-6%)    translateX(-14px) scaleX(1.04) scaleY(0.97); }
-      17%  { transform: translateY(-24%)   translateX(20px)  scaleX(0.95) scaleY(1.06); }
-      25%  { transform: translateY(-48%)   translateX(-10px) scaleX(0.92) scaleY(1.10); }
-      33%  { transform: translateY(-72%)   translateX(22px)  scaleX(0.90) scaleY(1.12); }
-      42%  { transform: translateY(-90%)   translateX(-12px) scaleX(0.92) scaleY(1.10); }
-      50%  { transform: translateY(-96%)   translateX(8px)   scaleX(1.08) scaleY(0.94); }
-      58%  { transform: translateY(-90%)   translateX(-18px) scaleX(1.06) scaleY(0.96); }
-      67%  { transform: translateY(-72%)   translateX(18px)  scaleX(0.91) scaleY(1.11); }
-      75%  { transform: translateY(-48%)   translateX(-20px) scaleX(0.93) scaleY(1.09); }
-      83%  { transform: translateY(-24%)   translateX(14px)  scaleX(0.96) scaleY(1.05); }
-      92%  { transform: translateY(-6%)    translateX(-8px)  scaleX(1.03) scaleY(0.98); }
+      8%   { transform: translateY(-6%)    translateX(-21px) scaleX(1.04) scaleY(0.97); }
+      17%  { transform: translateY(-24%)   translateX(30px)  scaleX(0.95) scaleY(1.06); }
+      25%  { transform: translateY(-48%)   translateX(-15px) scaleX(0.92) scaleY(1.10); }
+      33%  { transform: translateY(-72%)   translateX(33px)  scaleX(0.90) scaleY(1.12); }
+      42%  { transform: translateY(-90%)   translateX(-18px) scaleX(0.92) scaleY(1.10); }
+      50%  { transform: translateY(-96%)   translateX(12px)   scaleX(1.08) scaleY(0.94); }
+      58%  { transform: translateY(-90%)   translateX(-27px) scaleX(1.06) scaleY(0.96); }
+      67%  { transform: translateY(-72%)   translateX(27px)  scaleX(0.91) scaleY(1.11); }
+      75%  { transform: translateY(-48%)   translateX(-30px) scaleX(0.93) scaleY(1.09); }
+      83%  { transform: translateY(-24%)   translateX(21px)  scaleX(0.96) scaleY(1.05); }
+      92%  { transform: translateY(-6%)    translateX(-12px) scaleX(1.03) scaleY(0.98); }
       100% { transform: translateY(0%)     translateX(0px)   scaleX(1.10) scaleY(0.92); }
     }
     @keyframes lavaBlobFloatB {
       0%   { transform: translateY(0%)     translateX(0px)   scaleX(1.12) scaleY(0.90); }
-      8%   { transform: translateY(-7%)    translateX(18px)  scaleX(1.05) scaleY(0.96); }
-      17%  { transform: translateY(-26%)   translateX(-22px) scaleX(0.94) scaleY(1.07); }
-      25%  { transform: translateY(-50%)   translateX(12px)  scaleX(0.91) scaleY(1.11); }
-      33%  { transform: translateY(-74%)   translateX(-24px) scaleX(0.89) scaleY(1.13); }
-      42%  { transform: translateY(-92%)   translateX(14px)  scaleX(0.91) scaleY(1.11); }
-      50%  { transform: translateY(-98%)   translateX(-8px)  scaleX(1.10) scaleY(0.92); }
-      58%  { transform: translateY(-92%)   translateX(20px)  scaleX(1.07) scaleY(0.95); }
-      67%  { transform: translateY(-74%)   translateX(-16px) scaleX(0.90) scaleY(1.12); }
-      75%  { transform: translateY(-50%)   translateX(22px)  scaleX(0.92) scaleY(1.10); }
-      83%  { transform: translateY(-26%)   translateX(-12px) scaleX(0.95) scaleY(1.06); }
-      92%  { transform: translateY(-7%)    translateX(10px)  scaleX(1.04) scaleY(0.97); }
+      8%   { transform: translateY(-7%)    translateX(27px)  scaleX(1.05) scaleY(0.96); }
+      17%  { transform: translateY(-26%)   translateX(-33px) scaleX(0.94) scaleY(1.07); }
+      25%  { transform: translateY(-50%)   translateX(18px)  scaleX(0.91) scaleY(1.11); }
+      33%  { transform: translateY(-74%)   translateX(-36px) scaleX(0.89) scaleY(1.13); }
+      42%  { transform: translateY(-92%)   translateX(21px)  scaleX(0.91) scaleY(1.11); }
+      50%  { transform: translateY(-98%)   translateX(-12px) scaleX(1.10) scaleY(0.92); }
+      58%  { transform: translateY(-92%)   translateX(30px)  scaleX(1.07) scaleY(0.95); }
+      67%  { transform: translateY(-74%)   translateX(-24px) scaleX(0.90) scaleY(1.12); }
+      75%  { transform: translateY(-50%)   translateX(33px)  scaleX(0.92) scaleY(1.10); }
+      83%  { transform: translateY(-26%)   translateX(-18px) scaleX(0.95) scaleY(1.06); }
+      92%  { transform: translateY(-7%)    translateX(15px)  scaleX(1.04) scaleY(0.97); }
       100% { transform: translateY(0%)     translateX(0px)   scaleX(1.12) scaleY(0.90); }
     }
     @keyframes lavaBlobFloatC {
       0%   { transform: translateY(0%)     translateX(0px)   scaleX(1.14) scaleY(0.88); }
-      8%   { transform: translateY(-8%)    translateX(-20px) scaleX(1.06) scaleY(0.95); }
-      17%  { transform: translateY(-28%)   translateX(26px)  scaleX(0.93) scaleY(1.08); }
-      25%  { transform: translateY(-52%)   translateX(-14px) scaleX(0.90) scaleY(1.12); }
-      33%  { transform: translateY(-76%)   translateX(28px)  scaleX(0.88) scaleY(1.14); }
-      42%  { transform: translateY(-94%)   translateX(-10px) scaleX(0.90) scaleY(1.12); }
-      50%  { transform: translateY(-100%)  translateX(10px)  scaleX(1.12) scaleY(0.90); }
-      58%  { transform: translateY(-94%)   translateX(-22px) scaleX(1.08) scaleY(0.94); }
-      67%  { transform: translateY(-76%)   translateX(20px)  scaleX(0.89) scaleY(1.13); }
-      75%  { transform: translateY(-52%)   translateX(-24px) scaleX(0.91) scaleY(1.11); }
-      83%  { transform: translateY(-28%)   translateX(16px)  scaleX(0.94) scaleY(1.07); }
-      92%  { transform: translateY(-8%)    translateX(-10px) scaleX(1.05) scaleY(0.96); }
+      8%   { transform: translateY(-8%)    translateX(-30px) scaleX(1.06) scaleY(0.95); }
+      17%  { transform: translateY(-28%)   translateX(39px)  scaleX(0.93) scaleY(1.08); }
+      25%  { transform: translateY(-52%)   translateX(-21px) scaleX(0.90) scaleY(1.12); }
+      33%  { transform: translateY(-76%)   translateX(42px)  scaleX(0.88) scaleY(1.14); }
+      42%  { transform: translateY(-94%)   translateX(-15px) scaleX(0.90) scaleY(1.12); }
+      50%  { transform: translateY(-100%)  translateX(15px)  scaleX(1.12) scaleY(0.90); }
+      58%  { transform: translateY(-94%)   translateX(-33px) scaleX(1.08) scaleY(0.94); }
+      67%  { transform: translateY(-76%)   translateX(30px)  scaleX(0.89) scaleY(1.13); }
+      75%  { transform: translateY(-52%)   translateX(-36px) scaleX(0.91) scaleY(1.11); }
+      83%  { transform: translateY(-28%)   translateX(24px)  scaleX(0.94) scaleY(1.07); }
+      92%  { transform: translateY(-8%)    translateX(-15px) scaleX(1.05) scaleY(0.96); }
       100% { transform: translateY(0%)     translateX(0px)   scaleX(1.14) scaleY(0.88); }
     }
     @keyframes lavaBlobMorph {
@@ -3070,19 +3070,19 @@
       // Rising blobs — float up, drip, and sink back down
       // Each blob gets a radial gradient: specular highlight top-left, base mid, dark rim
       const risingBlobs = [
-        { w: 245, h: 235, x: 32, delay: 0,    dur: 118,
+        { w: 245, h: 235, x: 42, delay: 0,    dur: 20,
           grad: 'radial-gradient(ellipse at 38% 32%, #fff5cc 0%, #ffcc40 20%, #ff7800 42%, #ff3800 64%, #d02400 84%, #941a00 100%)',
           float: 'lavaBlobFloat',  morph: 'lavaBlobMorph'  },
-        { w: 270, h: 258, x: 60, delay: -38,  dur: 130,
+        { w: 270, h: 258, x: 54, delay: -8,   dur: 26,
           grad: 'radial-gradient(ellipse at 40% 30%, #fff0c0 0%, #ffbc30 20%, #ff6800 42%, #f03000 64%, #c42200 84%, #8a1800 100%)',
           float: 'lavaBlobFloatB', morph: 'lavaBlobMorphB' },
-        { w: 210, h: 200, x: 46, delay: -62,  dur: 105,
+        { w: 210, h: 200, x: 46, delay: -12,  dur: 22,
           grad: 'radial-gradient(ellipse at 36% 34%, #fffacc 0%, #ffd460 20%, #ff8800 42%, #ff4000 64%, #d62800 84%, #9c1c00 100%)',
           float: 'lavaBlobFloatC', morph: 'lavaBlobMorphC' },
-        { w: 255, h: 244, x: 22, delay: -82,  dur: 122,
+        { w: 255, h: 244, x: 38, delay: -5,   dur: 24,
           grad: 'radial-gradient(ellipse at 42% 28%, #ffeebc 0%, #ffb820 20%, #ff6000 42%, #ef2e00 64%, #c22000 84%, #861600 100%)',
           float: 'lavaBlobFloatB', morph: 'lavaBlobMorphC' },
-        { w: 230, h: 220, x: 68, delay: -50,  dur: 112,
+        { w: 230, h: 220, x: 58, delay: -18,  dur: 28,
           grad: 'radial-gradient(ellipse at 37% 33%, #fff8d0 0%, #ffc840 20%, #ff7200 42%, #fc3c00 64%, #c82600 84%, #901e00 100%)',
           float: 'lavaBlobFloatC', morph: 'lavaBlobMorphB' },
       ];
@@ -3130,11 +3130,11 @@
       // Pool blobs — large, flat, stay near the base, slowly breathe
       // They merge with rising blobs as they detach — creates the pooling effect
       const poolBlobs = [
-        { w: 270, h: 108, x: 22, delay: 0,    dur: 70,
+        { w: 270, h: 108, x: 30, delay: 0,    dur: 14,
           grad: 'radial-gradient(ellipse at 44% 38%, #ffb030 0%, #ff6a00 28%, #ff3600 54%, #cc2400 76%, #8c1800 100%)' },
-        { w: 240, h: 96,  x: 58, delay: -22,  dur: 65,
+        { w: 240, h: 96,  x: 56, delay: -5,   dur: 12,
           grad: 'radial-gradient(ellipse at 46% 36%, #ffa820 0%, #ff6200 28%, #ff3000 54%, #c82200 76%, #881600 100%)' },
-        { w: 200, h: 86,  x: 40, delay: -40,  dur: 75,
+        { w: 200, h: 86,  x: 46, delay: -8,   dur: 16,
           grad: 'radial-gradient(ellipse at 42% 40%, #ffb840 0%, #ff7000 28%, #ff3e00 54%, #d02800 76%, #921c00 100%)' },
       ];
       if (_s !== 1) { poolBlobs.forEach(function(b) { b.w = Math.round(b.w * _s); b.h = Math.round(b.h * _s); }); }
