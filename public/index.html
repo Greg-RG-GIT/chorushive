@@ -1693,6 +1693,33 @@
       .effect-card { min-height: 220px; }
       .effect-name { font-size: 22px; }
     }
+
+    /* ── PAIN SECTION ── */
+    .pain-section { border-bottom: 1px solid var(--rule); }
+    .pain-inner { max-width: 780px; margin: 0 auto; padding: 64px 0; text-align: center; }
+    .pain-text { font-family: var(--font-body); font-size: clamp(17px,2vw,21px); line-height: 1.75; color: rgba(255,255,255,0.55); margin-bottom: 20px; }
+    .pain-bridge { font-family: var(--font-body); font-size: clamp(17px,2vw,21px); line-height: 1.75; color: rgba(255,255,255,0.85); font-weight: 500; }
+    .pain-bridge strong { color: var(--green); font-weight: 600; }
+
+    /* ── HOW IT WORKS ── */
+    .hiw-steps { display: grid; grid-template-columns: repeat(3,1fr); gap: 0; border-top: 1px solid var(--rule); margin-bottom: 48px; }
+    .hiw-step { padding: 40px 40px 40px 0; border-right: 1px solid var(--rule); display: flex; gap: 20px; align-items: flex-start; }
+    .hiw-step:last-child { border-right: none; padding-right: 0; }
+    .hiw-step:not(:first-child) { padding-left: 40px; }
+    .hiw-num { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.15em; color: var(--green); padding-top: 6px; flex-shrink: 0; }
+    .hiw-title { font-family: var(--font-display); font-weight: 700; font-size: 20px; letter-spacing: -0.02em; color: #fff; margin-bottom: 8px; }
+    .hiw-desc { font-family: var(--font-body); font-size: 15px; line-height: 1.7; color: var(--off); }
+
+    /* ── OCCASION STRIP ── */
+    .occasion-strip { display: flex; gap: 10px; flex-wrap: wrap; padding-bottom: 56px; }
+    .occasion-pill { font-family: var(--font-body); font-size: 13px; font-weight: 500; color: rgba(255,255,255,0.6); background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 100px; padding: 6px 16px; }
+
+    @media (max-width: 768px) {
+      .hiw-steps { grid-template-columns: 1fr; }
+      .hiw-step { border-right: none; border-bottom: 1px solid var(--rule); padding: 32px 0; }
+      .hiw-step:last-child { border-bottom: none; }
+      .hiw-step:not(:first-child) { padding-left: 0; }
+    }
   </style>
 </head>
 <body>
@@ -1762,15 +1789,14 @@
     </h1>
     <div class="hero-subline">
       <p class="hero-copy">
-        Connect Spotify. Pick your aesthetic. Turn any screen into a karaoke stage.
-        <strong>Eight handcrafted themes, six background modes, real-time lyrics</strong> —
-        built for bedrooms, living rooms, and the big screen at the party.
+        Your Spotify library. Real-time lyrics. Any screen, any room.
+        <strong>No new songs to learn. No setup. No ads.</strong> Just hit play and everyone knows the words.
       </p>
       <div class="hero-cta-group">
         <div class="trust-row">
-          <span class="trust-pill">✓ Free to Start</span>
+          <span class="trust-pill">✓ Free Forever</span>
           <span class="trust-pill">✓ No Install</span>
-          <span class="trust-pill">✓ Millions of Songs</span>
+          <span class="trust-pill">✓ Your Spotify Songs</span>
         </div>
         <a href="/auth/login" class="btn-connect">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"></path></svg>
@@ -1864,6 +1890,53 @@
       <span class="lyric-marquee-item">I can buy myself <span class="highlight">flowers</span> —</span>
     </div>
   </div>
+
+
+  <!-- Pain point -->
+  <section class="section pain-section">
+    <div class="pain-inner">
+      <p class="pain-text">You know the feeling. The song drops, everyone wants to sing — and someone&#39;s fumbling for lyrics on YouTube. Tiny text. Wrong sync. An ad about to kill the vibe.</p>
+      <p class="pain-bridge">Chorushive puts your Spotify, <strong>word-for-word</strong>, on whatever screen you have. No fumbling. No ads. No wrong words.</p>
+    </div>
+  </section>
+
+  <!-- How it works -->
+  <section class="section">
+    <div class="section-header">
+      <span class="section-num">No setup. No learning curve.</span>
+      <h2 class="section-title">Hit play. Everyone sings.</h2>
+    </div>
+    <div class="hiw-steps">
+      <div class="hiw-step">
+        <div class="hiw-num">01</div>
+        <div class="hiw-content">
+          <div class="hiw-title">Connect Spotify</div>
+          <div class="hiw-desc">Takes 10 seconds. No new account, no catalog to learn — just the songs you already know and love.</div>
+        </div>
+      </div>
+      <div class="hiw-step">
+        <div class="hiw-num">02</div>
+        <div class="hiw-content">
+          <div class="hiw-title">Pick your vibe</div>
+          <div class="hiw-desc">Eight themes, six backgrounds. Match the aesthetic to the room — chill bedroom session or full-on party.</div>
+        </div>
+      </div>
+      <div class="hiw-step">
+        <div class="hiw-num">03</div>
+        <div class="hiw-content">
+          <div class="hiw-title">Put it on any screen</div>
+          <div class="hiw-desc">Phone, laptop, TV, projector. Word-by-word lyrics sync in real time. The whole room sees it.</div>
+        </div>
+      </div>
+    </div>
+    <div class="occasion-strip">
+      <span class="occasion-pill">&#127968; House parties</span>
+      <span class="occasion-pill">&#127867; Pregames</span>
+      <span class="occasion-pill">&#128663; Road trips</span>
+      <span class="occasion-pill">&#127908; Bedroom sessions</span>
+      <span class="occasion-pill">&#128250; TV &amp; projector nights</span>
+    </div>
+  </section>
 
   <!-- Themes showcase -->
   <section class="section themes-section">
@@ -2115,15 +2188,15 @@
     </h2>
     <div class="hero-cta-group">
       <div class="trust-row">
-        <span class="trust-pill">✓ Free to Start</span>
+        <span class="trust-pill">✓ Free Forever</span>
         <span class="trust-pill">✓ No Install</span>
-        <span class="trust-pill">✓ Millions of Songs</span>
+        <span class="trust-pill">✓ No Credit Card</span>
       </div>
       <a href="/auth/login" class="btn-connect">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"></path></svg>
         Start Singing Free
       </a>
-      <span class="cta-note">No install · Works with Free &amp; Premium</span>
+      <span class="cta-note">Free forever · No card · Works with Free &amp; Premium</span>
     </div>
   </div>
 
