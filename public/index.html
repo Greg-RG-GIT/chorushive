@@ -3069,10 +3069,10 @@
       filt.setAttribute('width', '220%'); filt.setAttribute('height', '220%');
       filt.setAttribute('color-interpolation-filters', 'sRGB');
       var fBlur = document.createElementNS(ns, 'feGaussianBlur');
-      fBlur.setAttribute('in', 'SourceGraphic'); fBlur.setAttribute('stdDeviation', '18'); fBlur.setAttribute('result', 'blur');
+      fBlur.setAttribute('in', 'SourceGraphic'); fBlur.setAttribute('stdDeviation', '26'); fBlur.setAttribute('result', 'blur');
       var fMat = document.createElementNS(ns, 'feColorMatrix');
       fMat.setAttribute('in', 'blur'); fMat.setAttribute('type', 'matrix');
-      fMat.setAttribute('values', '1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 22 -9'); fMat.setAttribute('result', 'goo');
+      fMat.setAttribute('values', '1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 13 -4'); fMat.setAttribute('result', 'goo');
       var fComp = document.createElementNS(ns, 'feComposite');
       fComp.setAttribute('in', 'SourceGraphic'); fComp.setAttribute('in2', 'goo'); fComp.setAttribute('operator', 'atop');
       filt.appendChild(fBlur); filt.appendChild(fMat); filt.appendChild(fComp);
@@ -3144,11 +3144,11 @@
 
       // Rising blobs -- cx clustered 38-58% for frequent horizontal overlap, merging
       var blobDefs=[
-        {cx:0.42*VW,rx:110,ry:106,dur:28000,delay:0,      lat:24, grad:'lg0'},
-        {cx:0.54*VW,rx:120,ry:115,dur:36000,delay:-12000, lat:-30,grad:'lg1'},
-        {cx:0.46*VW,rx:96, ry:92, dur:32000,delay:-20000, lat:20, grad:'lg2'},
-        {cx:0.38*VW,rx:108,ry:104,dur:40000,delay:-8000,  lat:-24,grad:'lg3'},
-        {cx:0.58*VW,rx:100,ry:96, dur:44000,delay:-28000, lat:28, grad:'lg4'},
+        {cx:0.44*VW,rx:118,ry:112,dur:75000, delay:0,       lat:12, grad:'lg0'},
+        {cx:0.52*VW,rx:126,ry:120,dur:95000, delay:-30000, lat:-14,grad:'lg1'},
+        {cx:0.47*VW,rx:104,ry:100,dur:85000, delay:-52000, lat:11, grad:'lg2'},
+        {cx:0.40*VW,rx:114,ry:110,dur:105000,delay:-20000, lat:-13,grad:'lg3'},
+        {cx:0.56*VW,rx:108,ry:104,dur:115000,delay:-70000, lat:14, grad:'lg4'},
       ];
       var baseY=VH-80;   // resting y (merged with pool at bottom)
       var travel=VH-130; // how far each blob rises (SVG units)
@@ -3178,10 +3178,10 @@
       //  0.65-1.00: fall -- smoothstep easing back to pool
       function ss(t){ return t*t*(3-2*t); }
       function lavaCurve(p){
-        if(p<0.20){ return ss(p/0.20)*0.04; }                     // warm/bob at bottom
-        if(p<0.55){ var t=(p-0.20)/0.35; return ss(t); }          // rise
-        if(p<0.65){ return 1-ss((p-0.55)/0.10)*0.04; }            // cool/bob at top
-        var t=(p-0.65)/0.35; return 1-ss(t);                      // fall
+        if(p<0.30){ return ss(p/0.30)*0.03; }                     // long gather at bottom
+        if(p<0.58){ var t=(p-0.30)/0.28; return ss(t); }          // slow rise
+        if(p<0.73){ return 1-ss((p-0.58)/0.15)*0.03; }            // long linger at top
+        var t=(p-0.73)/0.27; return 1-ss(t);                      // slow fall
       }
 
       function tick(now){
