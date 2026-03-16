@@ -3075,6 +3075,17 @@
           float: 'lavaBlobFloatC', morph: 'lavaBlobMorphB' },
       ];
 
+      // Scale blob dimensions for the preview's actual width —
+      // desktop preview is ~70vw; mobile is 100vw. Without scaling,
+      // 245–270px blobs occupy 70%+ of a 375px mobile preview.
+      const _s = window.innerWidth <= 768
+        ? Math.max(0.38, Math.min(0.58, window.innerWidth / 700))
+        : 1;
+      if (_s !== 1) {
+        risingBlobs.forEach(function(b) { b.w = Math.round(b.w * _s); b.h = Math.round(b.h * _s); });
+        poolBlobs.forEach(function(b)   { b.w = Math.round(b.w * _s); b.h = Math.round(b.h * _s); });
+      }
+
       risingBlobs.forEach(function(b) {
         const track = document.createElement('div');
         track.className = 'lava-blob-track';
@@ -3091,7 +3102,7 @@
           'width:' + b.w + 'px;' +
           'height:' + b.h + 'px;' +
           'background:' + b.grad + ';' +
-          'box-shadow: inset -6px -10px 20px rgba(0,0,0,0.38), inset 3px 5px 12px rgba(255,190,120,0.14);' +
+          'box-shadow: inset -' + Math.round(6*_s) + 'px -' + Math.round(10*_s) + 'px ' + Math.round(20*_s) + 'px rgba(0,0,0,0.38), inset ' + Math.round(3*_s) + 'px ' + Math.round(5*_s) + 'px ' + Math.round(12*_s) + 'px rgba(255,190,120,0.14);' +
           'animation-name:' + b.morph + ';' +
           'animation-duration:' + b.dur + 's;' +
           'animation-delay:' + b.delay + 's;';
@@ -3125,7 +3136,7 @@
           'width:' + b.w + 'px;' +
           'height:' + b.h + 'px;' +
           'background:' + b.grad + ';' +
-          'box-shadow: inset -4px -6px 14px rgba(0,0,0,0.32), inset 2px 3px 8px rgba(255,160,80,0.10);' +
+          'box-shadow: inset -' + Math.round(4*_s) + 'px -' + Math.round(6*_s) + 'px ' + Math.round(14*_s) + 'px rgba(0,0,0,0.32), inset ' + Math.round(2*_s) + 'px ' + Math.round(3*_s) + 'px ' + Math.round(8*_s) + 'px rgba(255,160,80,0.10);' +
           'animation-duration:' + b.dur + 's;' +
           'animation-delay:' + b.delay + 's;';
         gooLayer.appendChild(blob);
