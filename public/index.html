@@ -1550,10 +1550,6 @@
       font-size: 12px;
       color: rgba(255,255,255,0.4);
     }
-    @media (max-width: 768px) {
-      .themes-grid { grid-template-columns: 1fr 1fr; }
-    }
-
     /* ── CUSTOMIZATION STRIP ── */
     .customize-section {
       max-width: 1400px;
@@ -1672,26 +1668,176 @@
     .error { margin-top: 12px; font-size: 12px; color: #ff6b6b; text-align: center; }
 
     /* ── RESPONSIVE ── */
+
+    /* Touch devices: always show PRO overlays (no hover state on touch) */
+    @media (hover: none) {
+      [data-pro] .pro-lock-overlay { opacity: 1; pointer-events: all; }
+    }
+
+    /* ── 768px — MOBILE / TABLET ── */
     @media (max-width: 768px) {
-      nav { padding: 20px 24px; }
-      .hero { padding: 48px 24px 0; grid-template-columns: 1fr; gap: 32px; }
-      .hero-right { display: block; }
-      .preview-window { max-height: 300px; }
-      .hero-subline { grid-template-columns: 1fr; gap: 32px; }
-      .hero-cta-group { align-items: flex-start; }
-      .section { padding: 0 24px; }
+      /* Nav */
+      nav { padding: 18px 20px; }
+
+      /* Hero: preview-first — visual experience above the fold */
+      .hero {
+        display: flex;
+        flex-direction: column;
+        padding: 0;
+        min-height: unset;
+        gap: 0;
+        align-items: stretch;
+      }
+      .hero-right { order: -1; display: block; width: 100%; }
+      .hero-right::before { display: none; } /* Remove left-fade gradient — not needed full-width */
+      .hero-left { padding: 36px 20px 52px; }
+
+      /* Preview window: generous viewport-relative height */
+      .preview-window {
+        height: clamp(260px, 50vh, 480px);
+        min-height: unset;
+        max-height: unset;
+        border-left: none;
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+        border-radius: 0;
+      }
+
+      /* FX switcher: horizontal scroll, no wrapping */
+      .fx-switcher {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        justify-content: flex-start;
+        padding: 8px 16px;
+        gap: 5px;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        mask-image: linear-gradient(to right, transparent 0, #000 12px, #000 calc(100% - 20px), transparent 100%);
+        -webkit-mask-image: linear-gradient(to right, transparent 0, #000 12px, #000 calc(100% - 20px), transparent 100%);
+      }
+      .fx-btn { font-size: 9px; padding: 5px 10px; flex-shrink: 0; }
+
+      /* Hero text */
+      .hero-label { font-size: 10px; margin-bottom: 14px; }
+      .hero-headline { font-size: clamp(44px, 11.5vw, 72px); line-height: 0.93; }
+      .hero-copy { font-size: 15px; line-height: 1.65; max-width: 100%; }
+      .hero-subline { margin-top: 20px; }
+      .hero-cta-group { align-items: stretch; margin-top: 20px; gap: 14px; }
+
+      /* CTA button: full-width, 44px+ touch target */
+      .btn-connect {
+        width: 100%;
+        justify-content: center;
+        padding: 18px 20px;
+        font-size: 13px;
+        min-height: 52px;
+        box-sizing: border-box;
+      }
+
+      /* Trust pills & screen strip */
+      .trust-row { gap: 8px; }
+      .trust-pill { font-size: 11px; }
+      .screen-strip { padding: 10px 14px; gap: 8px; margin-top: 12px; }
+      .screen-item { font-size: 11px; }
+
+      /* Lyric marquee */
+      .lyric-marquee { padding: 14px 0; margin: 0 0 32px; }
+      .lyric-marquee-item { font-size: 19px; padding: 0 24px; }
+
+      /* Sections */
+      .section { padding: 0 20px; }
+      .section-header { padding: 40px 0 28px; margin-bottom: 32px; }
+
+      /* Pain section */
+      .pain-inner { padding: 44px 20px; }
+
+      /* How it works */
+      .hiw-steps { grid-template-columns: 1fr; }
+      .hiw-step { border-right: none; border-bottom: 1px solid var(--rule); padding: 28px 0; gap: 16px; }
+      .hiw-step:last-child { border-bottom: none; }
+      .hiw-step:not(:first-child) { padding-left: 0; }
+
+      /* Feature rows */
       .feature-row { grid-template-columns: 1fr; gap: 12px; }
-      .preview-section { padding: 0 24px 48px; }
-      .closing { grid-template-columns: 1fr; padding: 48px 24px; }
-      .closing-headline { font-size: clamp(36px, 10vw, 64px); }
-      footer { padding: 20px 24px; flex-direction: column; gap: 8px; text-align: center; }
-      .themes-grid { grid-template-columns: 1fr 1fr; }
+
+      /* Preview section */
+      .preview-section { padding: 0 20px 40px; }
+
+      /* Themes grid: 2 columns */
+      .themes-grid { grid-template-columns: 1fr 1fr; gap: 2px; }
+      .theme-card { min-height: 240px; padding: 28px 20px 18px; }
+      .tc-active { font-size: 18px; }
+
+      /* Effects grid: 2 columns */
       .effects-grid { grid-template-columns: repeat(2, 1fr); }
+      .effect-card { min-height: 200px; padding: 24px 20px 20px; }
+      .effect-name { font-size: 20px; }
+      .effect-desc { font-size: 12px; }
+
+      /* Customize section */
       .customize-options { grid-template-columns: 1fr; }
-      .customize-section { padding: 48px 24px; }
-      .theme-card { min-height: 280px; }
-      .effect-card { min-height: 220px; }
-      .effect-name { font-size: 22px; }
+      .customize-section { padding: 44px 20px; }
+      .customize-option { padding: 24px 20px; }
+
+      /* Closing */
+      .closing { grid-template-columns: 1fr; padding: 48px 20px; gap: 28px; }
+      .closing-headline { font-size: clamp(36px, 10vw, 64px); }
+
+      /* Footer */
+      footer { padding: 20px 20px; flex-direction: column; gap: 8px; text-align: center; }
+    }
+
+    /* ── 480px — COMPACT PHONES (iPhone SE, Galaxy A series) ── */
+    @media (max-width: 480px) {
+      /* Preview: taller proportionally on narrow screens */
+      .preview-window { height: clamp(280px, 52vh, 440px); }
+
+      /* Hero copy: tighter padding */
+      .hero-left { padding: 28px 16px 44px; }
+      .hero-headline { font-size: clamp(38px, 12vw, 52px); }
+      .hero-copy { font-size: 14px; }
+
+      /* Mock lyrics: less side padding so words breathe */
+      .mock-lyrics-stage { padding: 32px 28px 80px; }
+
+      /* Ticker */
+      .ticker-item { font-size: 10px; padding: 0 32px; }
+
+      /* Lyric marquee */
+      .lyric-marquee-item { font-size: 16px; padding: 0 18px; }
+
+      /* Sections */
+      .section { padding: 0 16px; }
+      .section-header { padding: 32px 0 24px; margin-bottom: 24px; }
+      .section-title { font-size: clamp(26px, 7vw, 40px); }
+
+      /* Pain section */
+      .pain-inner { padding: 36px 0; }
+
+      /* Themes: 1 column on very narrow screens */
+      .themes-grid { grid-template-columns: 1fr; }
+      .theme-card { min-height: 200px; padding: 24px 18px 16px; }
+
+      /* Effects: 1 column on very narrow screens */
+      .effects-grid { grid-template-columns: 1fr; }
+      .effect-card { min-height: 170px; }
+
+      /* How it works */
+      .hiw-step { padding: 24px 0; gap: 14px; }
+
+      /* Customize */
+      .customize-section { padding: 36px 16px; }
+      .customize-option { padding: 20px 16px; }
+
+      /* Closing */
+      .closing { padding: 40px 16px; }
+
+      /* Footer */
+      footer { padding: 16px; }
+
+      /* Upgrade modal: compact on small screens */
+      .upgrade-modal { padding: 32px 20px; }
+      .upgrade-headline { font-size: 26px; }
+      .plan-price { font-size: 36px; }
     }
 
     /* ── PAIN SECTION ── */
@@ -1713,13 +1859,6 @@
     /* ── OCCASION STRIP ── */
     .occasion-strip { display: flex; gap: 10px; flex-wrap: wrap; padding-bottom: 56px; }
     .occasion-pill { font-family: var(--font-body); font-size: 13px; font-weight: 500; color: rgba(255,255,255,0.6); background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 100px; padding: 6px 16px; }
-
-    @media (max-width: 768px) {
-      .hiw-steps { grid-template-columns: 1fr; }
-      .hiw-step { border-right: none; border-bottom: 1px solid var(--rule); padding: 32px 0; }
-      .hiw-step:last-child { border-bottom: none; }
-      .hiw-step:not(:first-child) { padding-left: 0; }
-    }
 
     /* ── PRO LOCK OVERLAYS ── */
     [data-pro] { position: relative; }
