@@ -1,0 +1,2942 @@
+<html lang="en"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chorushive — Karaoke for Your Spotify</title>
+  <meta name="description" content="Turn any screen into a karaoke stage. Connect Spotify, pick a theme, and sing along with real-time word-by-word lyrics. Free. No install. Millions of songs.">
+  <meta property="og:title" content="Chorushive — Where the Whole Room Sings">
+  <meta property="og:description" content="Eight visual themes. Six background modes. Your entire Spotify library. The karaoke experience you actually want.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&amp;family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300;1,9..144,400&amp;family=Instrument+Serif:ital@0;1&amp;family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&amp;family=Space+Mono:wght@400;700&amp;family=Inter:wght@400;500;600&amp;family=Syne:wght@400;700;800&amp;display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --green: #1db954;
+      --white: #fff;
+      --off: rgba(255,255,255,0.75);
+      --dim: rgba(255,255,255,0.42);
+      --rule: rgba(255,255,255,0.12);
+      --font-body: 'Inter', system-ui, sans-serif;
+      --font-mono: 'Space Mono', monospace;
+      --font-serif: 'Cormorant Garamond', serif;
+      --font-display: 'Syne', system-ui, sans-serif;
+    }
+
+    html { background: #000; color: #fff; }
+
+    body {
+      font-family: 'Space Mono', monospace;
+      background: #000;
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+
+    /* ── TICKER ── */
+    .ticker-wrap {
+      width: 100%;
+      overflow: hidden;
+      border-bottom: 1px solid var(--rule);
+      padding: 12px 0;
+      background: #000;
+    }
+    .ticker-track {
+      display: flex;
+      width: max-content;
+      animation: ticker 70s linear infinite;
+    }
+    .ticker-track:hover { animation-play-state: paused; }
+    .ticker-item {
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--off);
+      padding: 0 48px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .ticker-item .dot { color: var(--green); margin: 0 12px; }
+    @keyframes ticker {
+      0%   { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+
+    /* ── NAV ── */
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 28px 48px;
+      border-bottom: 1px solid var(--rule);
+    }
+    .nav-logo {
+      font-family: 'Space Mono', monospace;
+      font-size: 12px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--white);
+      text-decoration: none;
+    }
+    .nav-right {
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--dim);
+    }
+    .nav-right span { color: var(--green); }
+
+    /* ── HERO — full-bleed split screen ── */
+    .hero-outer { display: block; }
+    .hero {
+      display: grid;
+      grid-template-columns: 44fr 56fr;
+      gap: 0;
+      align-items: stretch;
+      min-height: calc(100vh - 90px);
+      width: 100%;
+    }
+    .hero-left {
+      padding: 72px 56px 72px 48px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .hero-right {
+      padding: 0;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+    /* Soft left-edge fade — preview bleeds naturally into the page */
+    .hero-right::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 100px;
+      background: linear-gradient(to right, #000 0%, transparent 100%);
+      z-index: 6;
+      pointer-events: none;
+    }
+    .hero-label {
+      font-size: 11px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--off);
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .hero-label::before {
+      content: '';
+      display: block;
+      width: 32px;
+      height: 1px;
+      background: var(--green);
+    }
+
+    .hero-headline {
+      font-family: 'Syne', system-ui, sans-serif;
+      font-weight: 800;
+      font-style: normal;
+      font-size: clamp(52px, 7vw, 108px);
+      line-height: 0.92;
+      letter-spacing: -0.03em;
+      color: #fff;
+      margin-bottom: 0;
+    }
+    .hero-headline .fade {
+      color: rgba(255,255,255,0.55);
+    }
+    .hero-headline .green-word {
+      background: linear-gradient(
+        90deg,
+        #1db954 0%,
+        #1db954 30%,
+        #7fffd4 50%,
+        #1db954 70%,
+        #1db954 100%
+      );
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: heroShimmer 3.2s linear infinite;
+    }
+    @keyframes heroShimmer {
+      0%   { background-position: 200% center; }
+      100% { background-position: -200% center; }
+    }
+
+    .hero-subline {
+      margin-top: 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding-bottom: 0;
+    }
+    .hero-copy {
+      font-family: var(--font-body);
+      font-size: 16px;
+      line-height: 1.7;
+      color: var(--off);
+      max-width: 440px;
+    }
+    .hero-copy strong { color: #fff; font-weight: 600; }
+    .hero-cta-group {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 16px;
+      margin-top: 32px;
+    }
+    .btn-connect {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--green);
+      color: #000;
+      font-family: 'Space Mono', monospace;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 16px 32px;
+      border-radius: 2px;
+      text-decoration: none;
+      transition: background 0.15s, transform 0.1s;
+    }
+    .btn-connect {
+      box-shadow: 0 8px 24px rgba(29, 185, 84, 0.2);
+    }
+    .btn-connect:hover {
+      background: #1ed760;
+      transform: translateY(-2px);
+      box-shadow: 0 12px 32px rgba(29, 185, 84, 0.35);
+    }
+    .trust-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    .trust-pill {
+      font-family: var(--font-body);
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.03em;
+      color: rgba(255,255,255,0.65);
+    }
+    .cta-note {
+      font-family: var(--font-body);
+      font-size: 12px;
+      color: var(--dim);
+    }
+
+    /* ── MARQUEE LYRIC ── */
+    .lyric-marquee {
+      overflow: hidden;
+      border-top: 1px solid var(--rule);
+      border-bottom: 1px solid var(--rule);
+      padding: 20px 0;
+      margin: 0 0 48px;
+    }
+    .lyric-marquee-track {
+      display: flex;
+      width: max-content;
+      animation: ticker 60s linear infinite reverse;
+    }
+    .lyric-marquee-item {
+      font-family: 'Syne', system-ui, sans-serif;
+      font-weight: 700;
+      font-size: 26px;
+      letter-spacing: -0.01em;
+      color: rgba(255,255,255,0.28);
+      padding: 0 40px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .lyric-marquee-item .highlight { color: rgba(255,255,255,0.85); }
+
+    /* ── HOW IT WORKS ── */
+    .section {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 48px;
+    }
+
+    .section-header {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      padding: 48px 0 40px;
+      border-bottom: 1px solid var(--rule);
+      margin-bottom: 48px;
+    }
+    .section-num {
+      font-family: var(--font-body);
+      font-size: 11px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--dim);
+    }
+    .section-title {
+      font-family: 'Syne', system-ui, sans-serif;
+      font-weight: 800;
+      font-style: normal;
+      font-size: clamp(30px, 4vw, 52px);
+      letter-spacing: -0.02em;
+    }
+
+    /* Feature rows */
+    .feature-list { border-top: 1px solid var(--rule); }
+    .feature-row {
+      display: grid;
+      grid-template-columns: 200px 1fr 1fr;
+      gap: 48px;
+      padding: 32px 0;
+      border-bottom: 1px solid var(--rule);
+      align-items: start;
+    }
+    .feature-tag {
+      font-family: var(--font-body);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--dim);
+      padding-top: 6px;
+    }
+    .feature-name {
+      font-family: 'Syne', system-ui, sans-serif;
+      font-style: normal;
+      font-weight: 700;
+      font-size: 22px;
+      line-height: 1.2;
+      letter-spacing: -0.02em;
+      color: #fff;
+    }
+    .feature-desc {
+      font-family: var(--font-body);
+      font-size: 15px;
+      line-height: 1.75;
+      color: var(--off);
+    }
+
+    /* ── LIVE PREVIEW ── */
+    .preview-section {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 48px 80px;
+    }
+    /* Preview fills the full right column — no frame, no border, no chrome */
+    .preview-window {
+      background: #060606;
+      overflow: hidden;
+      flex: 1;
+      min-height: 480px;
+      display: flex;
+      flex-direction: column;
+      isolation: isolate;
+      contain: paint;
+      border-radius: 0;
+      border-left: 1px solid rgba(255,255,255,0.06);
+    }
+    .preview-body {
+      background: #060606;
+      padding: 0;
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      position: relative;
+      overflow: hidden;
+    }
+    /* Full blurred album-art background — primary layer */
+    .preview-bg {
+      position: absolute;
+      inset: -20%;
+      filter: blur(28px) saturate(2.8) brightness(0.88);
+      z-index: 0;
+      animation: bgDrift 20s linear infinite;
+      transform-origin: center;
+      will-change: transform;
+    }
+    /* Secondary layer — same art, counter-rotates at different speed
+       No mix-blend-mode: filter + blend-mode combo breaks Chrome compositing */
+    .preview-bg-secondary {
+      position: absolute;
+      inset: -20%;
+      filter: blur(36px) saturate(1.8) brightness(0.55);
+      z-index: 0;
+      animation: bgDriftReverse 27s linear infinite;
+      transform-origin: 62% 38%;
+      opacity: 0.52;
+      will-change: transform;
+    }
+    @keyframes bgDriftReverse {
+      0%   { transform: rotate(0deg)   scale(1.12); }
+      33%  { transform: rotate(-120deg) scale(1.20); }
+      66%  { transform: rotate(-240deg) scale(1.14); }
+      100% { transform: rotate(-360deg) scale(1.12); }
+    }
+    /* Subtle vignette — just enough for text contrast, not enough to kill the color */
+    .preview-bg::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 50% 35%, rgba(0,0,0,0.0) 0%, rgba(0,0,0,0.28) 100%);
+    }
+    /* Track info overlay — absolute bottom, fades in from transparent */
+    .mock-track-overlay {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      z-index: 3;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 24px 18px 12px;
+      background: linear-gradient(to top, rgba(0,0,0,0.72) 0%, transparent 100%);
+      transform: translateZ(0);
+      -webkit-font-smoothing: antialiased;
+    }
+    .preview-lyrics-demo {
+      position: relative;
+      width: 100%;
+      max-width: 600px;
+      text-align: center;
+    }
+    .demo-line {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: normal;
+      font-weight: 300;
+      display: block;
+      transition: all 0.4s ease;
+    }
+    .demo-line.past   { font-size: 15px; color: rgba(255,255,255,0.22); margin-bottom: 18px; }
+    .demo-line.active { font-size: 40px; color: #fff; font-weight: 300; margin-bottom: 18px; letter-spacing: 0.02em; }
+    .demo-line.active .w { color: rgba(255,255,255,0.28); }
+    .demo-line.active .w.lit { color: var(--green); }
+    .demo-line.active .w.done { color: #fff; }
+    .demo-line.next   { font-size: 19px; color: rgba(255,255,255,0.18); }
+    .demo-line.far    { font-size: 13px; color: rgba(255,255,255,0.09); margin-top: 12px; }
+
+    /* ── Animated preview ── */
+    .mock-album {
+      width: 36px; height: 36px;
+      border-radius: 3px;
+      background: linear-gradient(135deg, #f09030, #7a2a08);
+      flex-shrink: 0;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    }
+    .mock-track-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff;
+      font-family: 'Inter', sans-serif;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.6);
+    }
+    .mock-artist {
+      font-size: 11px;
+      color: rgba(255,255,255,0.65);
+      font-family: 'Inter', sans-serif;
+      margin-top: 2px;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+    }
+    .mock-lyrics-stage {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 28px;
+      flex: 1;
+      padding: 40px 48px 88px;
+      text-align: center;
+      /* Smooth line transition */
+      transition: opacity 0.22s ease, transform 0.22s ease;
+      /* Own compositing layer — prevents bleed-through blur from bg layers */
+      transform: translateZ(0);
+      -webkit-font-smoothing: antialiased;
+    }
+    .mock-line {
+      text-align: center;
+      font-family: 'Syne', system-ui, sans-serif;
+      font-style: normal;
+      line-height: 1.15;
+    }
+    .mock-line.mock-prev,
+    .mock-line.mock-next {
+      color: rgba(255,255,255,0.40);
+      font-size: clamp(14px, 1.8vw, 20px);
+      font-weight: 500;
+      letter-spacing: -0.01em;
+      text-shadow: 0 1px 12px rgba(0,0,0,0.9);
+    }
+    .mock-line.mock-active {
+      font-size: clamp(36px, 5.6vw, 72px);
+      color: #fff;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      text-shadow: 0 2px 32px rgba(0,0,0,0.6), 0 0 60px rgba(0,0,0,0.3);
+      animation: lineEnter 0.3s ease forwards;
+    }
+    @keyframes lineEnter {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    /* Word highlight — color+glow approach so it's always readable regardless of bg */
+    .mock-word {
+      display: inline;
+      color: rgba(255,255,255,0.22);
+      transition: color 0.2s ease, text-shadow 0.2s ease;
+    }
+    .mock-word.lit {
+      color: #fff;
+      text-shadow:
+        0 0 12px var(--preview-accent, #1db954),
+        0 0 24px var(--preview-accent, #1db954);
+    }
+    .mock-word.done {
+      color: rgba(255,255,255,0.80);
+      text-shadow: none;
+    }
+
+    /* ── PREVIEW THEMES (applied randomly per visit) ── */
+    .preview-body.theme-aurora  { --preview-accent: #c084fc; }
+    .preview-body.theme-neon    { --preview-accent: #ff2d78; }
+    .preview-body.theme-cinema  { --preview-accent: #f0d080; }
+    .preview-body.theme-rave    { --preview-accent: #ffe600; }
+
+    /* Aurora: Cormorant Garamond upright — hairline contrast serif, delicate & editorial */
+    .preview-body.theme-aurora .mock-line.mock-active {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: normal; font-weight: 300;
+      font-size: clamp(28px, 4.2vw, 50px);
+      letter-spacing: 0.03em;
+    }
+    .preview-body.theme-aurora .mock-line.mock-prev,
+    .preview-body.theme-aurora .mock-line.mock-next {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: normal; font-weight: 300;
+    }
+
+    /* Neon: Space Mono caps, scan-line overlay */
+    .preview-body.theme-neon .mock-line.mock-active {
+      font-family: 'Space Mono', monospace;
+      font-weight: 700; font-style: normal;
+      text-transform: uppercase; letter-spacing: 0.04em;
+      font-size: clamp(18px, 2.8vw, 32px);
+    }
+    .preview-body.theme-neon .mock-line.mock-prev,
+    .preview-body.theme-neon .mock-line.mock-next {
+      font-family: 'Space Mono', monospace;
+      font-style: normal; font-size: clamp(9px, 1.1vw, 12px);
+      letter-spacing: 0.1em; text-transform: uppercase;
+    }
+    .preview-body.theme-neon::after {
+      content: '';
+      position: absolute; inset: 0; z-index: 2; pointer-events: none;
+      background: repeating-linear-gradient(
+        0deg, transparent, transparent 3px,
+        rgba(255,45,120,0.07) 3px, rgba(255,45,120,0.07) 4px
+      );
+    }
+
+    /* Cinema: Fraunces upright — NYT-style variable optical-size serif, bold & editorial */
+    .preview-body.theme-cinema .mock-line.mock-active {
+      font-family: 'Fraunces', serif;
+      font-style: normal; font-weight: 400;
+      font-size: clamp(24px, 3.5vw, 44px); letter-spacing: 0.01em;
+      font-variation-settings: 'opsz' 144;
+    }
+    .preview-body.theme-cinema .mock-line.mock-prev,
+    .preview-body.theme-cinema .mock-line.mock-next {
+      font-family: 'Fraunces', serif; font-style: normal; font-weight: 300;
+      font-variation-settings: 'opsz' 36;
+    }
+
+    /* Rave: Syne 800 brutal uppercase */
+    .preview-body.theme-rave .mock-line.mock-active {
+      font-family: 'Syne', system-ui, sans-serif;
+      font-weight: 800; text-transform: uppercase;
+      letter-spacing: -0.01em;
+      font-size: clamp(20px, 3vw, 36px);
+    }
+    .preview-body.theme-rave .mock-line.mock-prev,
+    .preview-body.theme-rave .mock-line.mock-next {
+      text-transform: uppercase; font-weight: 700; letter-spacing: 0.06em;
+    }
+    .mock-progress {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 2px;
+      background: rgba(255,255,255,0.1);
+    }
+    .mock-progress-fill {
+      height: 100%;
+      background: #1db954;
+      animation: progressSweep 8s linear infinite;
+      box-shadow: 0 0 6px #1db954;
+    }
+    @keyframes progressSweep {
+      from { width: 30%; }
+      to { width: 75%; }
+    }
+    /* Trippy drifting animation — transform + filter together */
+    @keyframes bgDrift {
+      0%   { transform: rotate(0deg)   scale(1.18); filter: blur(26px) saturate(2.8) brightness(0.88) hue-rotate(0deg); }
+      25%  { transform: rotate(90deg)  scale(1.24); filter: blur(28px) saturate(3.2) brightness(0.84) hue-rotate(18deg); }
+      50%  { transform: rotate(180deg) scale(1.18); filter: blur(26px) saturate(2.8) brightness(0.90) hue-rotate(0deg); }
+      75%  { transform: rotate(270deg) scale(1.24); filter: blur(28px) saturate(3.2) brightness(0.84) hue-rotate(-18deg); }
+      100% { transform: rotate(360deg) scale(1.18); filter: blur(26px) saturate(2.8) brightness(0.88) hue-rotate(0deg); }
+    }
+
+    /* Chromatic aberration on sung words — Neon + Rave only */
+    .preview-body.theme-neon .mock-word.done {
+      text-shadow: -1.5px 0 0 rgba(255, 0, 100, 0.55), 1.5px 0 0 rgba(0, 200, 255, 0.55);
+    }
+    .preview-body.theme-rave .mock-word.done {
+      text-shadow: -1.5px 0 0 rgba(255, 50, 0, 0.50), 1.5px 0 0 rgba(50, 255, 200, 0.50);
+    }
+
+    /* ── SCREEN STRIP ── */
+    .screen-strip {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 14px;
+      padding: 12px 16px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 4px;
+    }
+    .screen-item {
+      font-family: var(--font-body);
+      font-size: 12px;
+      color: rgba(255,255,255,0.5);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .screen-dot { color: rgba(255,255,255,0.2); }
+
+    /* ── THEMES GRID ── */
+    .themes-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 3px;
+      margin-bottom: 80px;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .theme-card {
+      background: var(--tbg);
+      padding: 40px 32px 30px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 340px;
+      position: relative;
+      cursor: default;
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+      overflow: hidden;
+    }
+    .theme-card:hover {
+      transform: scale(1.025);
+      z-index: 2;
+      box-shadow: 0 0 60px rgba(0,0,0,0.7);
+    }
+    .theme-card::before {
+      content: '';
+      position: absolute;
+      inset: -20%;
+      background:
+        radial-gradient(ellipse at 20% 30%, var(--tacc) 0%, transparent 55%),
+        radial-gradient(ellipse at 80% 70%, var(--tacc) 0%, transparent 50%);
+      opacity: 0.26;
+      filter: blur(32px);
+      transform: scale(1.3);
+      pointer-events: none;
+    }
+
+    /* ── AURORA: slow drifting orbs, dreamy ── */
+    .theme-aurora::before {
+      background:
+        radial-gradient(ellipse at 15% 25%, #c084fc 0%, transparent 50%),
+        radial-gradient(ellipse at 78% 20%, #818cf8 0%, transparent 48%),
+        radial-gradient(ellipse at 50% 80%, #6d28d9 0%, transparent 55%),
+        radial-gradient(ellipse at 85% 65%, #a855f7 0%, transparent 40%);
+      opacity: 0.32;
+      animation: auroraDrift 10s ease-in-out infinite alternate;
+    }
+    @keyframes auroraDrift {
+      0%   { transform: scale(1.2) translateY(0px)  rotate(0deg); filter: blur(28px) hue-rotate(0deg); }
+      50%  { transform: scale(1.3) translateY(-8px) rotate(4deg); filter: blur(32px) hue-rotate(20deg); }
+      100% { transform: scale(1.2) translateY(4px)  rotate(-3deg); filter: blur(28px) hue-rotate(-10deg); }
+    }
+
+    /* ── NEON: scan lines + electric edge glow ── */
+    .theme-neon::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 3px,
+        rgba(255,45,120,0.07) 3px,
+        rgba(255,45,120,0.07) 4px
+      );
+      pointer-events: none;
+      z-index: 0;
+    }
+    .theme-neon::before {
+      background:
+        radial-gradient(ellipse at 10% 15%, #ff2d78 0%, transparent 50%),
+        radial-gradient(ellipse at 85% 20%, #ff0a54 0%, transparent 45%),
+        radial-gradient(ellipse at 50% 90%, #c2185b 0%, transparent 55%),
+        radial-gradient(ellipse at 80% 70%, #ff4fa0 0%, transparent 40%);
+      opacity: 0.38;
+      animation: neonFlicker 6s ease-in-out infinite;
+    }
+    @keyframes neonFlicker {
+      0%, 100% { opacity: 0.38; }
+      48%       { opacity: 0.38; }
+      50%       { opacity: 0.28; }
+      52%       { opacity: 0.38; }
+      78%       { opacity: 0.38; }
+      80%       { opacity: 0.22; }
+      82%       { opacity: 0.38; }
+    }
+
+    /* ── CINEMA: film grain + sepia glow ── */
+    .theme-cinema::before {
+      background:
+        radial-gradient(ellipse at 50% 10%, #f5e6c8 0%, transparent 45%),
+        radial-gradient(ellipse at 20% 70%, #e8d5b0 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 65%, #c9a86c 0%, transparent 45%),
+        radial-gradient(ellipse at 55% 85%, #7a5c2a 0%, transparent 55%);
+      opacity: 0.26;
+      filter: blur(30px) sepia(0.3);
+      animation: cinemaDrift 14s ease-in-out infinite alternate;
+    }
+    @keyframes cinemaDrift {
+      0%   { transform: scale(1.25) translateY(0px);   filter: blur(28px) sepia(0.25); }
+      50%  { transform: scale(1.32) translateY(-6px);  filter: blur(32px) sepia(0.4);  }
+      100% { transform: scale(1.26) translateY(5px);   filter: blur(28px) sepia(0.2);  }
+    }
+    .theme-cinema::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='grain'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23grain)' opacity='0.08'/%3E%3C/svg%3E");
+      background-size: 200px 200px;
+      pointer-events: none;
+      z-index: 0;
+      mix-blend-mode: overlay;
+    }
+
+    /* ── RAVE: strobing pulse, aggressive energy ── */
+    .theme-rave::before {
+      background:
+        radial-gradient(ellipse at 50% 50%, #ffe600 0%, transparent 40%),
+        radial-gradient(ellipse at 10% 20%, #fff176 0%, transparent 45%),
+        radial-gradient(ellipse at 90% 80%, #ffc107 0%, transparent 45%),
+        radial-gradient(ellipse at 75% 15%, #ffe600 0%, transparent 38%);
+      opacity: 0.28;
+      animation: raveStrobe 1.6s ease-in-out infinite;
+    }
+    @keyframes raveStrobe {
+      0%, 40%, 100% { opacity: 0.22; transform: scale(1.2); }
+      20%            { opacity: 0.38; transform: scale(1.32); filter: blur(22px); }
+      60%            { opacity: 0.16; transform: scale(1.18); }
+      80%            { opacity: 0.32; transform: scale(1.28); }
+    }
+
+    /* ── MIDNIGHT: deep sapphire R&B, slow breathing cobalt ── */
+    .preview-body.theme-midnight { --preview-accent: #38bdf8; }
+    .preview-body.theme-midnight .mock-line.mock-active {
+      font-family: 'Inter', system-ui, sans-serif;
+      font-style: normal; font-weight: 800;
+      font-size: clamp(28px, 4.2vw, 52px);
+      letter-spacing: -0.04em;
+    }
+    .preview-body.theme-midnight .mock-line.mock-prev,
+    .preview-body.theme-midnight .mock-line.mock-next {
+      font-family: 'Inter', system-ui, sans-serif;
+      font-style: normal; font-weight: 500; letter-spacing: -0.02em;
+    }
+    .theme-midnight::before {
+      background:
+        radial-gradient(ellipse at 20% 20%, #1e40af 0%, transparent 52%),
+        radial-gradient(ellipse at 78% 22%, #0369a1 0%, transparent 48%),
+        radial-gradient(ellipse at 50% 80%, #172554 0%, transparent 55%),
+        radial-gradient(ellipse at 82% 68%, #38bdf8 0%, transparent 38%);
+      opacity: 0.34;
+      animation: midnightBreath 12s ease-in-out infinite alternate;
+    }
+    @keyframes midnightBreath {
+      0%   { transform: scale(1.22) translateY(0px);  filter: blur(30px) hue-rotate(0deg); }
+      50%  { transform: scale(1.32) translateY(-10px); filter: blur(36px) hue-rotate(15deg); }
+      100% { transform: scale(1.24) translateY(6px);  filter: blur(28px) hue-rotate(-8deg); }
+    }
+
+    /* ── EMBER: warm coal/amber country folk ── */
+    .preview-body.theme-ember { --preview-accent: #fb923c; }
+    .preview-body.theme-ember .mock-line.mock-active {
+      font-family: 'Fraunces', serif;
+      font-style: normal; font-weight: 400;
+      font-size: clamp(26px, 3.8vw, 46px);
+      letter-spacing: 0.01em;
+      font-variation-settings: 'opsz' 72;
+    }
+    .preview-body.theme-ember .mock-line.mock-prev,
+    .preview-body.theme-ember .mock-line.mock-next {
+      font-family: 'Fraunces', serif;
+      font-style: normal; font-weight: 300;
+      font-variation-settings: 'opsz' 18;
+    }
+    .theme-ember::before {
+      background:
+        radial-gradient(ellipse at 25% 25%, #ea580c 0%, transparent 50%),
+        radial-gradient(ellipse at 72% 20%, #d97706 0%, transparent 48%),
+        radial-gradient(ellipse at 50% 82%, #451a03 0%, transparent 55%),
+        radial-gradient(ellipse at 80% 68%, #f97316 0%, transparent 38%);
+      opacity: 0.30;
+      animation: emberGlow 11s ease-in-out infinite alternate;
+    }
+    @keyframes emberGlow {
+      0%   { transform: scale(1.22) translateY(0px);  filter: blur(30px) hue-rotate(0deg); }
+      50%  { transform: scale(1.30) translateY(-7px);  filter: blur(34px) hue-rotate(12deg); }
+      100% { transform: scale(1.24) translateY(4px);  filter: blur(28px) hue-rotate(-6deg); }
+    }
+
+    /* ── VAPOR: cyan/magenta synthwave/electronic ── */
+    .preview-body.theme-vapor { --preview-accent: #22d3ee; }
+    .preview-body.theme-vapor .mock-line.mock-active {
+      font-family: 'Space Mono', monospace;
+      font-style: normal; font-weight: 700;
+      font-size: clamp(22px, 3.2vw, 38px);
+      letter-spacing: 0.05em;
+      text-shadow: 0 0 20px rgba(34,211,238,0.5), 0 0 40px rgba(34,211,238,0.2);
+    }
+    .preview-body.theme-vapor .mock-line.mock-prev,
+    .preview-body.theme-vapor .mock-line.mock-next {
+      font-family: 'Space Mono', monospace;
+      font-style: normal; font-weight: 400; letter-spacing: 0.04em; opacity: 0.6;
+    }
+    .preview-body.theme-vapor .mock-word.done {
+      text-shadow: -1.5px 0 0 rgba(236,72,153,0.6), 1.5px 0 0 rgba(34,211,238,0.6);
+    }
+    .theme-vapor::before {
+      background:
+        radial-gradient(ellipse at 15% 20%, #7c3aed 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 18%, #0e7490 0%, transparent 48%),
+        radial-gradient(ellipse at 50% 85%, #4c1d95 0%, transparent 55%),
+        radial-gradient(ellipse at 82% 70%, #ec4899 0%, transparent 40%),
+        radial-gradient(ellipse at 18% 72%, #06b6d4 0%, transparent 42%);
+      opacity: 0.36;
+      animation: vaporShift 9s ease-in-out infinite alternate;
+    }
+    @keyframes vaporShift {
+      0%   { transform: scale(1.22) rotate(0deg);   filter: blur(28px) hue-rotate(0deg); }
+      50%  { transform: scale(1.32) rotate(4deg);   filter: blur(34px) hue-rotate(25deg); }
+      100% { transform: scale(1.24) rotate(-3deg);  filter: blur(28px) hue-rotate(-12deg); }
+    }
+
+    /* ── FOREST: deep emerald indie/folk ── */
+    .preview-body.theme-forest { --preview-accent: #4ade80; }
+    .preview-body.theme-forest .mock-line.mock-active {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: normal; font-weight: 400;
+      font-size: clamp(28px, 4.0vw, 48px);
+      letter-spacing: 0.02em;
+    }
+    .preview-body.theme-forest .mock-line.mock-prev,
+    .preview-body.theme-forest .mock-line.mock-next {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: normal; font-weight: 300; letter-spacing: 0.01em;
+    }
+    .theme-forest::before {
+      background:
+        radial-gradient(ellipse at 20% 22%, #166534 0%, transparent 50%),
+        radial-gradient(ellipse at 76% 20%, #065f46 0%, transparent 48%),
+        radial-gradient(ellipse at 50% 80%, #022c22 0%, transparent 55%),
+        radial-gradient(ellipse at 80% 68%, #4ade80 0%, transparent 36%),
+        radial-gradient(ellipse at 16% 72%, #14532d 0%, transparent 44%);
+      opacity: 0.30;
+      animation: forestSway 16s ease-in-out infinite alternate;
+    }
+    @keyframes forestSway {
+      0%   { transform: scale(1.22) translateX(0px)  translateY(0px);  filter: blur(30px); }
+      33%  { transform: scale(1.28) translateX(-8px) translateY(-5px); filter: blur(34px) hue-rotate(8deg); }
+      66%  { transform: scale(1.30) translateX(6px)  translateY(-9px); filter: blur(32px) hue-rotate(-5deg); }
+      100% { transform: scale(1.24) translateX(-4px) translateY(4px);  filter: blur(30px); }
+    }
+
+    /* Theme card overrides for new themes */
+    .theme-midnight .tc-active,
+    .theme-midnight .tc-prev,
+    .theme-midnight .tc-next {
+      font-family: 'Inter', system-ui, sans-serif;
+      font-style: normal;
+    }
+    .theme-midnight .tc-active { font-weight: 800; font-size: 22px; letter-spacing: -0.04em; }
+    .theme-midnight .tc-prev, .theme-midnight .tc-next { font-weight: 500; }
+
+    .theme-ember .tc-active,
+    .theme-ember .tc-prev,
+    .theme-ember .tc-next {
+      font-family: 'Fraunces', serif;
+      font-style: normal;
+      font-variation-settings: 'opsz' 18;
+    }
+    .theme-ember .tc-active { font-weight: 400; font-size: 21px; font-variation-settings: 'opsz' 72; }
+
+    .theme-vapor .tc-active,
+    .theme-vapor .tc-prev,
+    .theme-vapor .tc-next {
+      font-family: 'Space Mono', monospace;
+      font-style: normal;
+    }
+    .theme-vapor .tc-active { font-weight: 700; font-size: 17px; letter-spacing: 0.04em; text-transform: uppercase; }
+    .theme-vapor .tc-prev, .theme-vapor .tc-next { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; opacity: 0.55; }
+
+    .theme-forest .tc-active,
+    .theme-forest .tc-prev,
+    .theme-forest .tc-next {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: normal;
+    }
+    .theme-forest .tc-active { font-weight: 400; font-size: 24px; letter-spacing: 0.02em; }
+
+    /* ── HERO FX SWITCHER ── */
+    .fx-switcher {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      z-index: 4;
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 3px;
+      padding: 8px 10px;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, transparent 100%);
+    }
+    .fx-switcher::-webkit-scrollbar { display: none; }
+    .fx-btn {
+      font-family: 'Space Mono', monospace;
+      font-size: 8px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.45);
+      padding: 4px 9px;
+      border-radius: 2px;
+      border: 1px solid rgba(255,255,255,0.1);
+      cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
+      transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+      background: rgba(0,0,0,0.35);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      line-height: 1;
+    }
+    .fx-btn:hover {
+      color: rgba(255,255,255,0.8);
+      border-color: rgba(255,255,255,0.28);
+      background: rgba(0,0,0,0.5);
+    }
+    .fx-btn.active {
+      color: #1db954;
+      border-color: rgba(29,185,84,0.55);
+      background: rgba(29,185,84,0.1);
+    }
+
+    /* Pixel overlay — dissolve in/out effect */
+    .pixel-bg-overlay {
+      transform: scale(1.28);
+      transform-origin: center center;
+    }
+    .pixel-bg-overlay.pixel-mode-active {
+      animation: pixelDissolve 5s ease-in-out infinite;
+      animation-fill-mode: both;
+    }
+    @keyframes pixelDissolve {
+      0%   { opacity: 0; }
+      20%  { opacity: 1; }
+      80%  { opacity: 1; }
+      100% { opacity: 0; }
+    }
+
+    /* ── BACKGROUND EFFECTS SECTION ── */
+    .effects-section { padding-bottom: 0; }
+    .effects-section .section-header { margin-bottom: 40px; }
+    .effects-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 3px;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .effect-card {
+      position: relative;
+      min-height: 300px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 32px 28px 28px;
+      cursor: pointer;
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+    .effect-card:hover { transform: scale(1.02); z-index: 2; }
+    .effect-card.active {
+      box-shadow: inset 0 0 0 2.5px rgba(29,185,84,0.85);
+      z-index: 3;
+    }
+    .effect-card.active .effect-tag {
+      color: #1db954;
+      border-color: rgba(29,185,84,0.5);
+    }
+    .effect-card.active .effect-tag::before {
+      content: '▶ ';
+      font-size: 7px;
+      vertical-align: middle;
+    }
+    .effect-card-bg {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+    }
+    .effect-card-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.15) 55%, transparent 100%);
+      z-index: 1;
+    }
+    .effect-card-content { position: relative; z-index: 2; }
+    .effect-tag {
+      display: inline-block;
+      font-family: 'Space Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.5);
+      border: 1px solid rgba(255,255,255,0.18);
+      padding: 3px 8px;
+      border-radius: 2px;
+      margin-bottom: 10px;
+    }
+    .effect-name {
+      font-family: 'Syne', system-ui, sans-serif;
+      font-size: 26px;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+      margin-bottom: 6px;
+    }
+    .effect-desc {
+      font-family: 'Inter', system-ui, sans-serif;
+      font-size: 13px;
+      color: rgba(255,255,255,0.55);
+      line-height: 1.5;
+    }
+
+    /* Lava Lamp effect card */
+    .effect-lava .effect-card-bg {
+      background: radial-gradient(ellipse at 38% 72%, rgba(255,61,0,0.9) 0%, transparent 42%),
+                  radial-gradient(ellipse at 68% 80%, rgba(180,38,0,0.75) 0%, transparent 38%),
+                  radial-gradient(ellipse at 50% 55%, rgba(220,50,0,0.5) 0%, transparent 48%),
+                  radial-gradient(ellipse at 25% 40%, rgba(160,28,0,0.5) 0%, transparent 40%),
+                  #030100;
+      filter: saturate(1.4) brightness(1.05);
+    }
+    .effect-lava .effect-card-bg::after {
+      content: '';
+      position: absolute;
+      inset: -20%;
+      background: radial-gradient(ellipse at 60% 25%, rgba(240,60,0,0.5) 0%, transparent 40%),
+                  radial-gradient(ellipse at 30% 18%, rgba(200,44,0,0.4) 0%, transparent 38%);
+      filter: blur(36px) saturate(1.8) brightness(0.65);
+      opacity: 0.7;
+      animation: lavaCardDrift 18s linear infinite;
+      transform-origin: 62% 38%;
+    }
+    @keyframes lavaCardDrift {
+      0%   { transform: rotate(0deg)   scale(1.1); }
+      33%  { transform: rotate(-120deg) scale(1.2); }
+      66%  { transform: rotate(-240deg) scale(1.12); }
+      100% { transform: rotate(-360deg) scale(1.1); }
+    }
+
+    /* Pixel effect card */
+    .effect-pixel .effect-card-bg {
+      background: radial-gradient(ellipse at 25% 20%, #ff2d78 0%, transparent 50%),
+                  radial-gradient(ellipse at 75% 25%, #7c3aed 0%, transparent 48%),
+                  radial-gradient(ellipse at 50% 80%, #0369a1 0%, transparent 52%),
+                  #04000e;
+      image-rendering: pixelated;
+    }
+    .effect-pixel .effect-card-bg::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: inherit;
+      filter: blur(0);
+      image-rendering: pixelated;
+    }
+    .effect-pixel-mosaic {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      grid-template-rows: repeat(10, 1fr);
+      z-index: 0;
+      opacity: 0.45;
+    }
+    .effect-pixel-mosaic span {
+      display: block;
+    }
+
+    /* Album Art effect card */
+    .effect-album .effect-card-bg {
+      background: radial-gradient(ellipse at 30% 20%, #d97706 0%, transparent 50%),
+                  radial-gradient(ellipse at 70% 25%, #f59e0b 0%, transparent 48%),
+                  radial-gradient(ellipse at 50% 82%, #451a03 0%, transparent 52%),
+                  radial-gradient(ellipse at 80% 68%, #78350f 0%, transparent 40%),
+                  #180a00;
+      filter: blur(20px) saturate(2.2) brightness(0.85);
+      transform: scale(1.15);
+    }
+    .effect-album-art {
+      position: absolute;
+      top: 24px;
+      right: 24px;
+      width: 72px;
+      height: 72px;
+      border-radius: 4px;
+      background: linear-gradient(135deg, #d97706 0%, #78350f 100%);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      z-index: 2;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .effect-album-art::after {
+      content: '♫';
+      font-size: 28px;
+      color: rgba(255,255,255,0.4);
+    }
+
+    /* Aurora Borealis effect card */
+    .effect-aurora .effect-card-bg {
+      background: linear-gradient(175deg,
+        #010a0d 0%, rgba(0,25,12,0.95) 14%,
+        rgba(0,110,40,0.55) 26%,
+        rgba(0,215,85,0.75) 37%,
+        rgba(0,235,165,0.55) 46%,
+        rgba(0,175,215,0.45) 57%,
+        rgba(18,52,168,0.4) 70%,
+        #010515 88%
+      );
+    }
+    .effect-aurora .effect-card-bg::after {
+      content: '';
+      position: absolute;
+      inset: -12%;
+      background: linear-gradient(175deg,
+        transparent 0%, transparent 30%,
+        rgba(120,255,160,0.35) 40%,
+        rgba(80,255,210,0.45) 50%,
+        rgba(60,190,255,0.3) 62%,
+        transparent 74%
+      );
+      animation: auroraCardSweep 6s ease-in-out infinite;
+    }
+    @keyframes auroraCardSweep {
+      0%, 100% { transform: translateX(-7%) skewX(-1.5deg) scaleY(1); opacity: 0.7; }
+      50% { transform: translateX(7%) skewX(1.5deg) scaleY(1.1); opacity: 1; }
+    }
+
+    /* Neon Haze effect card */
+    .effect-neon-haze .effect-card-bg {
+      background:
+        radial-gradient(ellipse at 50% 25%, rgba(255,45,120,0.55) 0%, transparent 48%),
+        radial-gradient(ellipse at 15% 72%, rgba(124,58,237,0.65) 0%, transparent 46%),
+        radial-gradient(ellipse at 85% 68%, rgba(6,182,212,0.55) 0%, transparent 46%),
+        radial-gradient(ellipse at 58% 88%, rgba(250,204,21,0.3) 0%, transparent 38%),
+        #06000f;
+      filter: saturate(2.5) brightness(1.05);
+    }
+    .effect-neon-haze .effect-card-bg::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: inherit;
+      animation: neonCardPulse 2.6s ease-in-out infinite;
+      mix-blend-mode: screen;
+      opacity: 0.5;
+    }
+    @keyframes neonCardPulse {
+      0%, 100% { opacity: 0.3; filter: blur(0px); }
+      50% { opacity: 0.7; filter: blur(2px); }
+    }
+
+    /* Minimal Dark effect card */
+    .effect-minimal .effect-card-bg {
+      background:
+        radial-gradient(ellipse at 50% 40%, rgba(255,255,255,0.04) 0%, transparent 60%),
+        #010104;
+    }
+    .effect-minimal .effect-card-bg::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 50% 50%, rgba(255,255,255,0.02) 0%, transparent 55%);
+      animation: minimalBreath 4s ease-in-out infinite;
+    }
+    @keyframes minimalBreath {
+      0%, 100% { opacity: 0.4; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.08); }
+    }
+
+    /* ── PREVIEW FX OVERLAY ── */
+    #previewFx {
+      position: absolute;
+      inset: -20%;
+      z-index: 0;
+      opacity: 0;
+      pointer-events: none;
+      /* No transition — each effect switches instantly; pixel has its own dissolve animation */
+    }
+
+    /* fx-lava: actual lava lamp — gooey blobs floating in warm fluid */
+    .preview-body.fx-lava #previewBg  { opacity: 0; animation-play-state: paused; }
+    .preview-body.fx-lava #previewBg2 { opacity: 0; }
+    .preview-body.fx-lava #previewFx  { opacity: 1; }
+
+    .lava-container {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      /* Dark fluid background lives here, behind the goo layer */
+      background: #030100;
+    }
+    /* Goo layer: SVG feColorMatrix targets alpha only — crisp edges, true merging, no RGB blur */
+    .lava-goo-layer {
+      position: absolute;
+      inset: 0;
+      background: transparent;
+      filter: url(#lava-goo);
+    }
+    /* Overlay layer — sits above lyrics (z-index 2), one blob floats through here */
+    .lava-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .lava-blob-track {
+      position: absolute;
+      bottom: 0;
+      height: 100%;
+      animation: lavaBlobFloat ease-in-out infinite;
+    }
+    /* Rising blobs — stretch/drip shape morph */
+    .lava-blob {
+      position: absolute;
+      bottom: 0;
+      border-radius: 50% 50% 46% 54% / 44% 44% 56% 56%;
+      animation: lavaBlobMorph ease-in-out infinite;
+    }
+    /* Pool blobs — stay near the bottom, slowly breathe */
+    .lava-pool-blob {
+      position: absolute;
+      border-radius: 58% 42% 52% 48% / 38% 40% 60% 62%;
+      animation: lavaPoolSettle ease-in-out infinite, lavaPoolMorph ease-in-out infinite;
+    }
+    /* Bottom lamp heat glow — outside goo layer so filter doesn't distort it */
+    .lava-heat {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 60%;
+      background: radial-gradient(ellipse at 50% 100%,
+        rgba(255,80,0,0.5) 0%, rgba(180,40,0,0.22) 38%, transparent 65%);
+      pointer-events: none;
+    }
+    .lava-top-shadow {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 35%;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, transparent 100%);
+      pointer-events: none;
+    }
+    /* Float: Y translation + lateral sway + squash-and-stretch (fat blob physics) */
+    @keyframes lavaBlobFloat {
+      0%   { transform: translateY(0)      translateX(0px)   scaleX(1.14) scaleY(0.88); }
+      12%  { transform: translateY(-12%)   translateX(-18px) scaleX(0.94) scaleY(1.08); }
+      30%  { transform: translateY(-48%)   translateX(24px)  scaleX(0.90) scaleY(1.12); }
+      50%  { transform: translateY(-90%)   translateX(-14px) scaleX(0.96) scaleY(1.06); }
+      62%  { transform: translateY(-108%)  translateX(18px)  scaleX(1.18) scaleY(0.84); }
+      75%  { transform: translateY(-72%)   translateX(-22px) scaleX(0.92) scaleY(1.10); }
+      88%  { transform: translateY(-26%)   translateX(12px)  scaleX(1.10) scaleY(0.92); }
+      100% { transform: translateY(0)      translateX(0px)   scaleX(1.14) scaleY(0.88); }
+    }
+    @keyframes lavaBlobFloatB {
+      0%   { transform: translateY(0)      translateX(0px)   scaleX(1.16) scaleY(0.86); }
+      11%  { transform: translateY(-10%)   translateX(20px)  scaleX(0.92) scaleY(1.10); }
+      29%  { transform: translateY(-50%)   translateX(-26px) scaleX(0.88) scaleY(1.14); }
+      50%  { transform: translateY(-92%)   translateX(14px)  scaleX(0.94) scaleY(1.08); }
+      63%  { transform: translateY(-110%)  translateX(-18px) scaleX(1.20) scaleY(0.82); }
+      76%  { transform: translateY(-68%)   translateX(24px)  scaleX(0.90) scaleY(1.12); }
+      89%  { transform: translateY(-22%)   translateX(-10px) scaleX(1.12) scaleY(0.90); }
+      100% { transform: translateY(0)      translateX(0px)   scaleX(1.16) scaleY(0.86); }
+    }
+    @keyframes lavaBlobFloatC {
+      0%   { transform: translateY(0)      translateX(0px)   scaleX(1.18) scaleY(0.84); }
+      13%  { transform: translateY(-14%)   translateX(-28px) scaleX(0.90) scaleY(1.12); }
+      31%  { transform: translateY(-52%)   translateX(30px)  scaleX(0.86) scaleY(1.16); }
+      52%  { transform: translateY(-94%)   translateX(-20px) scaleX(0.92) scaleY(1.10); }
+      65%  { transform: translateY(-114%)  translateX(22px)  scaleX(1.22) scaleY(0.80); }
+      78%  { transform: translateY(-74%)   translateX(-28px) scaleX(0.88) scaleY(1.14); }
+      90%  { transform: translateY(-28%)   translateX(16px)  scaleX(1.14) scaleY(0.88); }
+      100% { transform: translateY(0)      translateX(0px)   scaleX(1.18) scaleY(0.84); }
+    }
+    @keyframes lavaBlobMorph {
+      0%   { border-radius: 54% 46% 48% 52% / 52% 56% 44% 48%; transform: scaleX(1.08) scaleY(0.96) rotate(0deg); }
+      16%  { border-radius: 76% 24% 36% 64% / 60% 44% 56% 40%; transform: scaleX(0.90) scaleY(1.12) rotate(9deg); }
+      33%  { border-radius: 82% 18% 30% 70% / 66% 38% 52% 48%; transform: scaleX(0.84) scaleY(1.18) rotate(15deg); }
+      50%  { border-radius: 40% 60% 70% 30% / 34% 66% 44% 56%; transform: scaleX(1.22) scaleY(0.84) rotate(9deg); }
+      64%  { border-radius: 32% 68% 76% 24% / 28% 72% 38% 62%; transform: scaleX(1.28) scaleY(0.78) rotate(-3deg); }
+      78%  { border-radius: 66% 34% 26% 74% / 56% 44% 66% 34%; transform: scaleX(0.86) scaleY(1.16) rotate(-12deg); }
+      90%  { border-radius: 58% 42% 40% 60% / 56% 46% 54% 44%; transform: scaleX(1.04) scaleY(0.98) rotate(-5deg); }
+      100% { border-radius: 54% 46% 48% 52% / 52% 56% 44% 48%; transform: scaleX(1.08) scaleY(0.96) rotate(0deg); }
+    }
+    @keyframes lavaBlobMorphB {
+      0%   { border-radius: 44% 56% 62% 38% / 50% 46% 54% 50%; transform: scaleX(1.06) scaleY(0.98) rotate(0deg); }
+      16%  { border-radius: 28% 72% 70% 30% / 42% 58% 62% 38%; transform: scaleX(0.88) scaleY(1.14) rotate(-8deg); }
+      33%  { border-radius: 22% 78% 74% 26% / 36% 64% 68% 32%; transform: scaleX(0.82) scaleY(1.20) rotate(-15deg); }
+      50%  { border-radius: 64% 36% 34% 66% / 66% 34% 36% 64%; transform: scaleX(1.20) scaleY(0.86) rotate(-9deg); }
+      64%  { border-radius: 72% 28% 28% 72% / 70% 30% 32% 68%; transform: scaleX(1.26) scaleY(0.80) rotate(4deg); }
+      78%  { border-radius: 26% 74% 66% 34% / 40% 60% 60% 40%; transform: scaleX(0.84) scaleY(1.18) rotate(13deg); }
+      90%  { border-radius: 40% 60% 54% 46% / 48% 52% 48% 52%; transform: scaleX(1.02) scaleY(1.00) rotate(6deg); }
+      100% { border-radius: 44% 56% 62% 38% / 50% 46% 54% 50%; transform: scaleX(1.06) scaleY(0.98) rotate(0deg); }
+    }
+    @keyframes lavaBlobMorphC {
+      0%   { border-radius: 62% 38% 42% 58% / 44% 60% 40% 56%; transform: scaleX(1.10) scaleY(0.94) rotate(0deg); }
+      17%  { border-radius: 78% 22% 30% 70% / 56% 44% 48% 52%; transform: scaleX(0.86) scaleY(1.16) rotate(11deg); }
+      35%  { border-radius: 84% 16% 24% 76% / 64% 36% 42% 58%; transform: scaleX(0.80) scaleY(1.22) rotate(19deg); }
+      52%  { border-radius: 36% 64% 76% 24% / 26% 74% 38% 62%; transform: scaleX(1.24) scaleY(0.82) rotate(12deg); }
+      66%  { border-radius: 28% 72% 80% 20% / 22% 78% 32% 68%; transform: scaleX(1.30) scaleY(0.76) rotate(-4deg); }
+      80%  { border-radius: 70% 30% 22% 78% / 58% 42% 64% 36%; transform: scaleX(0.82) scaleY(1.20) rotate(-14deg); }
+      92%  { border-radius: 60% 40% 38% 62% / 50% 54% 46% 50%; transform: scaleX(1.06) scaleY(0.96) rotate(-6deg); }
+      100% { border-radius: 62% 38% 42% 58% / 44% 60% 40% 56%; transform: scaleX(1.10) scaleY(0.94) rotate(0deg); }
+    }
+    @keyframes lavaPoolSettle {
+      0%   { transform: translateY(0)    scaleX(1.00) rotate(0deg);  }
+      28%  { transform: translateY(-7%)  scaleX(0.91) rotate(3deg);  }
+      55%  { transform: translateY(-3%)  scaleX(1.06) rotate(-2deg); }
+      78%  { transform: translateY(-9%)  scaleX(0.94) rotate(4deg);  }
+      100% { transform: translateY(0)    scaleX(1.00) rotate(0deg);  }
+    }
+    @keyframes lavaPoolMorph {
+      0%   { border-radius: 58% 42% 52% 48% / 38% 40% 60% 62%; }
+      30%  { border-radius: 46% 54% 60% 40% / 44% 42% 56% 58%; }
+      62%  { border-radius: 54% 46% 42% 58% / 50% 46% 54% 50%; }
+      100% { border-radius: 58% 42% 52% 48% / 38% 40% 60% 62%; }
+    }
+
+    /* fx-album: let JS manage bg, overlay hidden */
+
+    /* fx-aurora: sweeping horizontal northern lights */
+    .preview-body.fx-aurora #previewBg { opacity: 0.08; animation-play-state: paused; }
+    .preview-body.fx-aurora #previewBg2 { opacity: 0; }
+    .preview-body.fx-aurora #previewFx {
+      opacity: 1;
+      background: linear-gradient(178deg,
+        #000510 0%, #001308 14%,
+        rgba(0,90,35,0.5) 26%,
+        rgba(0,210,85,0.72) 36%,
+        rgba(0,238,168,0.56) 45%,
+        rgba(0,180,218,0.46) 56%,
+        rgba(20,55,178,0.36) 70%,
+        #000318 87%
+      );
+      animation: fxAuroraWave 7s ease-in-out infinite;
+      filter: saturate(1.5);
+    }
+    @keyframes fxAuroraWave {
+      0%, 100% { transform: translate(-5%, 0%) skewX(-1.5deg) scaleY(1); filter: brightness(0.9) saturate(1.5); }
+      40% { transform: translate(4%, -2%) skewX(1.5deg) scaleY(1.09); filter: brightness(1.2) saturate(1.7); }
+      70% { transform: translate(-1%, 1%) skewX(-0.5deg) scaleY(0.97); filter: brightness(0.95) saturate(1.4); }
+    }
+
+    /* fx-neon: electric pulsing glow */
+    .preview-body.fx-neon-haze #previewBg { opacity: 0.07; }
+    .preview-body.fx-neon-haze #previewBg2 { opacity: 0; }
+    .preview-body.fx-neon-haze #previewFx {
+      opacity: 1;
+      background:
+        radial-gradient(ellipse at 50% 22%, rgba(255,45,120,0.55) 0%, transparent 44%),
+        radial-gradient(ellipse at 14% 75%, rgba(124,58,237,0.65) 0%, transparent 48%),
+        radial-gradient(ellipse at 86% 70%, rgba(6,182,212,0.55) 0%, transparent 48%),
+        radial-gradient(ellipse at 60% 88%, rgba(250,204,21,0.28) 0%, transparent 38%),
+        #06000f;
+      filter: saturate(2.8);
+      animation: fxNeonPulse 2.8s ease-in-out infinite;
+    }
+    @keyframes fxNeonPulse {
+      0%, 100% { filter: saturate(2.8) brightness(1.0); }
+      50% { filter: saturate(3.3) brightness(1.28); }
+    }
+
+    /* fx-minimal: near-black serenity */
+    .preview-body.fx-minimal #previewBg { opacity: 0.04; animation-play-state: paused; }
+    .preview-body.fx-minimal #previewBg2 { opacity: 0; }
+    .preview-body.fx-minimal #previewFx {
+      opacity: 1;
+      background:
+        radial-gradient(ellipse at 50% 48%, rgba(255,255,255,0.025) 0%, transparent 60%),
+        #010108;
+    }
+
+    /* fx-pixel: static colorful pixel grid */
+    .preview-body.fx-pixel #previewBg { opacity: 0; }
+    .preview-body.fx-pixel #previewBg2 { opacity: 0; }
+    .preview-body.fx-pixel #previewFx {
+      opacity: 1;
+      background: #02000a;
+    }
+    /* Lyric readability mask — dark oval behind text, only in pixel mode */
+    .preview-body.fx-pixel .mock-lyrics-stage::before {
+      content: '';
+      position: absolute;
+      inset: -22px -44px;
+      background: radial-gradient(ellipse at 50% 50%, rgba(2,0,10,0.78) 30%, rgba(2,0,10,0.50) 65%, transparent 100%);
+      filter: blur(8px);
+      border-radius: 6px;
+      z-index: -1;
+      pointer-events: none;
+    }
+    .preview-fx-pixel-grid {
+      position: absolute;
+      inset: 0;
+      display: grid;
+    }
+
+    .theme-card-lyrics, .theme-card-footer { position: relative; z-index: 1; }
+    .theme-card-lyrics {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      flex: 1;
+      justify-content: center;
+    }
+    .tc-prev {
+      font-family: var(--font-serif);
+      font-style: normal;
+      font-size: 13px;
+      color: var(--tdim);
+      line-height: 1.3;
+    }
+    .tc-active {
+      font-family: var(--font-serif);
+      font-style: normal;
+      font-size: 22px;
+      color: #fff;
+      line-height: 1.2;
+    }
+    .tc-active span { color: var(--tacc); }
+    .tc-next {
+      font-family: var(--font-serif);
+      font-style: normal;
+      font-size: 13px;
+      color: var(--tdim);
+      line-height: 1.3;
+    }
+    /* Cinema card — Fraunces upright, optical-size serif */
+    .theme-cinema .tc-active,
+    .theme-cinema .tc-prev,
+    .theme-cinema .tc-next {
+      font-family: 'Fraunces', serif;
+      font-style: normal;
+      font-variation-settings: 'opsz' 36;
+    }
+    .theme-cinema .tc-active {
+      font-size: 21px;
+      font-weight: 400;
+      font-variation-settings: 'opsz' 144;
+      letter-spacing: 0.01em;
+    }
+    /* Aurora card — Cormorant Garamond upright */
+    .theme-aurora .tc-active,
+    .theme-aurora .tc-prev,
+    .theme-aurora .tc-next {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: normal;
+      font-weight: 300;
+      letter-spacing: 0.02em;
+    }
+    .theme-aurora .tc-active {
+      font-size: 23px;
+    }
+
+    /* Neon overrides — all caps bold */
+    .theme-neon-text .tc-prev,
+    .theme-neon-text .tc-next {
+      font-family: var(--font-mono);
+      font-style: normal;
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .tc-neon-active {
+      font-family: var(--font-mono);
+      font-style: normal;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    /* Rave overrides — Syne 800, brutal uppercase */
+    .theme-rave-text .tc-prev,
+    .theme-rave-text .tc-next {
+      font-family: var(--font-display);
+      font-style: normal;
+      font-weight: 700;
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+    .tc-rave-active {
+      font-family: var(--font-display);
+      font-style: normal;
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      text-transform: uppercase;
+    }
+    .theme-card-footer {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-top: 24px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(255,255,255,0.08);
+    }
+    .theme-name {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--tacc);
+    }
+    .theme-mood {
+      font-family: var(--font-body);
+      font-size: 12px;
+      color: rgba(255,255,255,0.4);
+    }
+    @media (max-width: 768px) {
+      .themes-grid { grid-template-columns: 1fr 1fr; }
+    }
+
+    /* ── CUSTOMIZATION STRIP ── */
+    .customize-section {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 80px 48px;
+      border-top: 1px solid var(--rule);
+    }
+    .customize-section .section-header { margin-bottom: 40px; }
+    .customize-options {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2px;
+    }
+    .customize-option {
+      background: #0a0a0a;
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 4px;
+      padding: 32px 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      transition: border-color 0.2s ease, background 0.2s ease;
+      cursor: default;
+    }
+    .customize-option:hover {
+      background: #111;
+      border-color: rgba(255,255,255,0.14);
+    }
+    .customize-option-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+    }
+    .customize-option-title {
+      font-family: 'Syne', system-ui, sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: -0.02em;
+    }
+    .customize-option-choices {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .choice-pill {
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.06em;
+      padding: 4px 10px;
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,0.15);
+      color: rgba(255,255,255,0.6);
+      white-space: nowrap;
+    }
+    .choice-pill.active {
+      background: rgba(255,255,255,0.1);
+      border-color: rgba(255,255,255,0.3);
+      color: #fff;
+    }
+    .customize-option-desc {
+      font-family: 'Inter', system-ui, sans-serif;
+      font-size: 13px;
+      color: rgba(255,255,255,0.45);
+      line-height: 1.55;
+    }
+
+    /* ── CLOSING ── */
+    .closing {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 80px 48px;
+      border-top: 1px solid var(--rule);
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: end;
+      gap: 48px;
+    }
+    .closing-headline {
+      font-family: 'Syne', system-ui, sans-serif;
+      font-weight: 800;
+      font-style: normal;
+      font-size: clamp(40px, 6vw, 88px);
+      line-height: 0.92;
+      letter-spacing: -0.03em;
+    }
+    .closing-headline em { color: var(--green); font-style: normal; }
+
+    /* ── FOOTER ── */
+    footer {
+      border-top: 1px solid var(--rule);
+      padding: 24px 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    footer .left {
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--dim);
+    }
+    footer .right {
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--dim);
+    }
+    footer a { color: var(--dim); text-decoration: none; }
+    footer a:hover { color: var(--green); }
+
+    .error { margin-top: 12px; font-size: 12px; color: #ff6b6b; text-align: center; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 768px) {
+      nav { padding: 20px 24px; }
+      .hero { padding: 48px 24px 0; grid-template-columns: 1fr; gap: 32px; }
+      .hero-right { display: block; }
+      .preview-window { max-height: 300px; }
+      .hero-subline { grid-template-columns: 1fr; gap: 32px; }
+      .hero-cta-group { align-items: flex-start; }
+      .section { padding: 0 24px; }
+      .feature-row { grid-template-columns: 1fr; gap: 12px; }
+      .preview-section { padding: 0 24px 48px; }
+      .closing { grid-template-columns: 1fr; padding: 48px 24px; }
+      .closing-headline { font-size: clamp(36px, 10vw, 64px); }
+      footer { padding: 20px 24px; flex-direction: column; gap: 8px; text-align: center; }
+      .themes-grid { grid-template-columns: 1fr 1fr; }
+      .effects-grid { grid-template-columns: repeat(2, 1fr); }
+      .customize-options { grid-template-columns: 1fr; }
+      .customize-section { padding: 48px 24px; }
+      .theme-card { min-height: 280px; }
+      .effect-card { min-height: 220px; }
+      .effect-name { font-size: 22px; }
+    }
+  </style>
+</head>
+<body>
+
+
+  <!-- Ticker -->
+  <div class="ticker-wrap" aria-hidden="true">
+    <div class="ticker-track">
+      <span class="ticker-item">Bohemian Rhapsody<span class="dot">◆</span></span>
+      <span class="ticker-item">Billie Jean<span class="dot">◆</span></span>
+      <span class="ticker-item">Waterfalls<span class="dot">◆</span></span>
+      <span class="ticker-item">Hey Ya!<span class="dot">◆</span></span>
+      <span class="ticker-item">Rolling in the Deep<span class="dot">◆</span></span>
+      <span class="ticker-item">Uptown Funk<span class="dot">◆</span></span>
+      <span class="ticker-item">Blinding Lights<span class="dot">◆</span></span>
+      <span class="ticker-item">Anti-Hero<span class="dot">◆</span></span>
+      <span class="ticker-item">Despacito<span class="dot">◆</span></span>
+      <span class="ticker-item">Old Town Road<span class="dot">◆</span></span>
+      <span class="ticker-item">Gangsta's Paradise<span class="dot">◆</span></span>
+      <span class="ticker-item">Crazy in Love<span class="dot">◆</span></span>
+      <span class="ticker-item">Bad Guy<span class="dot">◆</span></span>
+      <span class="ticker-item">Get Lucky<span class="dot">◆</span></span>
+      <span class="ticker-item">drivers license<span class="dot">◆</span></span>
+      <span class="ticker-item">Since U Been Gone<span class="dot">◆</span></span>
+      <span class="ticker-item">Killing Me Softly<span class="dot">◆</span></span>
+      <span class="ticker-item">As It Was<span class="dot">◆</span></span>
+      <span class="ticker-item">Shape of You<span class="dot">◆</span></span>
+      <span class="ticker-item">Flowers<span class="dot">◆</span></span>
+      <!-- duplicate for seamless loop -->
+      <span class="ticker-item">Bohemian Rhapsody<span class="dot">◆</span></span>
+      <span class="ticker-item">Billie Jean<span class="dot">◆</span></span>
+      <span class="ticker-item">Waterfalls<span class="dot">◆</span></span>
+      <span class="ticker-item">Hey Ya!<span class="dot">◆</span></span>
+      <span class="ticker-item">Rolling in the Deep<span class="dot">◆</span></span>
+      <span class="ticker-item">Uptown Funk<span class="dot">◆</span></span>
+      <span class="ticker-item">Blinding Lights<span class="dot">◆</span></span>
+      <span class="ticker-item">Anti-Hero<span class="dot">◆</span></span>
+      <span class="ticker-item">Despacito<span class="dot">◆</span></span>
+      <span class="ticker-item">Old Town Road<span class="dot">◆</span></span>
+      <span class="ticker-item">Gangsta's Paradise<span class="dot">◆</span></span>
+      <span class="ticker-item">Crazy in Love<span class="dot">◆</span></span>
+      <span class="ticker-item">Bad Guy<span class="dot">◆</span></span>
+      <span class="ticker-item">Get Lucky<span class="dot">◆</span></span>
+      <span class="ticker-item">drivers license<span class="dot">◆</span></span>
+      <span class="ticker-item">Since U Been Gone<span class="dot">◆</span></span>
+      <span class="ticker-item">Killing Me Softly<span class="dot">◆</span></span>
+      <span class="ticker-item">As It Was<span class="dot">◆</span></span>
+      <span class="ticker-item">Shape of You<span class="dot">◆</span></span>
+      <span class="ticker-item">Flowers<span class="dot">◆</span></span>
+    </div>
+  </div>
+
+  <!-- Nav -->
+  <nav>
+    <a class="nav-logo" href="/">Chorushive</a>
+    <div class="nav-right">Live at <span>chorushive.com</span></div>
+  </nav>
+
+  <!-- Hero -->
+  <div class="hero-outer">
+  <header class="hero">
+    <div class="hero-left">
+      <div class="hero-label">Karaoke for your Spotify</div>
+    <h1 class="hero-headline">
+      Where the <span class="fade">whole</span><br>
+      <span class="green-word">room sings.</span>
+    </h1>
+    <div class="hero-subline">
+      <p class="hero-copy">
+        Connect Spotify. Pick your aesthetic. Turn any screen into a karaoke stage.
+        <strong>Eight handcrafted themes, six background modes, real-time lyrics</strong> —
+        built for bedrooms, living rooms, and the big screen at the party.
+      </p>
+      <div class="hero-cta-group">
+        <div class="trust-row">
+          <span class="trust-pill">✓ Free to Start</span>
+          <span class="trust-pill">✓ No Install</span>
+          <span class="trust-pill">✓ Millions of Songs</span>
+        </div>
+        <a href="/auth/login" class="btn-connect">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"></path></svg>
+          Start Singing Free
+        </a>
+        <span class="cta-note">Secure Spotify signin — we never store your password</span>
+        <div id="error-msg" class="error"></div>
+      </div>
+      <!-- Screens strip — in left col now -->
+      <div class="screen-strip" style="margin-top:24px;">
+        <span class="screen-item">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"></rect><path d="M8 21h8M12 17v4"></path></svg>
+          Desktop
+        </span>
+        <span class="screen-dot">·</span>
+        <span class="screen-item">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="5" y="2" width="14" height="20" rx="2"></rect></svg>
+          Phone
+        </span>
+        <span class="screen-dot">·</span>
+        <span class="screen-item">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"></rect><path d="M2 20h20"></path></svg>
+          TV &amp; Projector
+        </span>
+      </div>
+    </div>
+    </div>
+    <div class="hero-right">
+      <div class="preview-window">
+        <div class="preview-body theme-rave fx-lava" id="previewBody">
+          <!-- Effect switcher — lets users cycle all 6 modes directly in the hero -->
+          <div class="fx-switcher">
+            <button class="fx-btn active" data-mode="lava">Lava Lamp</button>
+            <button class="fx-btn" data-mode="album">Album Art</button>
+            <button class="fx-btn" data-mode="aurora">Aurora</button>
+            <button class="fx-btn" data-mode="pixel">Pixel</button>
+            <button class="fx-btn" data-mode="neon-haze">Neon Haze</button>
+            <button class="fx-btn" data-mode="minimal">Minimal</button>
+          </div>
+          <!-- Primary blurred background — JS sets .style.background -->
+          <div class="preview-bg" id="previewBg" style="background: url(&quot;https://is1-ssl.mzstatic.com/image/thumb/Music122/v4/6b/dd/ee/6bddee52-12c7-8029-ee36-080386973af5/605.jpg/600x600bb.jpg&quot;) center center / cover no-repeat;"></div>
+          <!-- Secondary layer — counter-rotates at different speed, creates organic movement -->
+          <div class="preview-bg-secondary" id="previewBg2" style="background: url(&quot;https://is1-ssl.mzstatic.com/image/thumb/Music122/v4/6b/dd/ee/6bddee52-12c7-8029-ee36-080386973af5/605.jpg/600x600bb.jpg&quot;) center center / cover no-repeat;"></div>
+          <!-- FX overlay — controlled by JS for alternate background modes -->
+          <div id="previewFx"><div class="lava-container"><div class="lava-goo-layer"><div class="lava-blob-track" style="left: calc(30% - 55px); width: 110px; animation-duration: 80s; animation-delay: 0s;"><div class="lava-blob" style="width: 110px; height: 138px; background: rgb(255, 61, 0); animation-name: lavaBlobMorph; animation-duration: 80s; animation-delay: 0s;"></div></div><div class="lava-blob-track" style="left: calc(58% - 40px); width: 80px; animation-duration: 68s; animation-delay: -20s;"><div class="lava-blob" style="width: 80px; height: 100px; background: rgb(232, 54, 0); animation-name: lavaBlobMorphB; animation-duration: 68s; animation-delay: -20s;"></div></div><div class="lava-blob-track" style="left: calc(14% - 70px); width: 140px; animation-duration: 95s; animation-delay: -35s;"><div class="lava-blob" style="width: 140px; height: 175px; background: rgb(204, 46, 0); animation-name: lavaBlobMorph; animation-duration: 95s; animation-delay: -35s;"></div></div><div class="lava-blob-track" style="left: calc(72% - 32px); width: 64px; animation-duration: 62s; animation-delay: -12s;"><div class="lava-blob" style="width: 64px; height: 80px; background: rgb(255, 72, 0); animation-name: lavaBlobMorphB; animation-duration: 62s; animation-delay: -12s;"></div></div><div class="lava-blob-track" style="left: calc(44% - 49px); width: 98px; animation-duration: 86s; animation-delay: -52s;"><div class="lava-blob" style="width: 98px; height: 122px; background: rgb(212, 50, 0); animation-name: lavaBlobMorph; animation-duration: 86s; animation-delay: -52s;"></div></div><div class="lava-blob-track" style="left: calc(8% - 38px); width: 76px; animation-duration: 74s; animation-delay: -27s;"><div class="lava-blob" style="width: 76px; height: 96px; background: rgb(240, 57, 0); animation-name: lavaBlobMorphB; animation-duration: 74s; animation-delay: -27s;"></div></div><div class="lava-blob-track" style="left: calc(64% - 45px); width: 90px; animation-duration: 82s; animation-delay: -60s;"><div class="lava-blob" style="width: 90px; height: 112px; background: rgb(191, 42, 0); animation-name: lavaBlobMorph; animation-duration: 82s; animation-delay: -60s;"></div></div><div class="lava-blob-track" style="left: calc(36% - 34px); width: 68px; animation-duration: 70s; animation-delay: -16s;"><div class="lava-blob" style="width: 68px; height: 86px; background: rgb(224, 53, 0); animation-name: lavaBlobMorphB; animation-duration: 70s; animation-delay: -16s;"></div></div><div class="lava-pool-blob" style="left: calc(16% - 85px); bottom: -32px; width: 170px; height: 105px; background: rgb(168, 36, 0); animation-duration: 50s; animation-delay: 0s;"></div><div class="lava-pool-blob" style="left: calc(48% - 65px); bottom: -26px; width: 130px; height: 88px; background: rgb(196, 44, 0); animation-duration: 56s; animation-delay: -16s;"></div><div class="lava-pool-blob" style="left: calc(68% - 77.5px); bottom: -29px; width: 155px; height: 98px; background: rgb(184, 40, 0); animation-duration: 46s; animation-delay: -28s;"></div></div><div class="lava-heat"></div><div class="lava-top-shadow"></div></div></div>
+          <!-- Centered lyrics -->
+          <div class="mock-lyrics-stage" style="opacity: 1; transform: translateY(0px);">
+            <div class="mock-line mock-prev">It doesn't hurt me</div>
+            <div class="mock-line mock-active" style=""><span class="mock-word done">You</span> <span class="mock-word done">want</span> <span class="mock-word done">to</span> <span class="mock-word done">feel</span> <span class="mock-word done">how</span> <span class="mock-word done">it</span> <span class="mock-word lit">feels</span></div>
+            <div class="mock-line mock-next">You want to know, know that</div>
+          </div>
+          <!-- Track info overlay — bottom of preview -->
+          <div class="mock-track-overlay">
+            <div class="mock-album" id="mockAlbum" style="background: url(&quot;https://is1-ssl.mzstatic.com/image/thumb/Music122/v4/6b/dd/ee/6bddee52-12c7-8029-ee36-080386973af5/605.jpg/600x600bb.jpg&quot;) center center / cover no-repeat;"></div>
+            <div class="mock-track-meta">
+              <div class="mock-track-name" id="mockTrackName">Running Up That Hill</div>
+              <div class="mock-artist" id="mockArtistName">Kate Bush</div>
+            </div>
+          </div>
+          <div class="mock-progress" style="position:relative;z-index:4;">
+            <div class="mock-progress-fill"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+  </div><!-- /hero-outer -->
+
+  <!-- Slow lyric marquee -->
+  <div class="lyric-marquee" aria-hidden="true">
+    <div class="lyric-marquee-track">
+      <span class="lyric-marquee-item">Is this the <span class="highlight">real</span> life, is this just fantasy —</span>
+      <span class="lyric-marquee-item">I'm <span class="highlight">blinded</span> by the lights —</span>
+      <span class="lyric-marquee-item">We are never ever ever <span class="highlight">getting</span> back together —</span>
+      <span class="lyric-marquee-item">You are the <span class="highlight">dancing</span> queen —</span>
+      <span class="lyric-marquee-item">I can't stop the <span class="highlight">feeling</span> —</span>
+      <span class="lyric-marquee-item">Started from the <span class="highlight">bottom</span>, now we're here —</span>
+      <span class="lyric-marquee-item">Don't stop <span class="highlight">believin'</span>, hold on to the feeling —</span>
+      <span class="lyric-marquee-item">It's the <span class="highlight">eye</span> of the tiger —</span>
+      <span class="lyric-marquee-item">I bless the <span class="highlight">rains</span> down in Africa —</span>
+      <span class="lyric-marquee-item">I can buy myself <span class="highlight">flowers</span> —</span>
+      <span class="lyric-marquee-item">Is this the <span class="highlight">real</span> life, is this just fantasy —</span>
+      <span class="lyric-marquee-item">I'm <span class="highlight">blinded</span> by the lights —</span>
+      <span class="lyric-marquee-item">We are never ever ever <span class="highlight">getting</span> back together —</span>
+      <span class="lyric-marquee-item">You are the <span class="highlight">dancing</span> queen —</span>
+      <span class="lyric-marquee-item">I can't stop the <span class="highlight">feeling</span> —</span>
+      <span class="lyric-marquee-item">Started from the <span class="highlight">bottom</span>, now we're here —</span>
+      <span class="lyric-marquee-item">Don't stop <span class="highlight">believin'</span>, hold on to the feeling —</span>
+      <span class="lyric-marquee-item">It's the <span class="highlight">eye</span> of the tiger —</span>
+      <span class="lyric-marquee-item">I bless the <span class="highlight">rains</span> down in Africa —</span>
+      <span class="lyric-marquee-item">I can buy myself <span class="highlight">flowers</span> —</span>
+    </div>
+  </div>
+
+  <!-- Themes showcase -->
+  <section class="section themes-section">
+    <div class="section-header">
+      <span class="section-num">Make it yours</span>
+      <h2 class="section-title">Eight moods. One for every room.</h2>
+    </div>
+    <div class="themes-grid">
+
+      <div class="theme-card theme-aurora" style="--tbg:#0d0015; --tacc:#c084fc; --tdim:rgba(192,132,252,0.4);">
+        <div class="theme-card-lyrics">
+          <div class="tc-prev">Running Up That Hill</div>
+          <div class="tc-active">You want to <span>feel</span> how it <span>feels</span></div>
+          <div class="tc-next">You want to know, know that</div>
+        </div>
+        <div class="theme-card-footer">
+          <span class="theme-name">Aurora</span>
+          <span class="theme-mood">Dreamy &amp; dark</span>
+        </div>
+      </div>
+
+      <div class="theme-card theme-neon" style="--tbg:#0a001a; --tacc:#ff2d78; --tdim:rgba(255,45,120,0.4);">
+        <div class="theme-card-lyrics theme-neon-text">
+          <div class="tc-prev">Hit me baby one more time</div>
+          <div class="tc-active tc-neon-active">MY <span>LONELINESS</span> IS KILLING ME</div>
+          <div class="tc-next">I must confess I still believe</div>
+        </div>
+        <div class="theme-card-footer">
+          <span class="theme-name">Neon</span>
+          <span class="theme-mood">Club energy</span>
+        </div>
+      </div>
+
+      <div class="theme-card theme-cinema" style="--tbg:#0a0806; --tacc:#e8d5b0; --tdim:rgba(232,213,176,0.35);">
+        <div class="theme-card-lyrics">
+          <div class="tc-prev">Is this the real life</div>
+          <div class="tc-active">Is this just <span>fantasy</span></div>
+          <div class="tc-next">Caught in a landslide</div>
+        </div>
+        <div class="theme-card-footer">
+          <span class="theme-name">Cinema</span>
+          <span class="theme-mood">Old Hollywood</span>
+        </div>
+      </div>
+
+      <div class="theme-card theme-rave" style="--tbg:#000309; --tacc:#ffe600; --tdim:rgba(255,230,0,0.35);">
+        <div class="theme-card-lyrics theme-rave-text">
+          <div class="tc-prev">MR. BRIGHTSIDE</div>
+          <div class="tc-active tc-rave-active">COMING OUT OF MY <span>CAGE</span></div>
+          <div class="tc-next">AND I'VE BEEN DOING JUST FINE</div>
+        </div>
+        <div class="theme-card-footer">
+          <span class="theme-name">Rave</span>
+          <span class="theme-mood">Loud &amp; raw</span>
+        </div>
+      </div>
+
+      <div class="theme-card theme-midnight" style="--tbg:#030d1f; --tacc:#38bdf8; --tdim:rgba(56,189,248,0.4);">
+        <div class="theme-card-lyrics">
+          <div class="tc-prev">Started from the bottom</div>
+          <div class="tc-active">Now the <span>whole</span> team here</div>
+          <div class="tc-next">We made it</div>
+        </div>
+        <div class="theme-card-footer">
+          <span class="theme-name">Midnight</span>
+          <span class="theme-mood">R&amp;B &amp; hip-hop</span>
+        </div>
+      </div>
+
+      <div class="theme-card theme-ember" style="--tbg:#0d0a06; --tacc:#fb923c; --tdim:rgba(251,146,60,0.4);">
+        <div class="theme-card-lyrics">
+          <div class="tc-prev">Almost heaven</div>
+          <div class="tc-active">West Virginia, <span>Blue</span> Ridge Mountains</div>
+          <div class="tc-next">Shenandoah River</div>
+        </div>
+        <div class="theme-card-footer">
+          <span class="theme-name">Ember</span>
+          <span class="theme-mood">Country &amp; folk</span>
+        </div>
+      </div>
+
+      <div class="theme-card theme-vapor" style="--tbg:#0a0018; --tacc:#22d3ee; --tdim:rgba(34,211,238,0.35);">
+        <div class="theme-card-lyrics theme-vapor-text">
+          <div class="tc-prev">We're up all night to the sun</div>
+          <div class="tc-active">WE'RE UP ALL NIGHT TO <span>GET</span> LUCKY</div>
+          <div class="tc-next">We're up all night to get</div>
+        </div>
+        <div class="theme-card-footer">
+          <span class="theme-name">Vapor</span>
+          <span class="theme-mood">Synthwave &amp; electronic</span>
+        </div>
+      </div>
+
+      <div class="theme-card theme-forest" style="--tbg:#030d06; --tacc:#4ade80; --tdim:rgba(74,222,128,0.35);">
+        <div class="theme-card-lyrics">
+          <div class="tc-prev">I never loved nobody fully</div>
+          <div class="tc-active">Always one foot <span>on</span> the ground</div>
+          <div class="tc-next">And by protecting my heart truly</div>
+        </div>
+        <div class="theme-card-footer">
+          <span class="theme-name">Forest</span>
+          <span class="theme-mood">Indie &amp; folk</span>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Background effects showcase -->
+  <section class="section effects-section">
+    <div class="section-header">
+      <span class="section-num">Set the scene — click any to preview above</span>
+      <h2 class="section-title">Six ways to fill the room.</h2>
+    </div>
+    <div class="effects-grid">
+
+      <!-- Lava Lamp -->
+      <div class="effect-card effect-lava active" data-fx="lava">
+        <div class="effect-card-bg"></div>
+        <div class="effect-card-overlay"></div>
+        <div class="effect-card-content">
+          <div class="effect-tag">Effect 01</div>
+          <div class="effect-name">Lava Lamp</div>
+          <div class="effect-desc">Organic color pools that breathe with the music.</div>
+        </div>
+      </div>
+
+      <!-- Album Art Sync -->
+      <div class="effect-card effect-album" data-fx="album">
+        <div class="effect-card-bg"></div>
+        <div class="effect-album-art"></div>
+        <div class="effect-card-overlay"></div>
+        <div class="effect-card-content">
+          <div class="effect-tag">Effect 02</div>
+          <div class="effect-name">Album Art Sync</div>
+          <div class="effect-desc">Your actual album art, blurred into a living backdrop.</div>
+        </div>
+      </div>
+
+      <!-- Aurora Borealis -->
+      <div class="effect-card effect-aurora" data-fx="aurora">
+        <div class="effect-card-bg"></div>
+        <div class="effect-card-overlay"></div>
+        <div class="effect-card-content">
+          <div class="effect-tag">Effect 03</div>
+          <div class="effect-name">Aurora Borealis</div>
+          <div class="effect-desc">Slow waves of color sweeping the screen.</div>
+        </div>
+      </div>
+
+      <!-- Pixel Dissolve -->
+      <div class="effect-card effect-pixel" data-fx="pixel">
+        <div class="effect-card-bg">
+          <div class="effect-pixel-mosaic" id="pixelMosaic" style="grid-template-columns: repeat(14, 1fr); grid-template-rows: repeat(11, 1fr);"><span style="background: rgb(194, 24, 91); opacity: 0.52;"></span><span style="background: rgb(124, 58, 237); opacity: 0.73;"></span><span style="background: rgb(232, 121, 249); opacity: 0.59;"></span><span style="background: rgb(255, 79, 160); opacity: 0.76;"></span><span style="background: rgb(76, 29, 149); opacity: 0.64;"></span><span style="background: rgb(232, 121, 249); opacity: 0.78;"></span><span style="background: rgb(56, 189, 248); opacity: 0.48;"></span><span style="background: rgb(255, 79, 160); opacity: 0.62;"></span><span style="background: rgb(76, 29, 149); opacity: 0.76;"></span><span style="background: rgb(6, 182, 212); opacity: 0.32;"></span><span style="background: rgb(6, 182, 212); opacity: 0.48;"></span><span style="background: rgb(6, 182, 212); opacity: 0.54;"></span><span style="background: rgb(168, 85, 247); opacity: 0.76;"></span><span style="background: rgb(109, 40, 217); opacity: 0.41;"></span><span style="background: rgb(30, 64, 175); opacity: 0.84;"></span><span style="background: rgb(255, 79, 160); opacity: 0.65;"></span><span style="background: rgb(56, 189, 248); opacity: 0.85;"></span><span style="background: rgb(109, 40, 217); opacity: 0.56;"></span><span style="background: rgb(194, 24, 91); opacity: 0.44;"></span><span style="background: rgb(168, 85, 247); opacity: 0.45;"></span><span style="background: rgb(14, 116, 144); opacity: 0.45;"></span><span style="background: rgb(109, 40, 217); opacity: 0.45;"></span><span style="background: rgb(255, 79, 160); opacity: 0.39;"></span><span style="background: rgb(156, 0, 50); opacity: 0.5;"></span><span style="background: rgb(109, 40, 217); opacity: 0.45;"></span><span style="background: rgb(156, 0, 50); opacity: 0.38;"></span><span style="background: rgb(232, 121, 249); opacity: 0.31;"></span><span style="background: rgb(76, 29, 149); opacity: 0.8;"></span><span style="background: rgb(124, 58, 237); opacity: 0.41;"></span><span style="background: rgb(56, 189, 248); opacity: 0.87;"></span><span style="background: rgb(194, 24, 91); opacity: 0.64;"></span><span style="background: rgb(255, 45, 120); opacity: 0.44;"></span><span style="background: rgb(56, 189, 248); opacity: 0.32;"></span><span style="background: rgb(6, 182, 212); opacity: 0.66;"></span><span style="background: rgb(255, 45, 120); opacity: 0.82;"></span><span style="background: rgb(56, 189, 248); opacity: 0.37;"></span><span style="background: rgb(14, 116, 144); opacity: 0.39;"></span><span style="background: rgb(30, 64, 175); opacity: 0.46;"></span><span style="background: rgb(76, 29, 149); opacity: 0.63;"></span><span style="background: rgb(124, 58, 237); opacity: 0.52;"></span><span style="background: rgb(109, 40, 217); opacity: 0.61;"></span><span style="background: rgb(30, 64, 175); opacity: 0.44;"></span><span style="background: rgb(255, 45, 120); opacity: 0.5;"></span><span style="background: rgb(8, 145, 178); opacity: 0.75;"></span><span style="background: rgb(3, 105, 161); opacity: 0.55;"></span><span style="background: rgb(124, 58, 237); opacity: 0.77;"></span><span style="background: rgb(156, 0, 50); opacity: 0.72;"></span><span style="background: rgb(124, 58, 237); opacity: 0.4;"></span><span style="background: rgb(3, 105, 161); opacity: 0.54;"></span><span style="background: rgb(194, 24, 91); opacity: 0.64;"></span><span style="background: rgb(232, 121, 249); opacity: 0.45;"></span><span style="background: rgb(8, 145, 178); opacity: 0.86;"></span><span style="background: rgb(194, 24, 91); opacity: 0.77;"></span><span style="background: rgb(14, 116, 144); opacity: 0.38;"></span><span style="background: rgb(255, 79, 160); opacity: 0.48;"></span><span style="background: rgb(168, 85, 247); opacity: 0.5;"></span><span style="background: rgb(56, 189, 248); opacity: 0.88;"></span><span style="background: rgb(14, 116, 144); opacity: 0.89;"></span><span style="background: rgb(8, 145, 178); opacity: 0.77;"></span><span style="background: rgb(109, 40, 217); opacity: 0.85;"></span><span style="background: rgb(8, 145, 178); opacity: 0.49;"></span><span style="background: rgb(14, 116, 144); opacity: 0.53;"></span><span style="background: rgb(76, 29, 149); opacity: 0.65;"></span><span style="background: rgb(255, 79, 160); opacity: 0.9;"></span><span style="background: rgb(30, 64, 175); opacity: 0.46;"></span><span style="background: rgb(3, 105, 161); opacity: 0.5;"></span><span style="background: rgb(232, 121, 249); opacity: 0.8;"></span><span style="background: rgb(109, 40, 217); opacity: 0.77;"></span><span style="background: rgb(124, 58, 237); opacity: 0.65;"></span><span style="background: rgb(156, 0, 50); opacity: 0.32;"></span><span style="background: rgb(30, 64, 175); opacity: 0.87;"></span><span style="background: rgb(76, 29, 149); opacity: 0.59;"></span><span style="background: rgb(255, 45, 120); opacity: 0.56;"></span><span style="background: rgb(14, 116, 144); opacity: 0.55;"></span><span style="background: rgb(156, 0, 50); opacity: 0.48;"></span><span style="background: rgb(109, 40, 217); opacity: 0.71;"></span><span style="background: rgb(168, 85, 247); opacity: 0.75;"></span><span style="background: rgb(255, 79, 160); opacity: 0.71;"></span><span style="background: rgb(124, 58, 237); opacity: 0.64;"></span><span style="background: rgb(56, 189, 248); opacity: 0.56;"></span><span style="background: rgb(30, 64, 175); opacity: 0.75;"></span><span style="background: rgb(232, 121, 249); opacity: 0.36;"></span><span style="background: rgb(232, 121, 249); opacity: 0.54;"></span><span style="background: rgb(109, 40, 217); opacity: 0.64;"></span><span style="background: rgb(14, 116, 144); opacity: 0.61;"></span><span style="background: rgb(6, 182, 212); opacity: 0.84;"></span><span style="background: rgb(156, 0, 50); opacity: 0.75;"></span><span style="background: rgb(194, 24, 91); opacity: 0.73;"></span><span style="background: rgb(8, 145, 178); opacity: 0.79;"></span><span style="background: rgb(76, 29, 149); opacity: 0.32;"></span><span style="background: rgb(109, 40, 217); opacity: 0.32;"></span><span style="background: rgb(8, 145, 178); opacity: 0.37;"></span><span style="background: rgb(156, 0, 50); opacity: 0.64;"></span><span style="background: rgb(8, 145, 178); opacity: 0.45;"></span><span style="background: rgb(56, 189, 248); opacity: 0.43;"></span><span style="background: rgb(14, 116, 144); opacity: 0.69;"></span><span style="background: rgb(255, 79, 160); opacity: 0.72;"></span><span style="background: rgb(76, 29, 149); opacity: 0.65;"></span><span style="background: rgb(14, 116, 144); opacity: 0.46;"></span><span style="background: rgb(30, 64, 175); opacity: 0.55;"></span><span style="background: rgb(156, 0, 50); opacity: 0.61;"></span><span style="background: rgb(3, 105, 161); opacity: 0.49;"></span><span style="background: rgb(14, 116, 144); opacity: 0.66;"></span><span style="background: rgb(3, 105, 161); opacity: 0.36;"></span><span style="background: rgb(232, 121, 249); opacity: 0.54;"></span><span style="background: rgb(14, 116, 144); opacity: 0.32;"></span><span style="background: rgb(14, 116, 144); opacity: 0.57;"></span><span style="background: rgb(255, 79, 160); opacity: 0.86;"></span><span style="background: rgb(124, 58, 237); opacity: 0.56;"></span><span style="background: rgb(30, 64, 175); opacity: 0.33;"></span><span style="background: rgb(255, 79, 160); opacity: 0.66;"></span><span style="background: rgb(156, 0, 50); opacity: 0.62;"></span><span style="background: rgb(3, 105, 161); opacity: 0.38;"></span><span style="background: rgb(156, 0, 50); opacity: 0.57;"></span><span style="background: rgb(8, 145, 178); opacity: 0.56;"></span><span style="background: rgb(30, 64, 175); opacity: 0.42;"></span><span style="background: rgb(255, 45, 120); opacity: 0.49;"></span><span style="background: rgb(194, 24, 91); opacity: 0.55;"></span><span style="background: rgb(8, 145, 178); opacity: 0.53;"></span><span style="background: rgb(109, 40, 217); opacity: 0.71;"></span><span style="background: rgb(109, 40, 217); opacity: 0.9;"></span><span style="background: rgb(30, 64, 175); opacity: 0.48;"></span><span style="background: rgb(168, 85, 247); opacity: 0.63;"></span><span style="background: rgb(30, 64, 175); opacity: 0.89;"></span><span style="background: rgb(56, 189, 248); opacity: 0.34;"></span><span style="background: rgb(255, 79, 160); opacity: 0.44;"></span><span style="background: rgb(76, 29, 149); opacity: 0.53;"></span><span style="background: rgb(255, 45, 120); opacity: 0.77;"></span><span style="background: rgb(156, 0, 50); opacity: 0.51;"></span><span style="background: rgb(255, 45, 120); opacity: 0.84;"></span><span style="background: rgb(3, 105, 161); opacity: 0.54;"></span><span style="background: rgb(6, 182, 212); opacity: 0.57;"></span><span style="background: rgb(255, 45, 120); opacity: 0.76;"></span><span style="background: rgb(124, 58, 237); opacity: 0.71;"></span><span style="background: rgb(30, 64, 175); opacity: 0.67;"></span><span style="background: rgb(109, 40, 217); opacity: 0.84;"></span><span style="background: rgb(194, 24, 91); opacity: 0.51;"></span><span style="background: rgb(255, 45, 120); opacity: 0.89;"></span><span style="background: rgb(8, 145, 178); opacity: 0.74;"></span><span style="background: rgb(255, 79, 160); opacity: 0.87;"></span><span style="background: rgb(30, 64, 175); opacity: 0.31;"></span><span style="background: rgb(255, 45, 120); opacity: 0.45;"></span><span style="background: rgb(76, 29, 149); opacity: 0.7;"></span><span style="background: rgb(56, 189, 248); opacity: 0.59;"></span><span style="background: rgb(156, 0, 50); opacity: 0.69;"></span><span style="background: rgb(109, 40, 217); opacity: 0.85;"></span><span style="background: rgb(124, 58, 237); opacity: 0.46;"></span><span style="background: rgb(194, 24, 91); opacity: 0.32;"></span><span style="background: rgb(30, 64, 175); opacity: 0.53;"></span><span style="background: rgb(6, 182, 212); opacity: 0.38;"></span><span style="background: rgb(124, 58, 237); opacity: 0.74;"></span><span style="background: rgb(156, 0, 50); opacity: 0.33;"></span><span style="background: rgb(255, 79, 160); opacity: 0.46;"></span><span style="background: rgb(109, 40, 217); opacity: 0.48;"></span></div>
+        </div>
+        <div class="effect-card-overlay"></div>
+        <div class="effect-card-content">
+          <div class="effect-tag">Effect 04</div>
+          <div class="effect-name">Pixel Grid</div>
+          <div class="effect-desc">Album art rendered as a blocky retro mosaic. Lo-fi by design.</div>
+        </div>
+      </div>
+
+      <!-- Neon Haze -->
+      <div class="effect-card effect-neon-haze" data-fx="neon-haze">
+        <div class="effect-card-bg"></div>
+        <div class="effect-card-overlay"></div>
+        <div class="effect-card-content">
+          <div class="effect-tag">Effect 05</div>
+          <div class="effect-name">Neon Haze</div>
+          <div class="effect-desc">Electric color blooms pulsing in real time.</div>
+        </div>
+      </div>
+
+      <!-- Minimal Dark -->
+      <div class="effect-card effect-minimal" data-fx="minimal">
+        <div class="effect-card-bg"></div>
+        <div class="effect-card-overlay"></div>
+        <div class="effect-card-content">
+          <div class="effect-tag">Effect 06</div>
+          <div class="effect-name">Minimal Dark</div>
+          <div class="effect-desc">Pure near-black. Let the words do the talking.</div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Customization options -->
+  <section class="customize-section">
+    <div class="section-header">
+      <span class="section-num">Your room, your rules</span>
+      <h2 class="section-title">Mix and match until it's right.</h2>
+    </div>
+    <div class="customize-options">
+
+      <div class="customize-option">
+        <div class="customize-option-icon" style="background: rgba(192,132,252,0.15);">🎨</div>
+        <div class="customize-option-title">Color Theme</div>
+        <div class="customize-option-choices">
+          <span class="choice-pill active" style="border-color:#c084fc; color:#c084fc;">Aurora</span>
+          <span class="choice-pill" style="border-color:#ff2d78; color:#ff2d78;">Neon</span>
+          <span class="choice-pill" style="border-color:#e8d5b0; color:#e8d5b0;">Cinema</span>
+          <span class="choice-pill" style="border-color:#ffe600; color:#ffe600;">Rave</span>
+          <span class="choice-pill" style="border-color:#38bdf8; color:#38bdf8;">Midnight</span>
+          <span class="choice-pill" style="border-color:#fb923c; color:#fb923c;">Ember</span>
+          <span class="choice-pill" style="border-color:#22d3ee; color:#22d3ee;">Vapor</span>
+          <span class="choice-pill" style="border-color:#4ade80; color:#4ade80;">Forest</span>
+        </div>
+        <div class="customize-option-desc">Eight hand-crafted color palettes, each with its own font, energy, and mood.</div>
+      </div>
+
+      <div class="customize-option">
+        <div class="customize-option-icon" style="background: rgba(56,189,248,0.12);">✦</div>
+        <div class="customize-option-title">Background Style</div>
+        <div class="customize-option-choices">
+          <span class="choice-pill active">Lava Lamp</span>
+          <span class="choice-pill">Album Art</span>
+          <span class="choice-pill">Aurora</span>
+          <span class="choice-pill">Pixel</span>
+          <span class="choice-pill">Neon Haze</span>
+          <span class="choice-pill">Minimal</span>
+        </div>
+        <div class="customize-option-desc">Six completely different background modes — from organic blobs to aurora waves to pure minimalism. Each totally distinct.</div>
+      </div>
+
+      <div class="customize-option">
+        <div class="customize-option-icon" style="background: rgba(74,222,128,0.12);">Aa</div>
+        <div class="customize-option-title">Typography</div>
+        <div class="customize-option-choices">
+          <span class="choice-pill active" style="font-family:'Cormorant Garamond',serif; letter-spacing:0.05em;">Cormorant</span>
+          <span class="choice-pill" style="font-family:'Fraunces',serif;">Fraunces</span>
+          <span class="choice-pill" style="font-family:'Space Mono',monospace; font-size:9px;">SPACE MONO</span>
+          <span class="choice-pill" style="font-family:'Syne',sans-serif; font-weight:800; font-size:9px;">SYNE</span>
+          <span class="choice-pill" style="font-family:'Inter',sans-serif; font-weight:800; letter-spacing:-0.03em;">Inter</span>
+        </div>
+        <div class="customize-option-desc">Every theme ships with a font that matches its vibe — from hairline editorial to brutal all-caps.</div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Closing CTA -->
+  <div class="closing">
+    <h2 class="closing-headline">
+      Your song.<br>
+      Your screen.<br>
+      <em>Your room.</em>
+    </h2>
+    <div class="hero-cta-group">
+      <div class="trust-row">
+        <span class="trust-pill">✓ Free to Start</span>
+        <span class="trust-pill">✓ No Install</span>
+        <span class="trust-pill">✓ Millions of Songs</span>
+      </div>
+      <a href="/auth/login" class="btn-connect">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"></path></svg>
+        Start Singing Free
+      </a>
+      <span class="cta-note">No install · Works with Free &amp; Premium</span>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <span class="left">Chorushive &nbsp;·&nbsp; <a href="https://lrclib.net" target="_blank" rel="noopener">Lyrics via lrclib.net</a></span>
+    <span class="right">Built with Spotify Web API</span>
+  </footer>
+
+  <script>
+    // URL error
+    const err = new URLSearchParams(location.search).get('error');
+    if (err) document.getElementById('error-msg').textContent = 'Error: ' + err;
+
+    // ── PREVIEW THEMES: rotate randomly each visit ──
+    const previewThemes = [
+      {
+        cssClass: 'theme-aurora',
+        bg: 'radial-gradient(ellipse at 18% 22%, #c084fc 0%, transparent 52%), radial-gradient(ellipse at 72% 18%, #818cf8 0%, transparent 48%), radial-gradient(ellipse at 50% 75%, #7c3aed 0%, transparent 55%), radial-gradient(ellipse at 82% 72%, #e879f9 0%, transparent 40%), radial-gradient(ellipse at 12% 72%, #4c1d95 0%, transparent 48%), #080318'
+      },
+      {
+        cssClass: 'theme-neon',
+        bg: 'radial-gradient(ellipse at 12% 18%, #ff2d78 0%, transparent 52%), radial-gradient(ellipse at 82% 22%, #ff0a54 0%, transparent 48%), radial-gradient(ellipse at 50% 85%, #e91e8c 0%, transparent 58%), radial-gradient(ellipse at 78% 68%, #ff4fa0 0%, transparent 42%), radial-gradient(ellipse at 28% 60%, #9c0032 0%, transparent 44%), #08000e'
+      },
+      {
+        cssClass: 'theme-cinema',
+        bg: 'radial-gradient(ellipse at 50% 12%, #d4a847 0%, transparent 50%), radial-gradient(ellipse at 18% 68%, #b8860b 0%, transparent 52%), radial-gradient(ellipse at 78% 62%, #8b6914 0%, transparent 48%), radial-gradient(ellipse at 55% 82%, #5a3e10 0%, transparent 58%), radial-gradient(ellipse at 82% 20%, #c9a86c 0%, transparent 38%), #0a0806'
+      },
+      {
+        cssClass: 'theme-rave',
+        bg: 'radial-gradient(ellipse at 50% 45%, #ffe600 0%, transparent 45%), radial-gradient(ellipse at 12% 22%, #ffed4a 0%, transparent 48%), radial-gradient(ellipse at 88% 78%, #ffc107 0%, transparent 48%), radial-gradient(ellipse at 72% 14%, #ffe600 0%, transparent 40%), radial-gradient(ellipse at 30% 80%, #e6cc00 0%, transparent 44%), #000209'
+      },
+      {
+        cssClass: 'theme-midnight',
+        bg: 'radial-gradient(ellipse at 18% 20%, #1e40af 0%, transparent 52%), radial-gradient(ellipse at 78% 18%, #0369a1 0%, transparent 48%), radial-gradient(ellipse at 50% 80%, #172554 0%, transparent 55%), radial-gradient(ellipse at 82% 68%, #38bdf8 0%, transparent 36%), radial-gradient(ellipse at 14% 72%, #0c4a6e 0%, transparent 44%), #020a1a'
+      },
+      {
+        cssClass: 'theme-ember',
+        bg: 'radial-gradient(ellipse at 22% 18%, #ea580c 0%, transparent 50%), radial-gradient(ellipse at 76% 20%, #d97706 0%, transparent 46%), radial-gradient(ellipse at 50% 82%, #451a03 0%, transparent 54%), radial-gradient(ellipse at 80% 66%, #f97316 0%, transparent 36%), radial-gradient(ellipse at 14% 72%, #7c2d12 0%, transparent 44%), #120600'
+      },
+      {
+        cssClass: 'theme-vapor',
+        bg: 'radial-gradient(ellipse at 15% 18%, #7c3aed 0%, transparent 50%), radial-gradient(ellipse at 80% 18%, #0e7490 0%, transparent 48%), radial-gradient(ellipse at 50% 84%, #4c1d95 0%, transparent 54%), radial-gradient(ellipse at 82% 68%, #ec4899 0%, transparent 38%), radial-gradient(ellipse at 16% 70%, #06b6d4 0%, transparent 42%), #06000f'
+      },
+      {
+        cssClass: 'theme-forest',
+        bg: 'radial-gradient(ellipse at 20% 20%, #166534 0%, transparent 50%), radial-gradient(ellipse at 76% 18%, #065f46 0%, transparent 46%), radial-gradient(ellipse at 50% 82%, #022c22 0%, transparent 54%), radial-gradient(ellipse at 80% 66%, #4ade80 0%, transparent 32%), radial-gradient(ellipse at 14% 72%, #14532d 0%, transparent 44%), #020d05'
+      }
+    ];
+    const theme = previewThemes[Math.floor(Math.random() * previewThemes.length)];
+
+    // Apply theme class to preview body
+    const previewBodyEl = document.querySelector('.preview-body');
+    if (previewBodyEl) previewBodyEl.classList.add(theme.cssClass);
+
+    // Secondary layer gets a mirror/shifted version of the theme gradient
+    const themeBg2Map = {
+      'theme-aurora':   'radial-gradient(ellipse at 80% 80%, #a855f7 0%, transparent 48%), radial-gradient(ellipse at 25% 75%, #7c3aed 0%, transparent 45%), radial-gradient(ellipse at 50% 20%, #1e0a5e 0%, transparent 50%), radial-gradient(ellipse at 15% 30%, #c084fc 0%, transparent 35%), radial-gradient(ellipse at 85% 25%, #4c1d95 0%, transparent 45%), #08031a',
+      'theme-neon':     'radial-gradient(ellipse at 90% 85%, #ff2d78 0%, transparent 50%), radial-gradient(ellipse at 15% 80%, #ff0a54 0%, transparent 45%), radial-gradient(ellipse at 50% 10%, #c2185b 0%, transparent 55%), radial-gradient(ellipse at 20% 30%, #ff4fa0 0%, transparent 40%), #080010',
+      'theme-cinema':   'radial-gradient(ellipse at 50% 90%, #c9a86c 0%, transparent 45%), radial-gradient(ellipse at 80% 30%, #8b6914 0%, transparent 50%), radial-gradient(ellipse at 20% 35%, #6b4c0f 0%, transparent 45%), radial-gradient(ellipse at 45% 15%, #3d2b08 0%, transparent 55%), #0a0806',
+      'theme-rave':     'radial-gradient(ellipse at 50% 50%, #ffe600 0%, transparent 40%), radial-gradient(ellipse at 90% 80%, #fff176 0%, transparent 45%), radial-gradient(ellipse at 10% 20%, #ffc107 0%, transparent 45%), radial-gradient(ellipse at 25% 85%, #ffe600 0%, transparent 38%), #000309',
+      'theme-midnight': 'radial-gradient(ellipse at 85% 85%, #1e40af 0%, transparent 48%), radial-gradient(ellipse at 20% 80%, #0369a1 0%, transparent 45%), radial-gradient(ellipse at 50% 12%, #172554 0%, transparent 52%), radial-gradient(ellipse at 18% 28%, #38bdf8 0%, transparent 36%), radial-gradient(ellipse at 82% 22%, #0c4a6e 0%, transparent 44%), #010812',
+      'theme-ember':    'radial-gradient(ellipse at 82% 82%, #d97706 0%, transparent 46%), radial-gradient(ellipse at 18% 78%, #ea580c 0%, transparent 45%), radial-gradient(ellipse at 50% 12%, #451a03 0%, transparent 52%), radial-gradient(ellipse at 80% 20%, #7c2d12 0%, transparent 42%), radial-gradient(ellipse at 22% 25%, #f97316 0%, transparent 38%), #0e0500',
+      'theme-vapor':    'radial-gradient(ellipse at 88% 82%, #7c3aed 0%, transparent 48%), radial-gradient(ellipse at 14% 82%, #0e7490 0%, transparent 45%), radial-gradient(ellipse at 48% 12%, #4c1d95 0%, transparent 52%), radial-gradient(ellipse at 78% 20%, #06b6d4 0%, transparent 40%), radial-gradient(ellipse at 22% 22%, #ec4899 0%, transparent 38%), #04000c',
+      'theme-forest':   'radial-gradient(ellipse at 82% 82%, #065f46 0%, transparent 46%), radial-gradient(ellipse at 18% 80%, #166534 0%, transparent 45%), radial-gradient(ellipse at 50% 12%, #022c22 0%, transparent 52%), radial-gradient(ellipse at 80% 22%, #14532d 0%, transparent 40%), radial-gradient(ellipse at 20% 22%, #4ade80 0%, transparent 30%), #010a03'
+    };
+
+    // ── DEMO SONGS: pick one randomly per visit ──
+    const demoSongs = [
+      {
+        title: "Running Up That Hill", artist: "Kate Bush",
+        albumColor: "radial-gradient(ellipse at 15% 20%, #f09030 0%, transparent 52%), radial-gradient(ellipse at 80% 15%, #e85810 0%, transparent 48%), radial-gradient(ellipse at 55% 78%, #a03808 0%, transparent 52%), radial-gradient(ellipse at 25% 72%, #d06820 0%, transparent 42%), radial-gradient(ellipse at 70% 62%, #7a3205 0%, transparent 46%), #2a0d03",
+        lines: [
+          { prev: "C'mon baby",                words: ["Running","up","that","hill"],             next: "With no problems" },
+          { prev: "Running up that hill",       words: ["It","doesn't","hurt","me"],              next: "You want to feel how it feels" },
+          { prev: "It doesn't hurt me",         words: ["You","want","to","feel","how","it","feels"], next: "You want to know, know that" },
+          { prev: "You want to feel how it feels", words: ["Do","you","want","to","know?"],       next: "It doesn't hurt me" },
+        ]
+      },
+      {
+        title: "Bohemian Rhapsody", artist: "Queen",
+        albumColor: "radial-gradient(ellipse at 20% 20%, #a855f7 0%, transparent 48%), radial-gradient(ellipse at 75% 25%, #7c3aed 0%, transparent 45%), radial-gradient(ellipse at 50% 80%, #1e0a5e 0%, transparent 50%), radial-gradient(ellipse at 85% 70%, #d4a017 0%, transparent 35%), radial-gradient(ellipse at 15% 75%, #4c1d95 0%, transparent 45%), #08031a",
+        lines: [
+          { prev: "Is this the real life",  words: ["Is","this","just","fantasy"],               next: "Caught in a landslide" },
+          { prev: "Is this just fantasy",   words: ["Caught","in","a","landslide"],              next: "No escape from reality" },
+          { prev: "Caught in a landslide",  words: ["Open","your","eyes"],                       next: "Look up to the skies and see" },
+          { prev: "Open your eyes",         words: ["Look","up","to","the","skies","and","see"], next: "I'm just a poor boy" },
+        ]
+      },
+      {
+        title: "Don't Stop Believin'", artist: "Journey",
+        albumColor: "radial-gradient(ellipse at 20% 20%, #3b82f6 0%, transparent 48%), radial-gradient(ellipse at 75% 25%, #1d4ed8 0%, transparent 45%), radial-gradient(ellipse at 45% 78%, #0c1f6e 0%, transparent 52%), radial-gradient(ellipse at 82% 72%, #06b6d4 0%, transparent 35%), radial-gradient(ellipse at 15% 70%, #1e3a5f 0%, transparent 42%), #030d1f",
+        lines: [
+          { prev: "Born and raised in South Detroit", words: ["She","took","the","midnight","train"], next: "Going anywhere" },
+          { prev: "She took the midnight train",       words: ["Going","anywhere"],                   next: "A singer in a smoky room" },
+          { prev: "Don't stop believing",              words: ["Hold","on","to","the","feeling"],     next: "Streetlight — people" },
+          { prev: "Just a small town girl",            words: ["Living","in","a","lonely","world"],   next: "She took the midnight train" },
+        ]
+      },
+      {
+        title: "Mr. Brightside", artist: "The Killers",
+        albumColor: "radial-gradient(ellipse at 18% 22%, #ef4444 0%, transparent 48%), radial-gradient(ellipse at 78% 20%, #dc2626 0%, transparent 45%), radial-gradient(ellipse at 50% 82%, #450a0a 0%, transparent 52%), radial-gradient(ellipse at 80% 68%, #f97316 0%, transparent 38%), radial-gradient(ellipse at 20% 72%, #7f1d1d 0%, transparent 42%), #120404",
+        lines: [
+          { prev: "Coming out of my cage",       words: ["And","I've","been","doing","just","fine"],  next: "Gotta gotta be down" },
+          { prev: "It started out with a kiss",  words: ["How","did","it","end","up","like","this"],  next: "It was only a kiss" },
+          { prev: "How did it end up like this", words: ["It","was","only","a","kiss"],               next: "It was only a kiss" },
+          { prev: "It was only a kiss",          words: ["I","never","wanna","feel","this","way"],    next: "Now I'm falling asleep" },
+        ]
+      },
+      {
+        title: "Sweet Caroline", artist: "Neil Diamond",
+        albumColor: "radial-gradient(ellipse at 20% 22%, #22c55e 0%, transparent 48%), radial-gradient(ellipse at 78% 20%, #16a34a 0%, transparent 45%), radial-gradient(ellipse at 50% 80%, #052e16 0%, transparent 52%), radial-gradient(ellipse at 80% 65%, #84cc16 0%, transparent 35%), radial-gradient(ellipse at 18% 70%, #065f46 0%, transparent 42%), #021408",
+        lines: [
+          { prev: "Where it began",        words: ["I","can't","begin","to","knowing"],            next: "But then I know it's growing strong" },
+          { prev: "Hands, touching hands", words: ["Sweet","Caroline"],                            next: "Good times never seemed so good" },
+          { prev: "Sweet Caroline",        words: ["Good","times","never","seemed","so","good"],   next: "So good, so good, so good" },
+          { prev: "Good times never",      words: ["So","good","so","good","so","good"],           next: "Sweet Caroline" },
+        ]
+      },
+      {
+        title: "Cruel Summer", artist: "Taylor Swift",
+        albumColor: "radial-gradient(ellipse at 22% 18%, #fb7185 0%, transparent 50%), radial-gradient(ellipse at 75% 22%, #f43f5e 0%, transparent 46%), radial-gradient(ellipse at 50% 80%, #9f1239 0%, transparent 52%), radial-gradient(ellipse at 80% 65%, #fda4af 0%, transparent 36%), radial-gradient(ellipse at 15% 75%, #881337 0%, transparent 42%), #1a0208",
+        lines: [
+          { prev: "Fever dream high in the quiet of the night", words: ["You","know","exactly","what","you","do"],   next: "Baby, I'm losing my mind" },
+          { prev: "You know exactly what you do",               words: ["Baby","I'm","losing","my","mind"],          next: "Looking at you" },
+          { prev: "Baby I'm losing my mind",                    words: ["It's","a","cruel","summer"],                next: "With you" },
+          { prev: "It's a cruel summer",                        words: ["Leaving","me","wanting","you"],             next: "Band-aids don't fix bullet holes" },
+        ]
+      },
+      {
+        title: "Blinding Lights", artist: "The Weeknd",
+        albumColor: "radial-gradient(ellipse at 18% 20%, #ef4444 0%, transparent 50%), radial-gradient(ellipse at 78% 18%, #dc2626 0%, transparent 46%), radial-gradient(ellipse at 50% 82%, #2d0606 0%, transparent 52%), radial-gradient(ellipse at 82% 68%, #f97316 0%, transparent 35%), radial-gradient(ellipse at 15% 72%, #7f1d1d 0%, transparent 42%), #120202",
+        lines: [
+          { prev: "I've been running",        words: ["I","can't","stop","calling","you"],              next: "When I'm drunk, it's you" },
+          { prev: "I can't stop calling you", words: ["I'm","blinded","by","the","lights"],             next: "No, I can't sleep until I feel your touch" },
+          { prev: "I'm blinded by the lights",words: ["I","said","ooh","I'm","drowning"],               next: "In the night, I call your name" },
+          { prev: "I said ooh I'm drowning",  words: ["In","the","night","I","call","your","name"],     next: "It's blinding lights" },
+        ]
+      },
+      {
+        title: "Levitating", artist: "Dua Lipa",
+        albumColor: "radial-gradient(ellipse at 20% 18%, #818cf8 0%, transparent 50%), radial-gradient(ellipse at 76% 22%, #6366f1 0%, transparent 46%), radial-gradient(ellipse at 50% 80%, #1e1b4b 0%, transparent 52%), radial-gradient(ellipse at 80% 68%, #a78bfa 0%, transparent 36%), radial-gradient(ellipse at 15% 72%, #312e81 0%, transparent 44%), #050315",
+        lines: [
+          { prev: "Baby lay me down and let's pray", words: ["I","got","you","moonlight"],            next: "You're my starlight" },
+          { prev: "I got you moonlight",              words: ["I","need","you","all","night"],         next: "Come on, dance with me" },
+          { prev: "I need you all night",             words: ["I'm","levitating"],                    next: "The Milky Way, we're renegading" },
+          { prev: "I'm levitating",                   words: ["You","can","fly","away","with","me","tonight"], next: "Baby let me take you" },
+        ]
+      },
+      {
+        title: "As It Was", artist: "Harry Styles",
+        albumColor: "radial-gradient(ellipse at 18% 20%, #f472b6 0%, transparent 50%), radial-gradient(ellipse at 76% 20%, #ec4899 0%, transparent 46%), radial-gradient(ellipse at 50% 82%, #500724 0%, transparent 52%), radial-gradient(ellipse at 80% 65%, #fbbf24 0%, transparent 32%), radial-gradient(ellipse at 15% 72%, #831843 0%, transparent 42%), #150008",
+        lines: [
+          { prev: "Holding me back",         words: ["Gravity's","holding","me","back"],              next: "I want you to hold out the palm of your hand" },
+          { prev: "Gravity's holding me back",words: ["In","this","world","it's","just","us"],         next: "You know it's not the same" },
+          { prev: "In this world it's just us",words: ["You","know","it's","not","the","same"],        next: "As it was" },
+          { prev: "You know it's not the same",words: ["As","it","was"],                              next: "In this world it's just us" },
+        ]
+      },
+      {
+        title: "Flowers", artist: "Miley Cyrus",
+        albumColor: "radial-gradient(ellipse at 20% 18%, #fbbf24 0%, transparent 50%), radial-gradient(ellipse at 76% 20%, #f59e0b 0%, transparent 46%), radial-gradient(ellipse at 50% 80%, #451a03 0%, transparent 52%), radial-gradient(ellipse at 80% 68%, #fde68a 0%, transparent 34%), radial-gradient(ellipse at 16% 72%, #78350f 0%, transparent 42%), #180a00",
+        lines: [
+          { prev: "We were good",            words: ["We","were","gold","kind","of","dream"],          next: "I remember us dancing" },
+          { prev: "We were gold",            words: ["I","can","buy","myself","flowers"],              next: "Write my name in the sand" },
+          { prev: "I can buy myself flowers", words: ["Talk","to","myself","for","hours"],             next: "Say things you don't understand" },
+          { prev: "Talk to myself for hours", words: ["I","can","love","me","better","than","you","can"], next: "Paint my nails, cherry red" },
+        ]
+      },
+      {
+        title: "Dancing Queen", artist: "ABBA",
+        albumColor: "radial-gradient(ellipse at 20% 18%, #38bdf8 0%, transparent 50%), radial-gradient(ellipse at 76% 20%, #0284c7 0%, transparent 46%), radial-gradient(ellipse at 50% 80%, #082f49 0%, transparent 52%), radial-gradient(ellipse at 80% 68%, #7dd3fc 0%, transparent 35%), radial-gradient(ellipse at 16% 72%, #0c4a6e 0%, transparent 42%), #020e18",
+        lines: [
+          { prev: "See that girl",              words: ["Watch","that","scene"],                         next: "Dig in the dancing queen" },
+          { prev: "Watch that scene",           words: ["Friday","night","and","the","lights","are","low"], next: "Looking out for the place to go" },
+          { prev: "Friday night",               words: ["You","are","the","dancing","queen"],            next: "Young and sweet, only seventeen" },
+          { prev: "You are the dancing queen",  words: ["Young","and","sweet","only","seventeen"],       next: "Dancing queen, feel the beat" },
+        ]
+      },
+      {
+        title: "Billie Jean", artist: "Michael Jackson",
+        albumColor: "radial-gradient(ellipse at 20% 20%, #a3a3a3 0%, transparent 48%), radial-gradient(ellipse at 76% 22%, #737373 0%, transparent 46%), radial-gradient(ellipse at 50% 80%, #171717 0%, transparent 52%), radial-gradient(ellipse at 80% 65%, #d4d4d4 0%, transparent 32%), radial-gradient(ellipse at 16% 72%, #404040 0%, transparent 44%), #0a0a0a",
+        lines: [
+          { prev: "Billie Jean is not my lover", words: ["She's","just","a","girl","who","claims","that","I","am","the","one"], next: "But the kid is not my son" },
+          { prev: "She's just a girl",           words: ["But","the","kid","is","not","my","son"],        next: "She told me her name was Billie Jean" },
+          { prev: "But the kid is not my son",   words: ["People","always","told","me","be","careful"],   next: "What you do" },
+          { prev: "People always told me",       words: ["Don't","go","around","breaking","young","girls","hearts"], next: "And mother always told me" },
+        ]
+      },
+      {
+        title: "Hotel California", artist: "Eagles",
+        albumColor: "radial-gradient(ellipse at 20% 18%, #d97706 0%, transparent 50%), radial-gradient(ellipse at 76% 22%, #b45309 0%, transparent 46%), radial-gradient(ellipse at 50% 80%, #431407 0%, transparent 52%), radial-gradient(ellipse at 80% 65%, #fbbf24 0%, transparent 32%), radial-gradient(ellipse at 16% 72%, #78350f 0%, transparent 44%), #180800",
+        lines: [
+          { prev: "On a dark desert highway", words: ["Cool","wind","in","my","hair"],               next: "Warm smell of colitas" },
+          { prev: "Cool wind in my hair",     words: ["Warm","smell","of","colitas"],                 next: "Rising up through the air" },
+          { prev: "Welcome to the Hotel California", words: ["Such","a","lovely","place"],          next: "Such a lovely face" },
+          { prev: "Such a lovely place",      words: ["Plenty","of","room","at","the","Hotel","California"], next: "Any time of year" },
+        ]
+      },
+      {
+        title: "September", artist: "Earth, Wind & Fire",
+        albumColor: "radial-gradient(ellipse at 20% 18%, #facc15 0%, transparent 50%), radial-gradient(ellipse at 76% 22%, #eab308 0%, transparent 46%), radial-gradient(ellipse at 50% 80%, #422006 0%, transparent 52%), radial-gradient(ellipse at 80% 65%, #fde047 0%, transparent 35%), radial-gradient(ellipse at 16% 72%, #713f12 0%, transparent 44%), #180e00",
+        lines: [
+          { prev: "Do you remember",        words: ["The","twenty-first","night","of","September"],   next: "Love was changing the minds of pretenders" },
+          { prev: "The twenty-first night", words: ["Love","was","changing","the","minds"],          next: "Of pretenders while chasing the clouds away" },
+          { prev: "Ba-dee-ya",              words: ["Say","do","you","remember"],                    next: "Dancing in September" },
+          { prev: "Say do you remember",    words: ["Never","was","a","cloudy","day"],               next: "Ba-dee-ya" },
+        ]
+      },
+      {
+        title: "Africa", artist: "Toto",
+        albumColor: "radial-gradient(ellipse at 20% 18%, #16a34a 0%, transparent 50%), radial-gradient(ellipse at 76% 22%, #15803d 0%, transparent 46%), radial-gradient(ellipse at 50% 80%, #052e16 0%, transparent 52%), radial-gradient(ellipse at 80% 65%, #4ade80 0%, transparent 32%), radial-gradient(ellipse at 16% 72%, #166534 0%, transparent 44%), #011208",
+        lines: [
+          { prev: "The moonlit wings",       words: ["Reflect","the","stars","that","guide","me","towards","salvation"], next: "I stopped an old man along the way" },
+          { prev: "The rains down in Africa", words: ["Gonna","take","some","time","to","do","the","things","we","never","had"], next: "Sure as Kilimanjaro" },
+          { prev: "I hear the drums echoing tonight", words: ["She","hears","only","whispers","of","some","quiet","conversation"], next: "She's coming in twelve-thirty flight" },
+          { prev: "Gonna stop those dreams", words: ["I","bless","the","rains","down","in","Africa"], next: "Gonna take some time" },
+        ]
+      },
+      {
+        title: "Eye of the Tiger", artist: "Survivor",
+        albumColor: "radial-gradient(ellipse at 20% 18%, #f97316 0%, transparent 50%), radial-gradient(ellipse at 76% 22%, #ea580c 0%, transparent 46%), radial-gradient(ellipse at 50% 80%, #431407 0%, transparent 52%), radial-gradient(ellipse at 80% 65%, #fed7aa 0%, transparent 32%), radial-gradient(ellipse at 16% 72%, #7c2d12 0%, transparent 44%), #160500",
+        lines: [
+          { prev: "Rising up",              words: ["Back","on","the","street"],                      next: "Did my time, took my chances" },
+          { prev: "Back on the street",     words: ["Went","the","distance","now","I'm","back","on","my","feet"], next: "Just a man and his will to survive" },
+          { prev: "It's the eye of the tiger", words: ["It's","the","thrill","of","the","fight"],    next: "Rising up to the challenge of our rival" },
+          { prev: "It's the thrill of the fight", words: ["And","the","last","known","survivor"],    next: "Stalks his prey in the night" },
+        ]
+      },
+      {
+        title: "Shape of You", artist: "Ed Sheeran",
+        albumColor: "radial-gradient(ellipse at 20% 18%, #34d399 0%, transparent 50%), radial-gradient(ellipse at 76% 22%, #10b981 0%, transparent 46%), radial-gradient(ellipse at 50% 80%, #022c22 0%, transparent 52%), radial-gradient(ellipse at 80% 65%, #6ee7b7 0%, transparent 32%), radial-gradient(ellipse at 16% 72%, #065f46 0%, transparent 44%), #011510",
+        lines: [
+          { prev: "The club isn't the best place", words: ["To","find","a","lover"],                  next: "So the bar is where I go" },
+          { prev: "To find a lover",               words: ["Me","and","my","friends","at","the","table","doing","shots"], next: "Drinking fast and then we talk slow" },
+          { prev: "I'm in love with your body",    words: ["Oh-I-oh-I-oh-I-oh-I"],                    next: "And last night you were in my room" },
+          { prev: "Come on be my baby",            words: ["I'm","in","love","with","the","shape","of","you"], next: "We push and pull like a magnet do" },
+        ]
+      },
+      {
+        title: "Take On Me", artist: "a-ha",
+        albumColor: "radial-gradient(ellipse at 20% 18%, #60a5fa 0%, transparent 50%), radial-gradient(ellipse at 76% 22%, #3b82f6 0%, transparent 46%), radial-gradient(ellipse at 50% 80%, #1e3a8a 0%, transparent 52%), radial-gradient(ellipse at 80% 65%, #93c5fd 0%, transparent 32%), radial-gradient(ellipse at 16% 72%, #1d4ed8 0%, transparent 44%), #020a1f",
+        lines: [
+          { prev: "We're talking away",      words: ["I","don't","know","what","I'm","to","say"], next: "I'll say it anyway" },
+          { prev: "I don't know",            words: ["Today's","another","day","to","find","you"], next: "Shying away" },
+          { prev: "Take on me",              words: ["Take","me","on"],                            next: "I'll be gone in a day or two" },
+          { prev: "Take me on",              words: ["In","a","day","or","two"],                   next: "So needless to say" },
+        ]
+      },
+      {
+        title: "Waterloo", artist: "ABBA",
+        albumColor: "radial-gradient(ellipse at 20% 18%, #fbbf24 0%, transparent 50%), radial-gradient(ellipse at 76% 22%, #f59e0b 0%, transparent 46%), radial-gradient(ellipse at 50% 80%, #78350f 0%, transparent 52%), radial-gradient(ellipse at 80% 65%, #fde68a 0%, transparent 32%), radial-gradient(ellipse at 16% 72%, #b45309 0%, transparent 44%), #1a0e00",
+        lines: [
+          { prev: "My, my",                 words: ["At","Waterloo","Napoleon","did","surrender"],   next: "Oh yeah" },
+          { prev: "Napoleon did surrender", words: ["And","I","have","met","my","destiny"],          next: "In quite a similar way" },
+          { prev: "Waterloo",               words: ["Knowing","my","fate","is","to","be","with","you"], next: "Waterloo" },
+          { prev: "Knowing my fate",        words: ["Waterloo","finally","facing","my","Waterloo"],  next: "My my I tried to hold you back" },
+        ]
+      },
+      {
+        title: "Lose Yourself", artist: "Eminem",
+        albumColor: "radial-gradient(ellipse at 20% 18%, #6b7280 0%, transparent 50%), radial-gradient(ellipse at 76% 22%, #374151 0%, transparent 46%), radial-gradient(ellipse at 50% 80%, #111827 0%, transparent 52%), radial-gradient(ellipse at 80% 65%, #9ca3af 0%, transparent 32%), radial-gradient(ellipse at 16% 72%, #1f2937 0%, transparent 44%), #080a0d",
+        lines: [
+          { prev: "Look, if you had one shot",    words: ["Or","one","opportunity"],                        next: "To seize everything you ever wanted" },
+          { prev: "Or one opportunity",           words: ["Would","you","capture","it"],                    next: "Or just let it slip?" },
+          { prev: "You only get one shot",        words: ["Do","not","miss","your","chance","to","blow"],   next: "This opportunity comes once in a lifetime" },
+          { prev: "Do not miss your chance",      words: ["Yo","his","palms","are","sweaty"],               next: "Knees weak, arms are heavy" },
+        ]
+      },
+    ];
+
+    // Pick random song once per visit
+    const song = demoSongs[Math.floor(Math.random() * demoSongs.length)];
+
+    // ── UPDATE TRACK INFO ──
+    const trackNameEl   = document.getElementById('mockTrackName');
+    const trackArtistEl = document.getElementById('mockArtistName');
+    const albumEl       = document.getElementById('mockAlbum');
+    const previewBgEl   = document.getElementById('previewBg');
+    if (trackNameEl)   trackNameEl.textContent  = song.title;
+    if (trackArtistEl) trackArtistEl.textContent = song.artist;
+
+    // Set theme gradient as fallback on both layers
+    const previewBg2El = document.getElementById('previewBg2');
+    if (previewBgEl) previewBgEl.style.background = theme.bg;
+    if (previewBg2El) previewBg2El.style.background = themeBg2Map[theme.cssClass] || theme.bg;
+    // Save theme gradients so fx switcher can restore them
+    window.__themeBg  = theme.bg;
+    window.__themeBg2 = themeBg2Map[theme.cssClass] || theme.bg;
+
+    // ── REAL ALBUM ART via iTunes Search API (no auth required) ──
+    // Fetches 8 candidates and prefers original studio albums over compilations/greatest hits
+    async function fetchAlbumArt(title, artist) {
+      try {
+        const q = encodeURIComponent(title + ' ' + artist);
+        const res = await fetch('https://itunes.apple.com/search?term=' + q + '&media=music&entity=song&limit=8&country=us');
+        const data = await res.json();
+        if (!data.results || !data.results.length) return null;
+        // Prefer non-compilation albums — filter out "greatest hits", "collection", "platinum", "remaster" in album name
+        const skipWords = /greatest hits|collection|platinum|anthology|essential|best of|definitive|legacy|deluxe edition|live in|live at|live from|symphony|orchestra|philharmonic|direct hits|the very best|remaster/i;
+        const preferred = data.results.find(r =>
+          r.artworkUrl100 && r.collectionName && !skipWords.test(r.collectionName)
+        );
+        const fallback = data.results.find(r => r.artworkUrl100);
+        const pick = preferred || fallback;
+        if (pick) return pick.artworkUrl100.replace('100x100bb', '600x600bb');
+      } catch(e) { /* silent fallback */ }
+      return null;
+    }
+
+    function applyAlbumBackground(artUrl) {
+      // Use background shorthand — unambiguous, no property ordering conflicts
+      const val = 'url(' + artUrl + ') center / cover no-repeat';
+      [previewBgEl, document.getElementById('previewBg2')].forEach(el => {
+        if (el) el.style.background = val;
+      });
+      if (albumEl) albumEl.style.background = 'url(' + artUrl + ') center / cover no-repeat';
+    }
+
+    fetchAlbumArt(song.title, song.artist).then(artUrl => {
+      if (!artUrl) return;
+      // Save for fx mode switcher
+      if (window.__setCurrentArtUrl) window.__setCurrentArtUrl(artUrl);
+
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+
+      img.onload = () => {
+        // ── PIXEL DISSOLVE: draw art at 24x24 grid, show it first, then fade out ──
+        try {
+          const canvas = document.createElement('canvas');
+          const CELLS  = 24;
+          const ratio  = img.naturalHeight / (img.naturalWidth || 1);
+          canvas.width  = CELLS;
+          canvas.height = Math.round(CELLS * ratio) || CELLS;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          const pixelDataUrl = canvas.toDataURL('image/jpeg', 0.85);
+
+          const isPixelModeNow = window.__fxMode === 'pixel';
+
+          if (isPixelModeNow) {
+            // PIXEL MODE: restart canvas scrambler with live art
+            buildPixelScramble(fxEl, artUrl);
+          } else {
+            // Non-pixel modes: show temporary pixelated dissolve overlay, then full-res underneath
+            const pixelOverlay = document.createElement('div');
+            pixelOverlay.className = 'pixel-bg-overlay';
+            pixelOverlay.style.cssText = [
+              'position:absolute;inset:-20%;z-index:1;pointer-events:none;',
+              'background-image:url(' + pixelDataUrl + ');',
+              'background-size:cover;background-position:center;',
+              'image-rendering:pixelated;-ms-interpolation-mode:nearest-neighbor;',
+              'filter:saturate(2.2) brightness(0.75);',
+              'opacity:1;transition:opacity 1.6s cubic-bezier(0.4,0,0.2,1), filter 1.6s ease;'
+            ].join('');
+
+            const previewBody = previewBgEl ? previewBgEl.parentElement : null;
+            if (previewBody) previewBody.insertBefore(pixelOverlay, previewBgEl.nextSibling);
+
+            // Load full-res behind the dissolve
+            applyAlbumBackground(artUrl);
+
+            // Dissolve the pixel overlay out to reveal full-res
+            requestAnimationFrame(() => requestAnimationFrame(() => {
+              pixelOverlay.style.opacity = '0';
+              pixelOverlay.style.filter  = 'saturate(2.4) brightness(0.72) blur(8px)';
+              setTimeout(() => { if (pixelOverlay.parentNode) pixelOverlay.remove(); }, 1700);
+            }));
+          }
+
+        } catch (e) {
+          // CORS / canvas security error — skip dissolve, apply directly
+          applyAlbumBackground(artUrl);
+        }
+      };
+
+      img.onerror = () => applyAlbumBackground(artUrl);
+      img.src = artUrl;
+    });
+
+    // ── LYRIC ANIMATION — smooth cross-fade between lines ──
+    let lineIdx = 0, wordTimer = null;
+    const LINE_INTERVAL = 5500; // ms per line
+
+    function runLine(lineData, instant) {
+      const stage = document.querySelector('.mock-lyrics-stage');
+      if (!stage) return;
+
+      function applyLine() {
+        const prevEl   = stage.querySelector('.mock-prev');
+        const activeEl = stage.querySelector('.mock-active');
+        const nextEl   = stage.querySelector('.mock-next');
+
+        prevEl.textContent = lineData.prev;
+        nextEl.textContent = lineData.next;
+        activeEl.innerHTML = lineData.words.map(w => `<span class="mock-word">${w}</span>`).join(' ');
+
+        // Force re-trigger lineEnter animation (reflow trick)
+        activeEl.style.animation = 'none';
+        void activeEl.offsetHeight;
+        activeEl.style.animation = '';
+
+        // Fade back in
+        stage.style.opacity   = '1';
+        stage.style.transform = 'translateY(0)';
+
+        // Adaptive word timing: fill ~80% of line duration evenly across all words
+        const wordEls = activeEl.querySelectorAll('.mock-word');
+        const totalMs = instant ? LINE_INTERVAL * 0.78 : (LINE_INTERVAL - 240) * 0.78;
+        const wordInterval = Math.min(640, Math.max(220, Math.floor(totalMs / wordEls.length)));
+
+        let wi = 0;
+        if (wordTimer) clearInterval(wordTimer);
+        wordTimer = setInterval(() => {
+          if (wi < wordEls.length) {
+            if (wi > 0) {
+              wordEls[wi - 1].classList.remove('lit');
+              wordEls[wi - 1].classList.add('done');
+            }
+            wordEls[wi].classList.add('lit');
+            wi++;
+          } else {
+            clearInterval(wordTimer);
+            // Mark last word done after a beat
+            setTimeout(() => {
+              if (wordEls[wi - 1]) {
+                wordEls[wi - 1].classList.remove('lit');
+                wordEls[wi - 1].classList.add('done');
+              }
+            }, wordInterval);
+          }
+        }, wordInterval);
+      }
+
+      if (instant) {
+        applyLine();
+      } else {
+        // Fade out, then swap content, then fade in
+        stage.style.opacity   = '0';
+        stage.style.transform = 'translateY(8px)';
+        setTimeout(applyLine, 230);
+      }
+    }
+
+    // First line: no transition (instant on load)
+    runLine(song.lines[0], true);
+
+    setInterval(() => {
+      lineIdx = (lineIdx + 1) % song.lines.length;
+      runLine(song.lines[lineIdx], false);
+    }, LINE_INTERVAL);
+
+  // ── EFFECT MODE SWITCHER ──
+  (function() {
+    let currentFxMode = 'lava';
+    let currentArtUrl = null;
+    window.__fxMode = 'lava'; // initialize global so img.onload can read it
+    const previewBodyEl = document.getElementById('previewBody');
+    const previewBgEl2  = document.getElementById('previewBg');
+    const previewBg2El2 = document.getElementById('previewBg2');
+    const fxEl = document.getElementById('previewFx');
+
+    // Expose art URL to this scope — patch the fetch callback
+    window.__setCurrentArtUrl = function(url) { currentArtUrl = url; };
+
+    function buildPreviewPixelGrid(el) {
+      if (el.dataset.built) return;
+      el.dataset.built = '1';
+      el.innerHTML = '';
+      const grid = document.createElement('div');
+      const cols = 20, rows = 16;
+      grid.style.cssText = 'position:absolute;inset:0;display:grid;grid-template-columns:repeat(' + cols + ',1fr);grid-template-rows:repeat(' + rows + ',1fr);';
+      const colors = ['#ff2d78','#ff4fa0','#7c3aed','#38bdf8','#06b6d4','#6d28d9','#a855f7','#e879f9','#0369a1','#1db954'];
+      for (let i = 0; i < cols * rows; i++) {
+        const cell = document.createElement('span');
+        cell.style.background = colors[Math.floor(Math.random() * colors.length)];
+        cell.style.opacity = (0.28 + Math.random() * 0.55).toFixed(2);
+        grid.appendChild(cell);
+      }
+      el.appendChild(grid);
+    }
+
+    function buildPixelScramble(el, artUrl) {
+      el.innerHTML = '';
+      delete el.dataset.built;
+
+      const canvas = document.createElement('canvas');
+      canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated;';
+      el.appendChild(canvas);
+
+      const pb = document.getElementById('previewBody');
+      const W = pb ? pb.offsetWidth  : 320;
+      const H = pb ? pb.offsetHeight : 400;
+      canvas.width  = W;
+      canvas.height = H;
+      const ctx = canvas.getContext('2d');
+
+      const BLOCK = 48; // large chunky pixels
+      const cols  = Math.ceil(W / BLOCK);
+      const rows  = Math.ceil(H / BLOCK);
+      const total = cols * rows;
+
+      // positions[destIdx] = srcIdx
+      const positions = Array.from({length: total}, function(_, i) { return i; });
+      for (var i = total - 1; i > 0; i--) {
+        var j = (Math.random() * (i + 1)) | 0;
+        var t = positions[i]; positions[i] = positions[j]; positions[j] = t;
+      }
+
+      var rafId = null;
+      var timer = null;
+      var alive = true;
+      canvas.__stopScramble = function() {
+        alive = false;
+        if (rafId) cancelAnimationFrame(rafId);
+        if (timer) clearTimeout(timer);
+        rafId = null; timer = null;
+      };
+
+      if (artUrl) {
+        var img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = function() {
+          if (!alive) return;
+          var srcCanvas = document.createElement('canvas');
+          srcCanvas.width = W; srcCanvas.height = H;
+          srcCanvas.getContext('2d').drawImage(img, 0, 0, W, H);
+
+          // transitions[destIdx] = { fromSrc, toSrc, startTime }
+          var transitions = {};
+          var FADE_MS = 1400; // ms each block cross-fades
+
+          function easeInOut(t) { return t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2,2)/2; }
+
+          function drawFrame(ts) {
+            if (!alive) return;
+            ctx.clearRect(0, 0, W, H);
+            for (var d = 0; d < total; d++) {
+              var dc = d % cols, dr = (d / cols) | 0;
+              var tr = transitions[d];
+              if (tr) {
+                var p = Math.min(1, (ts - tr.startTime) / FADE_MS);
+                var ep = easeInOut(p);
+                // old block fading out
+                var fsc = tr.fromSrc % cols, fsr = (tr.fromSrc / cols) | 0;
+                ctx.globalAlpha = 1 - ep;
+                ctx.drawImage(srcCanvas, fsc*BLOCK, fsr*BLOCK, BLOCK, BLOCK, dc*BLOCK, dr*BLOCK, BLOCK, BLOCK);
+                // new block fading in
+                var s = positions[d];
+                var sc = s % cols, sr = (s / cols) | 0;
+                ctx.globalAlpha = ep;
+                ctx.drawImage(srcCanvas, sc*BLOCK, sr*BLOCK, BLOCK, BLOCK, dc*BLOCK, dr*BLOCK, BLOCK, BLOCK);
+                ctx.globalAlpha = 1;
+                if (p >= 1) delete transitions[d];
+              } else {
+                var s = positions[d];
+                var sc = s % cols, sr = (s / cols) | 0;
+                ctx.drawImage(srcCanvas, sc*BLOCK, sr*BLOCK, BLOCK, BLOCK, dc*BLOCK, dr*BLOCK, BLOCK, BLOCK);
+              }
+            }
+            rafId = requestAnimationFrame(drawFrame);
+          }
+          rafId = requestAnimationFrame(drawFrame);
+
+          function scrambleTick() {
+            if (!alive) return;
+            var swaps = 3 + ((Math.random() * 3) | 0); // 3–5 blocks change per tick
+            var now = performance.now();
+            for (var s = 0; s < swaps; s++) {
+              var a = (Math.random() * total) | 0;
+              var b = (Math.random() * total) | 0;
+              transitions[a] = { fromSrc: positions[a], startTime: now };
+              transitions[b] = { fromSrc: positions[b], startTime: now };
+              var tmp = positions[a]; positions[a] = positions[b]; positions[b] = tmp;
+            }
+            timer = setTimeout(scrambleTick, 2200 + Math.random() * 1400); // 2.2–3.6s between ticks
+          }
+          scrambleTick();
+        };
+        img.onerror = function() { buildPreviewPixelGrid(el); };
+        img.src = artUrl;
+      } else {
+        // No art — slow colour wash: redraw all blocks every ~3s
+        var pixColors = ['#ff2d78','#7c3aed','#38bdf8','#06b6d4','#1db954','#ffe600','#ff7800'];
+        function drawColorScramble() {
+          if (!alive) return;
+          for (var r = 0; r < rows; r++) {
+            for (var c = 0; c < cols; c++) {
+              ctx.fillStyle = pixColors[(Math.random() * pixColors.length) | 0];
+              ctx.globalAlpha = 0.45 + Math.random() * 0.45;
+              ctx.fillRect(c * BLOCK, r * BLOCK, BLOCK, BLOCK);
+            }
+          }
+          ctx.globalAlpha = 1;
+        }
+        drawColorScramble();
+        function colorTick() { drawColorScramble(); timer = setTimeout(colorTick, 3000); }
+        colorTick();
+      }
+    }
+
+    function buildLavaLamp(el) {
+      el.innerHTML = '';
+      // Clear any previous overlay blob from the preview body
+      const prevOverlay = previewBodyEl && previewBodyEl.querySelector('.lava-overlay');
+      if (prevOverlay) prevOverlay.remove();
+
+      const container = document.createElement('div');
+      container.className = 'lava-container';
+
+      // Goo layer — blobs live here; contrast+blur filter creates organic merging
+      const gooLayer = document.createElement('div');
+      gooLayer.className = 'lava-goo-layer';
+
+      // Overlay layer — above lyrics, for the one foreground blob
+      const overlayLayer = document.createElement('div');
+      overlayLayer.className = 'lava-overlay';
+
+      // Rising blobs — float up, drip, and sink back down
+      // Each blob gets a radial gradient: specular highlight top-left, base mid, dark rim
+      const risingBlobs = [
+        { w: 245, h: 235, x: 32, delay: 0,    dur: 118,
+          grad: 'radial-gradient(ellipse at 36% 28%, rgba(255,255,255,0.22) 0%, #ff6030 8%, #ff3d00 40%, #c42c00 68%, #640e00 100%)',
+          float: 'lavaBlobFloat',  morph: 'lavaBlobMorph'  },
+        { w: 270, h: 258, x: 60, delay: -38,  dur: 130,
+          grad: 'radial-gradient(ellipse at 38% 30%, rgba(255,255,255,0.18) 0%, #e04a20 8%, #cc2e00 40%, #9e2000 68%, #520a00 100%)',
+          float: 'lavaBlobFloatB', morph: 'lavaBlobMorphB' },
+        { w: 210, h: 200, x: 46, delay: -62,  dur: 105,
+          grad: 'radial-gradient(ellipse at 34% 26%, rgba(255,255,255,0.24) 0%, #ff5f28 8%, #e83600 40%, #b42800 68%, #5c1000 100%)',
+          float: 'lavaBlobFloatC', morph: 'lavaBlobMorphC', overlay: true },
+        { w: 255, h: 244, x: 22, delay: -82,  dur: 122,
+          grad: 'radial-gradient(ellipse at 37% 29%, rgba(255,255,255,0.20) 0%, #f05028 8%, #d43200 40%, #a62400 68%, #581200 100%)',
+          float: 'lavaBlobFloatB', morph: 'lavaBlobMorphC' },
+        { w: 230, h: 220, x: 68, delay: -50,  dur: 112,
+          grad: 'radial-gradient(ellipse at 35% 27%, rgba(255,255,255,0.16) 0%, #d84418 8%, #bf2a00 40%, #941c00 68%, #4e0c00 100%)',
+          float: 'lavaBlobFloatC', morph: 'lavaBlobMorphB' },
+      ];
+
+      risingBlobs.forEach(function(b) {
+        const track = document.createElement('div');
+        track.className = 'lava-blob-track';
+        track.style.cssText =
+          'left:calc(' + b.x + '% - ' + (b.w / 2) + 'px);' +
+          'width:' + b.w + 'px;' +
+          'animation-name:' + b.float + ';' +
+          'animation-duration:' + b.dur + 's;' +
+          'animation-delay:' + b.delay + 's;';
+
+        const blob = document.createElement('div');
+        blob.className = 'lava-blob';
+        blob.style.cssText =
+          'width:' + b.w + 'px;' +
+          'height:' + b.h + 'px;' +
+          'background:' + b.grad + ';' +
+          'box-shadow: inset -6px -10px 20px rgba(0,0,0,0.38), inset 3px 5px 12px rgba(255,190,120,0.14);' +
+          'animation-name:' + b.morph + ';' +
+          'animation-duration:' + b.dur + 's;' +
+          'animation-delay:' + b.delay + 's;';
+
+        track.appendChild(blob);
+        // Blob marked overlay floats above the lyrics; others stay behind
+        if (b.overlay) {
+          overlayLayer.appendChild(track);
+        } else {
+          gooLayer.appendChild(track);
+        }
+      });
+
+      // Pool blobs — large, flat, stay near the base, slowly breathe
+      // They merge with rising blobs as they detach — creates the pooling effect
+      const poolBlobs = [
+        { w: 270, h: 108, x: 22, delay: 0,    dur: 70,
+          grad: 'radial-gradient(ellipse at 38% 34%, rgba(255,255,255,0.14) 0%, #c43818 8%, #a82400 42%, #7e1600 70%, #3c0800 100%)' },
+        { w: 240, h: 96,  x: 58, delay: -22,  dur: 65,
+          grad: 'radial-gradient(ellipse at 36% 32%, rgba(255,255,255,0.12) 0%, #d43e1c 8%, #b82800 42%, #8a1a00 70%, #420a00 100%)' },
+        { w: 200, h: 86,  x: 40, delay: -40,  dur: 75,
+          grad: 'radial-gradient(ellipse at 40% 35%, rgba(255,255,255,0.12) 0%, #dc421e 8%, #c02c00 42%, #921e00 70%, #460a00 100%)' },
+      ];
+
+      poolBlobs.forEach(function(b) {
+        const blob = document.createElement('div');
+        blob.className = 'lava-pool-blob';
+        blob.style.cssText =
+          'left:calc(' + b.x + '% - ' + (b.w / 2) + 'px);' +
+          'bottom:-' + Math.round(b.h * 0.30) + 'px;' +
+          'width:' + b.w + 'px;' +
+          'height:' + b.h + 'px;' +
+          'background:' + b.grad + ';' +
+          'box-shadow: inset -4px -6px 14px rgba(0,0,0,0.32), inset 2px 3px 8px rgba(255,160,80,0.10);' +
+          'animation-duration:' + b.dur + 's;' +
+          'animation-delay:' + b.delay + 's;';
+        gooLayer.appendChild(blob);
+      });
+
+      container.appendChild(gooLayer);
+
+      // Heat glow and top shadow sit outside the goo layer so they aren't gooey-filtered
+      const heat = document.createElement('div');
+      heat.className = 'lava-heat';
+      container.appendChild(heat);
+
+      const topShadow = document.createElement('div');
+      topShadow.className = 'lava-top-shadow';
+      container.appendChild(topShadow);
+
+      el.appendChild(container);
+
+      // Overlay layer lives on previewBody so it stacks above the lyrics (z-index 2 > z-index 1)
+      if (previewBodyEl) previewBodyEl.appendChild(overlayLayer);
+    }
+
+    function applyFxMode(mode) {
+      if (!previewBodyEl) return;
+      const prevMode = currentFxMode;
+      currentFxMode = mode;
+      window.__fxMode = mode; // expose for img.onload dissolve check
+
+      // Swap class on previewBody
+      previewBodyEl.className = (previewBodyEl.className || '')
+        .replace(/\bfx-\S+/g, '').trim() + ' fx-' + mode;
+
+      // Update active card highlight in effects section
+      document.querySelectorAll('.effect-card[data-fx]').forEach(c => c.classList.remove('active'));
+      const activeCard = document.querySelector('.effect-card[data-fx="' + mode + '"]');
+      if (activeCard) activeCard.classList.add('active');
+
+      // Update active state in hero fx switcher buttons
+      document.querySelectorAll('.fx-btn[data-mode]').forEach(b => b.classList.remove('active'));
+      const activeBtn = document.querySelector('.fx-btn[data-mode="' + mode + '"]');
+      if (activeBtn) activeBtn.classList.add('active');
+
+      // Leaving pixel mode: stop scrambler
+      if (mode !== 'pixel' && fxEl) {
+        var oldCanvas = fxEl.querySelector('canvas');
+        if (oldCanvas && oldCanvas.__stopScramble) oldCanvas.__stopScramble();
+      }
+
+      // Clear injected content from previous mode if it used fxEl
+      if (fxEl && (prevMode === 'lava' || prevMode === 'pixel') && fxEl.children.length) {
+        fxEl.innerHTML = '';
+        delete fxEl.dataset.built;
+      }
+
+      // Handle background content per mode
+      if (mode === 'lava') {
+        buildLavaLamp(fxEl);
+      } else if (mode === 'album') {
+        if (currentArtUrl) {
+          const val = 'url(' + currentArtUrl + ') center / cover no-repeat';
+          if (previewBgEl2) previewBgEl2.style.background = val;
+          if (previewBg2El2) previewBg2El2.style.background = val;
+          const albumEl2 = document.getElementById('mockAlbum');
+          if (albumEl2) albumEl2.style.background = val;
+        }
+      } else if (mode === 'pixel') {
+        // Canvas pixel scramble — randomly relocates blocks from album art each tick
+        buildPixelScramble(fxEl, currentArtUrl);
+      }
+    }
+
+    // Wire up effect CARD clicks — scroll hero into view so user sees the change
+    document.querySelectorAll('.effect-card[data-fx]').forEach(card => {
+      card.addEventListener('click', () => {
+        applyFxMode(card.dataset.fx);
+        const heroEl = document.querySelector('.hero-outer');
+        if (heroEl) heroEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    });
+
+    // Wire up hero switcher buttons — switch in place, no scroll needed
+    document.querySelectorAll('.fx-btn[data-mode]').forEach(btn => {
+      btn.addEventListener('click', () => applyFxMode(btn.dataset.mode));
+    });
+
+    // Expose applyFxMode globally so album art fetch can trigger mode restoration
+    window.__applyFxMode = applyFxMode;
+
+    // Boot into lava lamp mode — builds the lamp DOM and sets active states
+    applyFxMode('lava');
+  })();
+
+  // ── PIXEL MOSAIC: fill effect card with colorful pixel grid ──
+  (function() {
+    const mosaic = document.getElementById('pixelMosaic');
+    if (!mosaic) return;
+    const cols = 14, rows = 11;
+    const colors = [
+      '#ff2d78','#ff4fa0','#7c3aed','#0369a1','#38bdf8',
+      '#06b6d4','#6d28d9','#c2185b','#1e40af','#0891b2',
+      '#a855f7','#e879f9','#0e7490','#4c1d95','#9c0032',
+    ];
+    mosaic.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+    mosaic.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
+    for (let i = 0; i < cols * rows; i++) {
+      const cell = document.createElement('span');
+      cell.style.background = colors[Math.floor(Math.random() * colors.length)];
+      cell.style.opacity = (0.3 + Math.random() * 0.6).toFixed(2);
+      mosaic.appendChild(cell);
+    }
+  })();
+  </script>
+
+  <!-- SVG filter definitions — hidden, referenced by CSS filter: url() -->
+  <svg style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
+    <defs>
+      <!-- Lava lamp gooey merge: feColorMatrix targets alpha only, preserving crisp color -->
+      <filter id="lava-goo" x="-30%" y="-30%" width="160%" height="160%">
+        <feGaussianBlur in="SourceGraphic" stdDeviation="26" result="blur"></feGaussianBlur>
+        <feColorMatrix in="blur" type="matrix" values="1 0 0 0 0
+                  0 1 0 0 0
+                  0 0 1 0 0
+                  0 0 0 20 -8" result="goo"></feColorMatrix>
+      </filter>
+    </defs>
+  </svg>
+
+
+</body></html>
