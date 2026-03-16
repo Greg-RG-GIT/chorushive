@@ -8,18 +8,20 @@ export default async function handler(req, res) {
 
   try {
     // Exchange code for tokens
+    const clientId = (process.env.SPOTIFY_CLIENT_ID || '').trim();
+    const clientSecret = (process.env.SPOTIFY_CLIENT_SECRET || '').trim();
+    const redirectUri = (process.env.SPOTIFY_REDIRECT_URI || '').trim();
+
     const tokenRes = await fetch('https://accounts.spotify.com/api/token', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
-        Authorization: `Basic ${Buffer.from(
-          `${process.env.SPOTIFY_CLIENT_ID}:${process.env.SPOTIFY_CLIENT_SECRET}`
-        ).toString('base64')}`,
+        Authorization: `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString('base64')}`,
       },
       body: new URLSearchParams({
         grant_type: 'authorization_code',
         code,
-        redirect_uri: process.env.SPOTIFY_REDIRECT_URI,
+        redirect_uri: redirectUri,
       }),
     });
 

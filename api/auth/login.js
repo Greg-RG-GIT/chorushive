@@ -8,9 +8,9 @@ export default function handler(req, res) {
 
   const params = new URLSearchParams({
     response_type: 'code',
-    client_id: process.env.SPOTIFY_CLIENT_ID,
+    client_id: (process.env.SPOTIFY_CLIENT_ID || '').trim(),
     scope: scopes,
-    redirect_uri: process.env.SPOTIFY_REDIRECT_URI,
+    redirect_uri: (process.env.SPOTIFY_REDIRECT_URI || '').trim(),
     show_dialog: 'false',
   });
 
