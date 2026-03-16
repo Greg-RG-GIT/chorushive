@@ -2188,8 +2188,7 @@
         </div>
       </div>
 
-      <div class="theme-card theme-neon" style="--tbg:#0a001a; --tacc:#ff2d78; --tdim:rgba(255,45,120,0.4);" data-pro="true">
-                <div class="pro-lock-overlay"><span class="pro-lock-badge">PRO</span></div>
+      <div class="theme-card theme-neon" style="--tbg:#0a001a; --tacc:#ff2d78; --tdim:rgba(255,45,120,0.4);">
         <div class="theme-card-lyrics theme-neon-text">
           <div class="tc-prev">Hit me baby one more time</div>
           <div class="tc-active tc-neon-active">MY <span>LONELINESS</span> IS KILLING ME</div>
@@ -2201,8 +2200,7 @@
         </div>
       </div>
 
-      <div class="theme-card theme-cinema" style="--tbg:#0a0806; --tacc:#e8d5b0; --tdim:rgba(232,213,176,0.35);" data-pro="true">
-                <div class="pro-lock-overlay"><span class="pro-lock-badge">PRO</span></div>
+      <div class="theme-card theme-cinema" style="--tbg:#0a0806; --tacc:#e8d5b0; --tdim:rgba(232,213,176,0.35);">
         <div class="theme-card-lyrics">
           <div class="tc-prev">Is this the real life</div>
           <div class="tc-active">Is this just <span>fantasy</span></div>
@@ -2214,8 +2212,7 @@
         </div>
       </div>
 
-      <div class="theme-card theme-rave" style="--tbg:#000309; --tacc:#ffe600; --tdim:rgba(255,230,0,0.35);" data-pro="true">
-                <div class="pro-lock-overlay"><span class="pro-lock-badge">PRO</span></div>
+      <div class="theme-card theme-rave" style="--tbg:#000309; --tacc:#ffe600; --tdim:rgba(255,230,0,0.35);">
         <div class="theme-card-lyrics theme-rave-text">
           <div class="tc-prev">MR. BRIGHTSIDE</div>
           <div class="tc-active tc-rave-active">COMING OUT OF MY <span>CAGE</span></div>
@@ -2239,8 +2236,7 @@
         </div>
       </div>
 
-      <div class="theme-card theme-ember" style="--tbg:#0d0a06; --tacc:#fb923c; --tdim:rgba(251,146,60,0.4);" data-pro="true">
-                <div class="pro-lock-overlay"><span class="pro-lock-badge">PRO</span></div>
+      <div class="theme-card theme-ember" style="--tbg:#0d0a06; --tacc:#fb923c; --tdim:rgba(251,146,60,0.4);">
         <div class="theme-card-lyrics">
           <div class="tc-prev">Almost heaven</div>
           <div class="tc-active">West Virginia, <span>Blue</span> Ridge Mountains</div>
@@ -2252,8 +2248,7 @@
         </div>
       </div>
 
-      <div class="theme-card theme-vapor" style="--tbg:#0a0018; --tacc:#22d3ee; --tdim:rgba(34,211,238,0.35);" data-pro="true">
-                <div class="pro-lock-overlay"><span class="pro-lock-badge">PRO</span></div>
+      <div class="theme-card theme-vapor" style="--tbg:#0a0018; --tacc:#22d3ee; --tdim:rgba(34,211,238,0.35);">
         <div class="theme-card-lyrics theme-vapor-text">
           <div class="tc-prev">We're up all night to the sun</div>
           <div class="tc-active">WE'RE UP ALL NIGHT TO <span>GET</span> LUCKY</div>
@@ -2265,8 +2260,7 @@
         </div>
       </div>
 
-      <div class="theme-card theme-forest" style="--tbg:#030d06; --tacc:#4ade80; --tdim:rgba(74,222,128,0.35);" data-pro="true">
-                <div class="pro-lock-overlay"><span class="pro-lock-badge">PRO</span></div>
+      <div class="theme-card theme-forest" style="--tbg:#030d06; --tacc:#4ade80; --tdim:rgba(74,222,128,0.35);">
         <div class="theme-card-lyrics">
           <div class="tc-prev">I never loved nobody fully</div>
           <div class="tc-active">Always one foot <span>on</span> the ground</div>
@@ -2962,8 +2956,8 @@
         img.onload = function() {
           if (!alive) return;
           var srcCanvas = document.createElement('canvas');
-          srcCanvas.width = W; srcCanvas.height = H;
-          srcCanvas.getContext('2d').drawImage(img, 0, 0, W, H);
+          srcCanvas.width = cols; srcCanvas.height = rows;
+          srcCanvas.getContext('2d').drawImage(img, 0, 0, cols, rows);
 
           // transitions[destIdx] = { fromSrc, toSrc, startTime }
           var transitions = {};
@@ -2983,18 +2977,18 @@
                 // old block fading out
                 var fsc = tr.fromSrc % cols, fsr = (tr.fromSrc / cols) | 0;
                 ctx.globalAlpha = 1 - ep;
-                ctx.drawImage(srcCanvas, fsc*BLOCK, fsr*BLOCK, BLOCK, BLOCK, dc*BLOCK, dr*BLOCK, BLOCK, BLOCK);
+                ctx.drawImage(srcCanvas, fsc, fsr, 1, 1, dc*BLOCK, dr*BLOCK, BLOCK, BLOCK);
                 // new block fading in
                 var s = positions[d];
                 var sc = s % cols, sr = (s / cols) | 0;
                 ctx.globalAlpha = ep;
-                ctx.drawImage(srcCanvas, sc*BLOCK, sr*BLOCK, BLOCK, BLOCK, dc*BLOCK, dr*BLOCK, BLOCK, BLOCK);
+                ctx.drawImage(srcCanvas, sc, sr, 1, 1, dc*BLOCK, dr*BLOCK, BLOCK, BLOCK);
                 ctx.globalAlpha = 1;
                 if (p >= 1) delete transitions[d];
               } else {
                 var s = positions[d];
                 var sc = s % cols, sr = (s / cols) | 0;
-                ctx.drawImage(srcCanvas, sc*BLOCK, sr*BLOCK, BLOCK, BLOCK, dc*BLOCK, dr*BLOCK, BLOCK, BLOCK);
+                ctx.drawImage(srcCanvas, sc, sr, 1, 1, dc*BLOCK, dr*BLOCK, BLOCK, BLOCK);
               }
             }
             rafId = requestAnimationFrame(drawFrame);
@@ -3083,7 +3077,6 @@
         : 1;
       if (_s !== 1) {
         risingBlobs.forEach(function(b) { b.w = Math.round(b.w * _s); b.h = Math.round(b.h * _s); });
-        poolBlobs.forEach(function(b)   { b.w = Math.round(b.w * _s); b.h = Math.round(b.h * _s); });
       }
 
       risingBlobs.forEach(function(b) {
@@ -3126,6 +3119,7 @@
         { w: 200, h: 86,  x: 40, delay: -40,  dur: 75,
           grad: 'radial-gradient(ellipse at 40% 35%, rgba(255,255,255,0.12) 0%, #dc421e 8%, #c02c00 42%, #921e00 70%, #460a00 100%)' },
       ];
+      if (_s !== 1) { poolBlobs.forEach(function(b) { b.w = Math.round(b.w * _s); b.h = Math.round(b.h * _s); }); }
 
       poolBlobs.forEach(function(b) {
         const blob = document.createElement('div');
