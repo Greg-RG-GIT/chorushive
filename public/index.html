@@ -484,7 +484,7 @@
       color: #fff;
       font-weight: 800;
       letter-spacing: -0.03em;
-      text-shadow: 0 2px 6px rgba(0,0,0,0.98), 0 4px 28px rgba(0,0,0,0.9), 0 0 50px rgba(0,0,0,0.5);
+      text-shadow: 0 1px 4px rgba(0,0,0,0.75);
       animation: lineEnter 0.3s ease forwards;
     }
     @keyframes lineEnter {
@@ -499,9 +499,7 @@
     }
     .mock-word.lit {
       color: #fff;
-      text-shadow:
-        0 0 12px var(--preview-accent, #1db954),
-        0 0 24px var(--preview-accent, #1db954);
+      text-shadow: 0 0 8px var(--preview-accent, #1db954);
     }
     .mock-word.done {
       color: rgba(255,255,255,0.80);
@@ -599,12 +597,8 @@
     }
 
     /* Chromatic aberration on sung words — Neon + Rave only */
-    .preview-body.theme-neon .mock-word.done {
-      text-shadow: -1.5px 0 0 rgba(255, 0, 100, 0.55), 1.5px 0 0 rgba(0, 200, 255, 0.55);
-    }
-    .preview-body.theme-rave .mock-word.done {
-      text-shadow: -1.5px 0 0 rgba(255, 50, 0, 0.50), 1.5px 0 0 rgba(50, 255, 200, 0.50);
-    }
+    /* neon done chromatic removed */
+    /* rave done chromatic removed */
 
     /* ── SCREEN STRIP ── */
     .screen-strip {
@@ -3269,15 +3263,16 @@
   </script>
 
   <!-- SVG filter definitions — hidden, referenced by CSS filter: url() -->
-  <svg style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
+  <svg style="position:absolute;left:-9999px;top:-9999px;width:1px;height:1px;" aria-hidden="true">
     <defs>
       <!-- Lava lamp gooey merge: feColorMatrix targets alpha only, preserving crisp color -->
-      <filter id="lava-goo" x="-30%" y="-30%" width="160%" height="160%">
-        <feGaussianBlur in="SourceGraphic" stdDeviation="30" result="blur"></feGaussianBlur>
+      <filter id="lava-goo" x="-60%" y="-60%" width="220%" height="220%" color-interpolation-filters="sRGB">
+        <feGaussianBlur in="SourceGraphic" stdDeviation="18" result="blur"></feGaussianBlur>
         <feColorMatrix in="blur" type="matrix" values="1 0 0 0 0
                   0 1 0 0 0
                   0 0 1 0 0
-                  0 0 0 26 -11" result="goo"></feColorMatrix>
+                  0 0 0 22 -9" result="goo"></feColorMatrix>
+        <feComposite in="SourceGraphic" in2="goo" operator="atop"></feComposite>
       </filter>
     </defs>
   </svg>
