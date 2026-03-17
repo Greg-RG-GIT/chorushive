@@ -1,0 +1,14 @@
+<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+  <!-- Pointy-top hexagon: hive shape -->
+  <polygon
+    points="16,2 28.1,9 28.1,23 16,30 3.9,23 3.9,9"
+    fill="none"
+    stroke="#1db954"
+    stroke-width="2"
+    stroke-linejoin="round"
+  />
+  <!-- Equalizer bars: chorus / music -->
+  <rect x="9.5"  y="15" width="3" height="8"  rx="1.5" fill="#1db954"/>
+  <rect x="14.5" y="9"  width="3" height="14" rx="1.5" fill="#1db954"/>
+  <rect x="19.5" y="12" width="3" height="11" rx="1.5" fill="#1db954"/>
+</svg>
