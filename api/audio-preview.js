@@ -58,7 +58,6 @@ export default async function handler(req, res) {
     if (contentLength) res.setHeader('Content-Length', contentLength);
     // Cache at CDN edge for 1 hour so repeat visitors get instant response
     res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate=86400');
-    res.setHeader('Accept-Ranges', 'bytes');
     res.status(200);
 
     Readable.fromWeb(audioRes.body).pipe(res);
