@@ -3712,12 +3712,13 @@
 
       if (pill) {
         // ── Blob-URL preload strategy ──
-        // Use song.previewUrl (iTunes CDN) directly — lyrics are timed to these exact clips.
-        // The Deezer proxy clips a different 30s window, so lyrics go out of sync.
-        // iTunes CDN allows CORS fetch from browser. We fetch → Blob URL to avoid
-        // Chrome's <audio> Range-request stall-loop (audio element retries 200 as 206 mismatch).
+        // Use the Deezer proxy (not song.previewUrl) — iTunes CDN serves M4P (FairPlay DRM),
+        // which Chrome refuses to decode (canPlayType returns empty string).
+        // Deezer proxy serves plain MP3. We fetch → Blob URL to avoid Chrome's
+        // <audio> Range-request stall-loop (audio element retries 200 as 206 mismatch).
+        const previewApiUrl = '/api/audio-preview?artist=' + encodeURIComponent(song.artist) + '&title=' + encodeURIComponent(song.title);
         let blobReady = false;
-        fetch(song.previewUrl)
+        fetch(previewApiUrl)
           .then(function(r) { return r.ok ? r.blob() : Promise.reject(r.status); })
           .then(function(blob) {
             audio.src = URL.createObjectURL(blob);
