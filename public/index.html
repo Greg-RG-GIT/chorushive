@@ -2106,15 +2106,220 @@
     }
     .sw-wrap.done .sw-fill-clip  { width: 100% !important; transition: none; }
     .sw-wrap.active .sw-fill-clip { transition: width var(--sw-dur, 0.4s) cubic-bezier(0.35,0,0.15,1); width: 100%; }
+
+    /* ── PLAYER MODE ─────────────────────────────────────────────────────── */
+    /* Expand the existing preview-body to full-screen when playing */
+    #previewBody.player-mode {
+      position: fixed !important;
+      inset: 0 !important;
+      z-index: 9999 !important;
+      border-radius: 0 !important;
+      width: 100vw !important;
+      height: 100dvh !important;
+      max-width: none !important;
+      max-height: none !important;
+    }
+    #previewBody.player-mode .mock-lyrics-stage {
+      padding: 48px 8vw 100px;
+    }
+    #previewBody.player-mode .mock-line.mock-active {
+      font-size: clamp(28px, 6.5vw, 80px) !important;
+    }
+    #previewBody.player-mode .mock-line.mock-prev,
+    #previewBody.player-mode .mock-line.mock-next {
+      font-size: clamp(15px, 3vw, 38px) !important;
+    }
+    /* Player controls: close + fx switcher bar at top */
+    #playerControls {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      z-index: 10;
+      display: none;
+      align-items: center;
+      justify-content: flex-end;
+      padding: 14px 18px;
+      gap: 10px;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, transparent 100%);
+      pointer-events: none;
+    }
+    #previewBody.player-mode #playerControls { display: flex; pointer-events: all; }
+    #playerCloseBtn {
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.15);
+      color: rgba(255,255,255,0.75);
+      font-size: 15px;
+      width: 34px; height: 34px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.2s;
+    }
+    #playerCloseBtn:hover { background: rgba(255,255,255,0.22); }
+    /* Compact fx switcher inside player */
+    #playerFxBar {
+      display: flex; gap: 6px; flex-wrap: nowrap; overflow-x: auto;
+    }
+    .pfx-btn {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.12);
+      color: rgba(255,255,255,0.55);
+      font-family: monospace; font-size: 10px; letter-spacing: 0.06em;
+      padding: 4px 10px; border-radius: 2px; cursor: pointer; white-space: nowrap;
+      transition: background 0.15s, color 0.15s;
+    }
+    .pfx-btn.active, .pfx-btn:hover {
+      background: rgba(255,255,255,0.18);
+      color: #fff;
+    }
+    /* Status overlay (waiting / loading / no lyrics) */
+    #playerStatus {
+      position: absolute; inset: 0; z-index: 5;
+      display: none; align-items: center; justify-content: center;
+      flex-direction: column; gap: 10px; pointer-events: none;
+    }
+    #previewBody.player-mode #playerStatus { display: flex; }
+    #playerStatus.hidden { display: none !important; }
+    #playerStatusMsg {
+      color: rgba(255,255,255,0.42);
+      font-family: monospace; font-size: 12px; letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+    /* Hero launch button — shown after Spotify login */
+    #launchKaraokeBtn {
+      display: none;
+      margin-top: 24px;
+      padding: 14px 32px;
+      background: #1db954;
+      color: #000;
+      font-family: monospace; font-size: 13px; font-weight: 700; letter-spacing: 0.08em;
+      border: none; border-radius: 3px; cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    #launchKaraokeBtn:hover { opacity: 0.88; }
+    #launchKaraokeBtn.visible { display: inline-flex; align-items: center; gap: 8px; }
   </style>
   <!-- Three.js (plasma WebGL) + GSAP (lyric animations) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-</head>
-<body>
-
-
-  <!-- Ticker -->
+<style>@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600;700&display=swap');
+:root{--ch-bg:#050810;--ch-surface:rgba(255,255,255,0.04);--ch-cyan:#00d9ff;--ch-pink:#ff006e;--ch-purple:#8b5cf6;--ch-green:#10b981;--ch-text:#e4e6f1;--ch-muted:#7a7e8f;--ch-border:rgba(0,217,255,0.12);--ch-glow-cyan:0 0 20px rgba(0,217,255,0.4);--ch-glow-pink:0 0 20px rgba(255,0,110,0.4);--ch-glow-purple:0 0 20px rgba(139,92,246,0.4);--ch-glow-green:0 0 20px rgba(16,185,129,0.4);}
+::-webkit-scrollbar{width:8px}::-webkit-scrollbar-track{background:#050810}::-webkit-scrollbar-thumb{background:linear-gradient(180deg,var(--ch-purple),var(--ch-cyan));border-radius:8px}
+#main-nav{position:fixed;top:0;left:0;right:0;z-index:1000;padding:18px 48px;display:flex;align-items:center;justify-content:space-between;transition:all .3s ease;border-bottom:1px solid transparent}
+#main-nav.nav-scrolled{background:rgba(5,8,16,0.85);backdrop-filter:blur(16px);border-bottom-color:var(--ch-border);box-shadow:0 4px 24px rgba(0,0,0,0.4)}
+.ch-nav-logo{font-family:'Orbitron',monospace;font-size:14px;letter-spacing:.2em;color:var(--ch-cyan);text-decoration:none;text-shadow:var(--ch-glow-cyan);transition:text-shadow .3s}
+.ch-nav-links{display:flex;gap:2rem}.ch-nav-links a{color:rgba(255,255,255,0.7);font-size:.9rem;font-weight:500;text-decoration:none;transition:color .2s}.ch-nav-links a:hover{color:var(--ch-cyan)}
+.ch-btn-primary{display:inline-flex;align-items:center;gap:.5rem;padding:.7rem 1.6rem;background:var(--ch-cyan);color:#050810;font-weight:700;font-size:.85rem;letter-spacing:.05em;border-radius:8px;text-decoration:none;transition:all .2s;border:none;cursor:pointer}
+.ch-btn-primary:hover{box-shadow:var(--ch-glow-cyan);background:#1ae6ff;color:#050810;text-decoration:none}
+.ch-btn-secondary{display:inline-flex;align-items:center;padding:.7rem 1.6rem;border:1px solid rgba(255,255,255,0.25);color:rgba(255,255,255,0.8);font-weight:600;font-size:.85rem;border-radius:8px;text-decoration:none;transition:all .2s}
+.ch-btn-secondary:hover{border-color:var(--ch-cyan);color:var(--ch-cyan);box-shadow:var(--ch-glow-cyan)}
+@keyframes ch-hero-bg{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+@keyframes ch-scanline{0%{background-position:0 0}100%{background-position:0 4px}}
+#ch-hero{min-height:100vh;display:flex;align-items:center;position:relative;overflow:hidden;padding:100px 48px 60px}
+#ch-hero::before{content:'';position:absolute;inset:0;background:linear-gradient(45deg,#1a0033,#330066,#001a4d,#003333,#1a0033);background-size:400% 400%;animation:ch-hero-bg 10s ease infinite;z-index:0}
+#ch-hero::after{content:'';position:absolute;inset:0;background-image:repeating-linear-gradient(0deg,rgba(0,0,0,.12) 0,rgba(0,0,0,.12) 2px,transparent 2px,transparent 4px);z-index:1;pointer-events:none}
+.ch-hero-inner{position:relative;z-index:2;width:100%;max-width:1400px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:4rem;align-items:center}
+.ch-eyebrow{font-family:'Orbitron',monospace;font-size:.7rem;letter-spacing:.25em;color:var(--ch-cyan);margin-bottom:1rem;opacity:.8}
+.ch-headline{font-family:'Orbitron',monospace;font-size:clamp(2.5rem,5vw,4rem);font-weight:900;line-height:1.1;margin-bottom:1.5rem;background:linear-gradient(135deg,#fff 40%,var(--ch-cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.ch-subhead{font-size:1.1rem;color:rgba(255,255,255,0.65);line-height:1.7;margin-bottom:2rem;max-width:480px}
+.ch-cta-group{display:flex;gap:1rem;flex-wrap:wrap}
+.ch-hero-app{position:relative}.ch-hero-app .preview-window{border-radius:16px;overflow:hidden;box-shadow:0 0 60px rgba(0,217,255,0.2),0 40px 80px rgba(0,0,0,0.6);border:1px solid var(--ch-border)}
+.ch-section-inner{max-width:1200px;margin:0 auto;padding:5rem 2rem}
+.ch-section-label{font-family:'Orbitron',monospace;font-size:.65rem;letter-spacing:.3em;color:var(--ch-cyan);text-transform:uppercase;margin-bottom:.75rem;opacity:.7}
+.ch-section-title{font-family:'Orbitron',monospace;font-size:clamp(1.8rem,3.5vw,2.8rem);font-weight:700;margin-bottom:1rem;background:linear-gradient(135deg,#fff,var(--ch-cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.ch-section-intro{color:rgba(255,255,255,0.55);font-size:1.05rem;margin-bottom:3rem;max-width:600px}
+#features{background:linear-gradient(180deg,transparent,rgba(0,217,255,0.03),transparent)}
+.ch-features-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:1.5rem}
+.ch-feature-card{background:var(--ch-surface);border:1px solid var(--ch-border);border-radius:16px;padding:2rem;backdrop-filter:blur(10px);transition:all .3s ease}
+.ch-feature-card:hover{border-color:rgba(0,217,255,0.35);box-shadow:var(--ch-glow-cyan);transform:translateY(-4px)}
+.ch-feature-icon{font-size:2rem;margin-bottom:1rem;display:block}
+.ch-feature-title{font-family:'Orbitron',monospace;font-size:1rem;color:var(--ch-cyan);margin-bottom:.75rem;font-weight:700}
+.ch-feature-body{color:rgba(255,255,255,0.55);font-size:.9rem;line-height:1.6}
+#ch-moods{background:linear-gradient(180deg,rgba(0,217,255,0.03),rgba(255,0,110,0.03))}
+.ch-moods-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1.5rem}
+.ch-mood-card{border-radius:16px;padding:2rem;border:1px solid var(--ch-border);background:var(--ch-surface);backdrop-filter:blur(10px);cursor:pointer;transition:all .35s cubic-bezier(.23,1,.32,1);position:relative;overflow:hidden}
+.ch-mood-card::before{content:'';position:absolute;inset:0;opacity:0;transition:opacity .35s}
+.ch-mood-card.energetic::before{background:linear-gradient(135deg,rgba(255,0,110,.1),transparent)}
+.ch-mood-card.atmospheric::before{background:linear-gradient(135deg,rgba(0,217,255,.1),transparent)}
+.ch-mood-card.visual::before{background:linear-gradient(135deg,rgba(139,92,246,.1),transparent)}
+.ch-mood-card.minimal::before{background:linear-gradient(135deg,rgba(16,185,129,.1),transparent)}
+.ch-mood-card:hover::before,.ch-mood-card.active::before{opacity:1}
+.ch-mood-card.active.energetic{border-color:var(--ch-pink);box-shadow:var(--ch-glow-pink)}
+.ch-mood-card.active.atmospheric{border-color:var(--ch-cyan);box-shadow:var(--ch-glow-cyan)}
+.ch-mood-card.active.visual{border-color:var(--ch-purple);box-shadow:var(--ch-glow-purple)}
+.ch-mood-card.active.minimal{border-color:var(--ch-green);box-shadow:var(--ch-glow-green)}
+.ch-mood-name{font-family:'Orbitron',monospace;font-size:1.1rem;font-weight:700;margin-bottom:.25rem}
+.energetic .ch-mood-name{color:var(--ch-pink)}.atmospheric .ch-mood-name{color:var(--ch-cyan)}.visual .ch-mood-name{color:var(--ch-purple)}.minimal .ch-mood-name{color:var(--ch-green)}
+.ch-mood-tagline{font-style:italic;font-size:.85rem;color:rgba(255,255,255,0.45);margin-bottom:.75rem}
+.ch-mood-desc{font-size:.9rem;color:rgba(255,255,255,0.55);line-height:1.5;margin-bottom:1.25rem;position:relative;z-index:1}
+.ch-mood-pills{display:flex;gap:.5rem;flex-wrap:wrap;position:relative;z-index:1}
+.ch-mood-pill{padding:.35rem .85rem;border:1px solid var(--ch-border);border-radius:20px;font-size:.75rem;color:rgba(255,255,255,0.5);transition:all .3s}
+.active .ch-mood-pill{border-color:currentColor;color:var(--bg,#fff);background:currentColor;opacity:.85}
+.energetic.active .ch-mood-pill{background:var(--ch-pink);border-color:var(--ch-pink);color:#050810}
+.atmospheric.active .ch-mood-pill{background:var(--ch-cyan);border-color:var(--ch-cyan);color:#050810}
+.visual.active .ch-mood-pill{background:var(--ch-purple);border-color:var(--ch-purple);color:#fff}
+.minimal.active .ch-mood-pill{background:var(--ch-green);border-color:var(--ch-green);color:#050810}
+#ch-effects{background:linear-gradient(180deg,rgba(255,0,110,0.03),transparent)}
+.ch-effects-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1.25rem}
+.ch-effect-card{aspect-ratio:1/1;border-radius:16px;border:1px solid var(--ch-border);overflow:hidden;position:relative;cursor:pointer;transition:all .35s cubic-bezier(.23,1,.32,1)}
+.ch-effect-card:hover{transform:translateY(-8px);border-color:rgba(0,217,255,.4);box-shadow:var(--ch-glow-cyan)}
+.ch-effect-card.selected{border-color:var(--ch-cyan);box-shadow:0 0 40px rgba(0,217,255,.5)}
+.ch-eff-bg{position:absolute;inset:0;z-index:0}
+@keyframes ch-plasma{0%{filter:hue-rotate(0deg)}100%{filter:hue-rotate(360deg)}}
+.ch-eff-plasma{background:linear-gradient(135deg,#ff006e,#8b5cf6,#00d9ff,#ff006e);background-size:300% 300%;animation:ch-hero-bg 4s ease infinite,ch-plasma 8s linear infinite}
+@keyframes ch-wave{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+.ch-eff-waveform{background:linear-gradient(90deg,#050810 0%,#00d9ff 30%,#ff006e 50%,#00d9ff 70%,#050810 100%);background-size:300% 100%;animation:ch-wave 3s ease infinite}
+@keyframes ch-aurora{0%,100%{background-position:0% 50%;opacity:.7}50%{background-position:100% 50%;opacity:1}}
+.ch-eff-aurora{background:linear-gradient(90deg,#004466,#00d9ff,#1a6b6b,#00d9ff,#004466);background-size:300% 100%;animation:ch-aurora 5s ease infinite}
+@keyframes ch-lava{0%{border-radius:60% 40% 30% 70%/60% 30% 70% 40%}50%{border-radius:30% 60% 70% 40%/50% 60% 30% 60%}100%{border-radius:60% 40% 30% 70%/60% 30% 70% 40%}}
+.ch-eff-lava{background:radial-gradient(ellipse at 40% 40%,#ff4400,#ff6600,#1a0000);animation:ch-lava 5s ease infinite}
+.ch-eff-album{background:linear-gradient(135deg,#1a1a3e,#8b5cf6,#ff006e);position:relative}
+.ch-eff-album::after{content:'';position:absolute;inset:20%;border-radius:50%;border:2px solid rgba(255,255,255,.2);box-shadow:0 0 0 15px rgba(255,255,255,.05),0 0 0 30px rgba(255,255,255,.03)}
+@keyframes ch-pixel{0%,100%{opacity:1}50%{opacity:.6}}
+.ch-eff-pixel{background:repeating-linear-gradient(45deg,#1a1a3e 0,#1a1a3e 10px,#8b5cf6 10px,#8b5cf6 20px);animation:ch-pixel .4s ease infinite}
+.ch-eff-minimal{background:linear-gradient(135deg,#0a0a1a,#151525)}
+.ch-eff-neon-haze{background:radial-gradient(ellipse at 30% 50%,rgba(255,0,110,.6),transparent 60%),radial-gradient(ellipse at 70% 50%,rgba(0,217,255,.6),transparent 60%),#050810}
+.ch-effect-overlay{position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,rgba(5,8,16,.5) 0%,rgba(5,8,16,.2) 50%,rgba(5,8,16,.8) 100%);display:flex;flex-direction:column;justify-content:space-between;padding:1rem;transition:all .3s}
+.ch-effect-card:hover .ch-effect-overlay{background:linear-gradient(180deg,rgba(5,8,16,.2) 0%,transparent 50%,rgba(5,8,16,.7) 100%)}
+.ch-effect-badge{font-family:'Orbitron',monospace;font-size:.65rem;letter-spacing:.1em;background:rgba(255,255,255,.1);border:1px solid var(--ch-border);border-radius:6px;padding:.25rem .6rem;color:var(--ch-cyan);align-self:flex-start}
+.ch-effect-info{display:flex;flex-direction:column;gap:.25rem}
+.ch-effect-name{font-family:'Orbitron',monospace;font-size:.9rem;font-weight:700;opacity:0;transform:translateY(6px);transition:all .3s}
+.ch-effect-card:hover .ch-effect-name{opacity:1;transform:translateY(0)}
+.ch-effect-tagline{font-size:.75rem;color:rgba(255,255,255,.5);opacity:0;transform:translateY(6px);transition:all .3s .05s}
+.ch-effect-card:hover .ch-effect-tagline{opacity:1;transform:translateY(0)}
+.ch-effect-cta{position:absolute;bottom:1rem;left:1rem;right:1rem;padding:.65rem;background:var(--ch-cyan);color:#050810;font-weight:700;font-size:.8rem;border:none;border-radius:8px;cursor:pointer;opacity:0;transform:translateY(8px);transition:all .3s;text-align:center}
+.ch-effect-card.selected .ch-effect-cta{opacity:1;transform:translateY(0)}
+#ch-lyric-modes{background:linear-gradient(180deg,transparent,rgba(139,92,246,.04),transparent)}
+.ch-tabs{display:flex;gap:0;border-bottom:1px solid var(--ch-border);margin-bottom:3rem}
+.ch-tab{padding:1rem 2rem;background:none;border:none;color:rgba(255,255,255,.45);font-size:1rem;font-weight:600;cursor:pointer;position:relative;transition:color .3s;letter-spacing:.02em}
+.ch-tab::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:2px;background:var(--ch-cyan);transform:scaleX(0);transition:transform .3s cubic-bezier(.23,1,.32,1);box-shadow:var(--ch-glow-cyan)}
+.ch-tab.active{color:var(--ch-cyan);text-shadow:0 0 12px rgba(0,217,255,.4)}
+.ch-tab.active::after{transform:scaleX(1)}
+.ch-panel{display:none;animation:ch-fadein .4s ease}.ch-panel.active{display:grid;grid-template-columns:1fr 1fr;gap:3rem;align-items:center}
+@keyframes ch-fadein{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.ch-lyric-demo{padding:2rem;border:1px solid var(--ch-border);border-radius:16px;background:var(--ch-surface);backdrop-filter:blur(12px)}
+.ch-lyric-line{font-size:1.1rem;line-height:2.2;color:rgba(255,255,255,.4);transition:all .3s}
+.ch-lyric-line.active{color:var(--ch-cyan);font-weight:600;text-shadow:0 0 16px rgba(0,217,255,.4)}
+.panel-focused .ch-lyric-line:not(.active){filter:blur(3px);opacity:.25}
+.panel-focused .ch-lyric-line.active{filter:none;opacity:1}
+@keyframes ch-sweep{0%{background-position:-100% center}100%{background-position:200% center}}
+.ch-sweep-word{display:inline-block;margin-right:.3em;color:rgba(255,255,255,.3)}
+.ch-sweep-word.lit{background:linear-gradient(90deg,var(--ch-cyan) 0%,var(--ch-purple) 50%,var(--ch-cyan) 100%);background-size:200% 100%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:ch-sweep 1.8s ease-in-out infinite}
+.ch-lyric-desc h3{font-family:'Orbitron',monospace;font-size:1.4rem;color:var(--ch-cyan);margin-bottom:1rem}
+.ch-lyric-tagline{font-style:italic;color:rgba(255,255,255,.5);margin-bottom:1rem;font-size:.95rem}
+.ch-lyric-body{color:rgba(255,255,255,.55);line-height:1.7;margin-bottom:1.5rem;font-size:.95rem}
+.ch-mode-bullets{list-style:none}.ch-mode-bullets li{padding:.6rem 0 .6rem 1.5rem;position:relative;color:rgba(255,255,255,.5);font-size:.9rem}
+.ch-mode-bullets li::before{content:'▸';position:absolute;left:0;color:var(--ch-cyan)}
+.ch-new-footer{background:rgba(0,0,0,.5);border-top:1px solid var(--ch-border);padding:3rem 2rem;margin-top:4rem}
+.ch-footer-inner{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:1fr auto auto auto;gap:3rem;align-items:start;margin-bottom:2rem}
+.ch-footer-brand .ch-nav-logo{font-size:18px;display:block;margin-bottom:.75rem}
+.ch-footer-brand p{font-size:.85rem;color:rgba(255,255,255,.35);line-height:1.6}
+.ch-footer-col h5{font-family:'Orbitron',monospace;font-size:.7rem;letter-spacing:.15em;color:var(--ch-cyan);margin-bottom:1rem}
+.ch-footer-col a{display:block;color:rgba(255,255,255,.4);font-size:.85rem;text-decoration:none;margin-bottom:.5rem;transition:color .2s}.ch-footer-col a:hover{color:var(--ch-cyan)}
+.ch-footer-bottom{max-width:1200px;margin:0 auto;border-top:1px solid var(--ch-border);padding-top:1.5rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem}
+.ch-footer-copy{font-size:.8rem;color:rgba(255,255,255,.25)}
+@media(max-width:1024px){.ch-hero-inner{grid-template-columns:1fr}.ch-hero-app{display:none}.ch-panel.active{grid-template-columns:1fr}}
+@media(max-width:768px){#main-nav{padding:16px 24px}.ch-nav-links{display:none}#ch-hero{padding:80px 24px 48px}.ch-section-inner{padding:3rem 1.5rem}.ch-effects-grid{grid-template-columns:repeat(2,1fr)}.ch-footer-inner{grid-template-columns:1fr 1fr;gap:2rem}}
+</style></head><body><!-- Ticker -->
   <div class="ticker-wrap" aria-hidden="true">
     <div class="ticker-track">
       <span class="ticker-item">Bohemian Rhapsody<span class="dot">◆</span></span>
@@ -2159,61 +2364,41 @@
       <span class="ticker-item">Shape of You<span class="dot">◆</span></span>
       <span class="ticker-item">Flowers<span class="dot">◆</span></span>
     </div>
+  </div><!-- NEW NAV -->
+<nav id="main-nav">
+  <div class="ch-nav-container" style="max-width:1400px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;width:100%">
+    <a href="/" class="ch-nav-logo">CHORUSHIVE</a>
+    <div class="ch-nav-links">
+      <a href="#features">Experience</a>
+      <a href="#ch-effects">Effects</a>
+      <a href="#ch-lyric-modes">Modes</a>
+    </div>
+    <a href="/auth/login" class="ch-btn-primary">Enter</a>
   </div>
+</nav>
 
-  <!-- Nav -->
-  <nav>
-    <a class="nav-logo" href="/">Chorushive</a>
-
-  </nav>
-
-  <!-- Hero -->
-  <div class="hero-outer">
-  <header class="hero">
-    <div class="hero-left">
-      <div class="hero-label">Every song. Every screen. Every room.</div>
-    <h1 class="hero-headline">
-      Where the <span class="fade">whole</span><br>
-      <span class="green-word">room sings.</span>
-    </h1>
-    <div class="hero-subline">
-      <p class="hero-copy">
-        Your Spotify library. Real-time lyrics. Any screen, any room.
-        <strong>No new songs to learn. No setup. No ads.</strong> Just hit play and everyone knows the words.
-      </p>
-      <div class="hero-cta-group">
-        <div class="trust-row">
-          <span class="trust-pill">✓ Free Forever</span>
-          <span class="trust-pill">✓ No Install</span>
-          <span class="trust-pill">✓ Your Spotify Songs</span>
-        </div>
-        <a href="/auth/login" class="btn-connect">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"></path></svg>
+<!-- NEW HERO -->
+<section id="ch-hero">
+  <div class="ch-hero-inner">
+    <div class="ch-hero-copy">
+      <div class="ch-eyebrow">YOUR VOICE. VISUALIZED.</div>
+      <h1 class="ch-headline">Sing Into<br>the Light</h1>
+      <p class="ch-subhead">Word-for-word sync. Beat-reactive visuals. Eight immersive effects. This is karaoke reimagined.</p>
+      <div class="ch-cta-group">
+        <a href="/auth/login" class="ch-btn-primary">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
           Start Singing Free
         </a>
-        <span class="cta-note">Secure Spotify signin — we never store your password</span>
-        <div id="error-msg" class="error"></div>
+        <a href="#ch-effects" class="ch-btn-secondary">See It First</a>
       </div>
-      <!-- Screens strip — in left col now -->
-      <div class="screen-strip" style="margin-top:24px;">
-        <span class="screen-item">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"></rect><path d="M8 21h8M12 17v4"></path></svg>
-          Desktop
-        </span>
-        <span class="screen-dot">·</span>
-        <span class="screen-item">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="5" y="2" width="14" height="20" rx="2"></rect></svg>
-          Phone
-        </span>
-        <span class="screen-dot">·</span>
-        <span class="screen-item">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"></rect><path d="M2 20h20"></path></svg>
-          TV &amp; Projector
-        </span>
+      <div style="margin-top:1.5rem;display:flex;gap:1rem;flex-wrap:wrap">
+        <span style="font-size:.78rem;color:rgba(255,255,255,.35);background:rgba(255,255,255,.05);border:1px solid var(--ch-border);border-radius:20px;padding:.3rem .8rem">&#10003; Free Forever</span>
+        <span style="font-size:.78rem;color:rgba(255,255,255,.35);background:rgba(255,255,255,.05);border:1px solid var(--ch-border);border-radius:20px;padding:.3rem .8rem">&#10003; No Install</span>
+        <span style="font-size:.78rem;color:rgba(255,255,255,.35);background:rgba(255,255,255,.05);border:1px solid var(--ch-border);border-radius:20px;padding:.3rem .8rem">&#10003; Your Spotify Songs</span>
       </div>
     </div>
-    </div>
-    <div class="hero-right">
+    <div class="ch-hero-app">
+      <div class="hero-right">
       <div class="preview-window">
         <div class="preview-body theme-rave fx-lava" id="previewBody">
           <!-- Effect switcher — lets users cycle all 6 modes directly in the hero -->
@@ -2256,297 +2441,126 @@
           <div class="mock-progress" style="position:relative;z-index:4;">
             <div class="mock-progress-fill"></div>
           </div>
+          <!-- Player mode controls (hidden until player-mode class is added) -->
+          <div id="playerControls">
+            <div id="playerFxBar">
+              <button class="pfx-btn active" data-pfx="lava">Lava</button>
+              <button class="pfx-btn" data-pfx="album">Album</button>
+              <button class="pfx-btn" data-pfx="aurora">Aurora</button>
+              <button class="pfx-btn" data-pfx="pixel">Pixel</button>
+              <button class="pfx-btn" data-pfx="neon-haze">Neon</button>
+              <button class="pfx-btn" data-pfx="minimal">Minimal</button>
+              <button class="pfx-btn" data-pfx="waveform">Wave</button>
+            </div>
+            <button id="playerCloseBtn" title="Exit">✕</button>
+          </div>
+          <!-- Status overlay: loading / waiting / no lyrics -->
+          <div id="playerStatus" class="hidden">
+            <p id="playerStatusMsg"></p>
+          </div>
         </div>
       </div>
     </div>
   </header>
-  </div><!-- /hero-outer -->
-
-  <!-- Slow lyric marquee -->
-  <div class="lyric-marquee" aria-hidden="true">
-    <div class="lyric-marquee-track">
-      <span class="lyric-marquee-item">Is this the <span class="highlight">real</span> life, is this just fantasy —</span>
-      <span class="lyric-marquee-item">I'm <span class="highlight">blinded</span> by the lights —</span>
-      <span class="lyric-marquee-item">We are never ever ever <span class="highlight">getting</span> back together —</span>
-      <span class="lyric-marquee-item">You are the <span class="highlight">dancing</span> queen —</span>
-      <span class="lyric-marquee-item">I can't stop the <span class="highlight">feeling</span> —</span>
-      <span class="lyric-marquee-item">Started from the <span class="highlight">bottom</span>, now we're here —</span>
-      <span class="lyric-marquee-item">Don't stop <span class="highlight">believin'</span>, hold on to the feeling —</span>
-      <span class="lyric-marquee-item">It's the <span class="highlight">eye</span> of the tiger —</span>
-      <span class="lyric-marquee-item">I bless the <span class="highlight">rains</span> down in Africa —</span>
-      <span class="lyric-marquee-item">I can buy myself <span class="highlight">flowers</span> —</span>
-      <span class="lyric-marquee-item">Is this the <span class="highlight">real</span> life, is this just fantasy —</span>
-      <span class="lyric-marquee-item">I'm <span class="highlight">blinded</span> by the lights —</span>
-      <span class="lyric-marquee-item">We are never ever ever <span class="highlight">getting</span> back together —</span>
-      <span class="lyric-marquee-item">You are the <span class="highlight">dancing</span> queen —</span>
-      <span class="lyric-marquee-item">I can't stop the <span class="highlight">feeling</span> —</span>
-      <span class="lyric-marquee-item">Started from the <span class="highlight">bottom</span>, now we're here —</span>
-      <span class="lyric-marquee-item">Don't stop <span class="highlight">believin'</span>, hold on to the feeling —</span>
-      <span class="lyric-marquee-item">It's the <span class="highlight">eye</span> of the tiger —</span>
-      <span class="lyric-marquee-item">I bless the <span class="highlight">rains</span> down in Africa —</span>
-      <span class="lyric-marquee-item">I can buy myself <span class="highlight">flowers</span> —</span>
     </div>
   </div>
+</section>
 
-
-  <!-- Pain point -->
-  <section class="section pain-section">
-    <div class="pain-inner">
-      <p class="pain-text">You know the feeling. The song drops, everyone wants to sing — and someone&#39;s fumbling for lyrics on YouTube. Tiny text. Wrong sync. An ad about to kill the vibe.</p>
-      <p class="pain-bridge">Chorushive puts your Spotify, <strong>word-for-word</strong>, on whatever screen you have. No fumbling. No ads. No wrong words.</p>
+<!-- FEATURES -->
+<section id="features" style="background:linear-gradient(180deg,transparent,rgba(0,217,255,.03),transparent)">
+  <div class="ch-section-inner">
+    <div class="ch-section-label">What You Get</div>
+    <h2 class="ch-section-title">Built for Your Moment</h2>
+    <div class="ch-features-grid">
+      <div class="ch-feature-card"><span class="ch-feature-icon">&#9889;</span><div class="ch-feature-title">Locked-In Sync</div><p class="ch-feature-body">Every word lands on beat. Whisper AI timestamps mean your voice and the visuals move as one.</p></div>
+      <div class="ch-feature-card"><span class="ch-feature-icon">&#127912;</span><div class="ch-feature-title">Eight Worlds</div><p class="ch-feature-body">From digital plasma to shimmering aurora&mdash;pick the vibe that matches your song and mood.</p></div>
+      <div class="ch-feature-card"><span class="ch-feature-icon">&#128065;</span><div class="ch-feature-title">Three Ways to Read</div><p class="ch-feature-body">Words flow. Focused blurs the crowd. Sweep fills like a live stage. Your choice, your control.</p></div>
+      <div class="ch-feature-card"><span class="ch-feature-icon">&#127925;</span><div class="ch-feature-title">Powered by Beat</div><p class="ch-feature-body">Built-in beat detection drives every pulse, every glow, every reaction on screen.</p></div>
     </div>
-  </section>
+  </div>
+</section>
 
-  <!-- How it works -->
-  <section class="section">
-    <div class="section-header">
-      <span class="section-num">No setup. No learning curve.</span>
-      <h2 class="section-title">Hit play. Everyone sings.</h2>
+<!-- MOODS -->
+<section id="ch-moods">
+  <div class="ch-section-inner">
+    <div class="ch-section-label">Find Your Vibe</div>
+    <h2 class="ch-section-title">Choose the Energy</h2>
+    <p class="ch-section-intro">Every song is different. Pick the mood that ignites it.</p>
+    <div class="ch-moods-grid">
+      <div class="ch-mood-card energetic" onclick="chSetMood(this)"><div style="position:relative;z-index:1"><div class="ch-mood-name">Energetic</div><div class="ch-mood-tagline">Raw power. Hypnotic edge.</div><p class="ch-mood-desc">Plasma crackles. Waveforms surge. For songs that demand to be felt, not just heard.</p><div class="ch-mood-pills"><span class="ch-mood-pill">Plasma</span><span class="ch-mood-pill">Waveform</span></div></div></div>
+      <div class="ch-mood-card atmospheric" onclick="chSetMood(this)"><div style="position:relative;z-index:1"><div class="ch-mood-name">Atmospheric</div><div class="ch-mood-tagline">Immersive. Otherworldly.</div><p class="ch-mood-desc">Aurora cascades. Lava breathes. Surrender to the visual depth of every lyric.</p><div class="ch-mood-pills"><span class="ch-mood-pill">Aurora</span><span class="ch-mood-pill">Lava</span></div></div></div>
+      <div class="ch-mood-card visual" onclick="chSetMood(this)"><div style="position:relative;z-index:1"><div class="ch-mood-name">Visual</div><div class="ch-mood-tagline">Personal. Pixelated dreaming.</div><p class="ch-mood-desc">Your album art glows. Pixels scatter and reform. Make the song a reflection of itself.</p><div class="ch-mood-pills"><span class="ch-mood-pill">Album Art</span><span class="ch-mood-pill">Pixel Scramble</span></div></div></div>
+      <div class="ch-mood-card minimal" onclick="chSetMood(this)"><div style="position:relative;z-index:1"><div class="ch-mood-name">Minimal</div><div class="ch-mood-tagline">Pure. Neon stripped.</div><p class="ch-mood-desc">Neon cuts through the dark. Minimal keeps it bare. When less says everything.</p><div class="ch-mood-pills"><span class="ch-mood-pill">Minimal</span><span class="ch-mood-pill">Neon Haze</span></div></div></div>
     </div>
-    <div class="hiw-steps">
-      <div class="hiw-step">
-        <div class="hiw-num">01</div>
-        <div class="hiw-content">
-          <div class="hiw-title">Connect Spotify</div>
-          <div class="hiw-desc">Takes 10 seconds. No new account, no catalog to learn — just the songs you already know and love.</div>
+  </div>
+</section>
+
+<!-- EFFECTS GALLERY -->
+<section id="ch-effects">
+  <div class="ch-section-inner">
+    <div class="ch-section-label">The Palette</div>
+    <h2 class="ch-section-title">Eight Effects. Infinite Expression.</h2>
+    <p class="ch-section-intro">Each one is a lens. Each one transforms your performance.</p>
+    <div class="ch-effects-grid">
+      <div class="ch-effect-card" onclick="chSelectEffect(this,'plasma')"><div class="ch-eff-bg ch-eff-plasma"></div><div class="ch-effect-overlay"><span class="ch-effect-badge">01</span><div class="ch-effect-info"><div class="ch-effect-name">Plasma</div><div class="ch-effect-tagline">Electric. Alive.</div></div></div><button class="ch-effect-cta">Launch with Plasma &#8594;</button></div>
+      <div class="ch-effect-card" onclick="chSelectEffect(this,'waveform')"><div class="ch-eff-bg ch-eff-waveform"></div><div class="ch-effect-overlay"><span class="ch-effect-badge">02</span><div class="ch-effect-info"><div class="ch-effect-name">Waveform</div><div class="ch-effect-tagline">Audio made visible.</div></div></div><button class="ch-effect-cta">Launch with Waveform &#8594;</button></div>
+      <div class="ch-effect-card" onclick="chSelectEffect(this,'aurora')"><div class="ch-eff-bg ch-eff-aurora"></div><div class="ch-effect-overlay"><span class="ch-effect-badge">03</span><div class="ch-effect-info"><div class="ch-effect-name">Aurora</div><div class="ch-effect-tagline">Celestial. Hypnotic.</div></div></div><button class="ch-effect-cta">Launch with Aurora &#8594;</button></div>
+      <div class="ch-effect-card" onclick="chSelectEffect(this,'lava')"><div class="ch-eff-bg ch-eff-lava"></div><div class="ch-effect-overlay"><span class="ch-effect-badge">04</span><div class="ch-effect-info"><div class="ch-effect-name">Lava</div><div class="ch-effect-tagline">Molten. Breathing.</div></div></div><button class="ch-effect-cta">Launch with Lava &#8594;</button></div>
+      <div class="ch-effect-card" onclick="chSelectEffect(this,'album')"><div class="ch-eff-bg ch-eff-album"></div><div class="ch-effect-overlay"><span class="ch-effect-badge">05</span><div class="ch-effect-info"><div class="ch-effect-name">Album Art</div><div class="ch-effect-tagline">Your song&apos;s face.</div></div></div><button class="ch-effect-cta">Launch with Album Art &#8594;</button></div>
+      <div class="ch-effect-card" onclick="chSelectEffect(this,'pixel')"><div class="ch-eff-bg ch-eff-pixel"></div><div class="ch-effect-overlay"><span class="ch-effect-badge">06</span><div class="ch-effect-info"><div class="ch-effect-name">Pixel Scramble</div><div class="ch-effect-tagline">Fragmented. Reassembling.</div></div></div><button class="ch-effect-cta">Launch with Pixel &#8594;</button></div>
+      <div class="ch-effect-card" onclick="chSelectEffect(this,'minimal')"><div class="ch-eff-bg ch-eff-minimal"></div><div class="ch-effect-overlay"><span class="ch-effect-badge">07</span><div class="ch-effect-info"><div class="ch-effect-name">Minimal</div><div class="ch-effect-tagline">Pure focus.</div></div></div><button class="ch-effect-cta">Launch with Minimal &#8594;</button></div>
+      <div class="ch-effect-card" onclick="chSelectEffect(this,'neon-haze')"><div class="ch-eff-bg ch-eff-neon-haze"></div><div class="ch-effect-overlay"><span class="ch-effect-badge">08</span><div class="ch-effect-info"><div class="ch-effect-name">Neon Haze</div><div class="ch-effect-tagline">80s glowing edge.</div></div></div><button class="ch-effect-cta">Launch with Neon Haze &#8594;</button></div>
+    </div>
+  </div>
+</section>
+
+<!-- LYRIC MODES -->
+<section id="ch-lyric-modes">
+  <div class="ch-section-inner">
+    <div class="ch-section-label">How You Read</div>
+    <h2 class="ch-section-title">Three Ways to Own the Stage</h2>
+    <div class="ch-tabs">
+      <button class="ch-tab active" onclick="chSetTab(this,0)">Words</button>
+      <button class="ch-tab" onclick="chSetTab(this,1)">Focused</button>
+      <button class="ch-tab" onclick="chSetTab(this,2)">Sweep</button>
+    </div>
+    <div id="ch-panels">
+      <div class="ch-panel panel-words active">
+        <div class="ch-lyric-demo">
+          <div class="ch-lyric-line">It doesn&apos;t hurt me</div>
+          <div class="ch-lyric-line active">You want to feel how it feels</div>
+          <div class="ch-lyric-line">You want to know, know that it doesn&apos;t hurt me</div>
+          <div class="ch-lyric-line">You want to hear about the deal I&apos;m making</div>
+          <div class="ch-lyric-line">And if I only could, I&apos;d make a deal with God</div>
         </div>
+        <div class="ch-lyric-desc"><h3>Words</h3><p class="ch-lyric-tagline">Scrolling. Synced. Alive.</p><p class="ch-lyric-body">Words flow across the screen in real-time sync. Read ahead. Stay locked. Pure karaoke flow.</p><ul class="ch-mode-bullets"><li>Current line highlighted in cyan</li><li>Clean, readable typography</li><li>Minimal visual distraction</li><li>Perfect for all genres</li></ul></div>
       </div>
-      <div class="hiw-step">
-        <div class="hiw-num">02</div>
-        <div class="hiw-content">
-          <div class="hiw-title">Pick your vibe</div>
-          <div class="hiw-desc">Eight themes, six backgrounds. Match the aesthetic to the room — chill bedroom session or full-on party.</div>
+      <div class="ch-panel panel-focused">
+        <div class="ch-lyric-demo">
+          <div class="ch-lyric-line">It doesn&apos;t hurt me</div>
+          <div class="ch-lyric-line active">You want to feel how it feels</div>
+          <div class="ch-lyric-line">You want to know, know that it doesn&apos;t hurt me</div>
+          <div class="ch-lyric-line">You want to hear about the deal I&apos;m making</div>
+          <div class="ch-lyric-line">And if I only could, I&apos;d make a deal with God</div>
         </div>
+        <div class="ch-lyric-desc"><h3>Focused</h3><p class="ch-lyric-tagline">Apple Music Sing-inspired depth.</p><p class="ch-lyric-body">Your current line pops. Everything else blurs into context. Laser-locked concentration.</p><ul class="ch-mode-bullets"><li>Active line crystal clear</li><li>Non-active lines blurred</li><li>Depth-of-field effect</li><li>Reduces stage fright</li></ul></div>
       </div>
-      <div class="hiw-step">
-        <div class="hiw-num">03</div>
-        <div class="hiw-content">
-          <div class="hiw-title">Put it on any screen</div>
-          <div class="hiw-desc">Phone, laptop, TV, projector. Word-by-word lyrics sync in real time. The whole room sees it.</div>
+      <div class="ch-panel panel-sweep">
+        <div class="ch-lyric-demo" style="font-size:1.3rem;line-height:2.5">
+          <span class="ch-sweep-word lit">Running</span>
+          <span class="ch-sweep-word lit">up</span>
+          <span class="ch-sweep-word lit">that</span>
+          <span class="ch-sweep-word">hill</span>
+          <span class="ch-sweep-word">with</span>
+          <span class="ch-sweep-word">no</span>
+          <span class="ch-sweep-word">problems</span>
         </div>
+        <div class="ch-lyric-desc"><h3>Sweep</h3><p class="ch-lyric-tagline">Karaoke fill. Word by word.</p><p class="ch-lyric-body">Watch each word fill with color as you nail it. Visual confirmation that you&apos;re in control.</p><ul class="ch-mode-bullets"><li>Animated word-by-word fill</li><li>Karaoke-style progression</li><li>Stay perfectly in time</li><li>Engaging &amp; dynamic</li></ul></div>
       </div>
     </div>
-    <div class="occasion-strip">
-      <span class="occasion-pill">&#127968; House parties</span>
-      <span class="occasion-pill">&#127867; Pregames</span>
-      <span class="occasion-pill">&#128663; Road trips</span>
-      <span class="occasion-pill">&#127908; Bedroom sessions</span>
-      <span class="occasion-pill">&#128250; TV &amp; projector nights</span>
-    </div>
-  </section>
-
-  <!-- Themes showcase -->
-  <section class="section themes-section">
-    <div class="section-header">
-      <span class="section-num">Make it yours</span>
-      <h2 class="section-title">Eight moods. One for every room.</h2>
-    </div>
-    <div class="themes-grid">
-
-      <div class="theme-card theme-aurora" style="--tbg:#0d0015; --tacc:#c084fc; --tdim:rgba(192,132,252,0.4);">
-        <div class="theme-card-lyrics">
-          <div class="tc-prev">Running Up That Hill</div>
-          <div class="tc-active">You want to <span>feel</span> how it <span>feels</span></div>
-          <div class="tc-next">You want to know, know that</div>
-        </div>
-        <div class="theme-card-footer">
-          <span class="theme-name">Aurora</span>
-          <span class="theme-mood">Dreamy &amp; dark</span>
-        </div>
-      </div>
-
-      <div class="theme-card theme-neon" style="--tbg:#0a001a; --tacc:#ff2d78; --tdim:rgba(255,45,120,0.4);">
-        <div class="theme-card-lyrics theme-neon-text">
-          <div class="tc-prev">Hit me baby one more time</div>
-          <div class="tc-active tc-neon-active">MY <span>LONELINESS</span> IS KILLING ME</div>
-          <div class="tc-next">I must confess I still believe</div>
-        </div>
-        <div class="theme-card-footer">
-          <span class="theme-name">Neon</span>
-          <span class="theme-mood">Club energy</span>
-        </div>
-      </div>
-
-      <div class="theme-card theme-cinema" style="--tbg:#0a0806; --tacc:#e8d5b0; --tdim:rgba(232,213,176,0.35);">
-        <div class="theme-card-lyrics">
-          <div class="tc-prev">Is this the real life</div>
-          <div class="tc-active">Is this just <span>fantasy</span></div>
-          <div class="tc-next">Caught in a landslide</div>
-        </div>
-        <div class="theme-card-footer">
-          <span class="theme-name">Cinema</span>
-          <span class="theme-mood">Old Hollywood</span>
-        </div>
-      </div>
-
-      <div class="theme-card theme-rave" style="--tbg:#000309; --tacc:#ffe600; --tdim:rgba(255,230,0,0.35);">
-        <div class="theme-card-lyrics theme-rave-text">
-          <div class="tc-prev">MR. BRIGHTSIDE</div>
-          <div class="tc-active tc-rave-active">COMING OUT OF MY <span>CAGE</span></div>
-          <div class="tc-next">AND I'VE BEEN DOING JUST FINE</div>
-        </div>
-        <div class="theme-card-footer">
-          <span class="theme-name">Rave</span>
-          <span class="theme-mood">Loud &amp; raw</span>
-        </div>
-      </div>
-
-      <div class="theme-card theme-midnight" style="--tbg:#030d1f; --tacc:#38bdf8; --tdim:rgba(56,189,248,0.4);">
-        <div class="theme-card-lyrics">
-          <div class="tc-prev">Started from the bottom</div>
-          <div class="tc-active">Now the <span>whole</span> team here</div>
-          <div class="tc-next">We made it</div>
-        </div>
-        <div class="theme-card-footer">
-          <span class="theme-name">Midnight</span>
-          <span class="theme-mood">R&amp;B &amp; hip-hop</span>
-        </div>
-      </div>
-
-      <div class="theme-card theme-ember" style="--tbg:#0d0a06; --tacc:#fb923c; --tdim:rgba(251,146,60,0.4);">
-        <div class="theme-card-lyrics">
-          <div class="tc-prev">Almost heaven</div>
-          <div class="tc-active">West Virginia, <span>Blue</span> Ridge Mountains</div>
-          <div class="tc-next">Shenandoah River</div>
-        </div>
-        <div class="theme-card-footer">
-          <span class="theme-name">Ember</span>
-          <span class="theme-mood">Country &amp; folk</span>
-        </div>
-      </div>
-
-      <div class="theme-card theme-vapor" style="--tbg:#0a0018; --tacc:#22d3ee; --tdim:rgba(34,211,238,0.35);">
-        <div class="theme-card-lyrics theme-vapor-text">
-          <div class="tc-prev">We're up all night to the sun</div>
-          <div class="tc-active">WE'RE UP ALL NIGHT TO <span>GET</span> LUCKY</div>
-          <div class="tc-next">We're up all night to get</div>
-        </div>
-        <div class="theme-card-footer">
-          <span class="theme-name">Vapor</span>
-          <span class="theme-mood">Synthwave &amp; electronic</span>
-        </div>
-      </div>
-
-      <div class="theme-card theme-forest" style="--tbg:#030d06; --tacc:#4ade80; --tdim:rgba(74,222,128,0.35);">
-        <div class="theme-card-lyrics">
-          <div class="tc-prev">I never loved nobody fully</div>
-          <div class="tc-active">Always one foot <span>on</span> the ground</div>
-          <div class="tc-next">And by protecting my heart truly</div>
-        </div>
-        <div class="theme-card-footer">
-          <span class="theme-name">Forest</span>
-          <span class="theme-mood">Indie &amp; folk</span>
-        </div>
-      </div>
-
-    </div>
-  </section>
-
-  <!-- Background effects showcase -->
-  <section class="section effects-section">
-    <div class="section-header">
-      <span class="section-num">Set the scene — click any to preview above</span>
-      <h2 class="section-title">Six ways to fill the room.</h2>
-    </div>
-    <div class="effects-grid">
-
-      <!-- Lava Lamp -->
-      <div class="effect-card effect-lava active" data-fx="lava">
-        <div class="effect-card-bg"></div>
-        <div class="effect-card-overlay"></div>
-        <div class="effect-card-content">
-          <div class="effect-tag">Effect 01</div>
-          <div class="effect-name">Lava Lamp</div>
-          <div class="effect-desc">Organic color pools that breathe with the music.</div>
-        </div>
-      </div>
-
-      <!-- Album Art Sync -->
-      <div class="effect-card effect-album" data-fx="album">
-        <div class="effect-card-bg"></div>
-        <div class="effect-album-art"></div>
-        <div class="effect-card-overlay"></div>
-        <div class="effect-card-content">
-          <div class="effect-tag">Effect 02</div>
-          <div class="effect-name">Album Art Sync</div>
-          <div class="effect-desc">Your actual album art, blurred into a living backdrop.</div>
-        </div>
-      </div>
-
-      <!-- Aurora Borealis -->
-      <div class="effect-card effect-aurora" data-pro="true" data-fx="aurora">
-        <div class="pro-lock-overlay fx-lock"><span class="pro-lock-badge">PRO</span></div>
-        <div class="effect-card-bg"></div>
-        <div class="effect-card-overlay"></div>
-        <div class="effect-card-content">
-          <div class="effect-tag">Effect 03</div>
-          <div class="effect-name">Aurora Borealis</div>
-          <div class="effect-desc">Slow waves of color sweeping the screen.</div>
-        </div>
-      </div>
-
-      <!-- Pixel Dissolve -->
-      <div class="effect-card effect-pixel" data-pro="true" data-fx="pixel">
-        <div class="pro-lock-overlay fx-lock"><span class="pro-lock-badge">PRO</span></div>
-        <div class="effect-card-bg">
-          <div class="effect-pixel-mosaic" id="pixelMosaic" style="grid-template-columns: repeat(14, 1fr); grid-template-rows: repeat(11, 1fr);"><span style="background: rgb(194, 24, 91); opacity: 0.52;"></span><span style="background: rgb(124, 58, 237); opacity: 0.73;"></span><span style="background: rgb(232, 121, 249); opacity: 0.59;"></span><span style="background: rgb(255, 79, 160); opacity: 0.76;"></span><span style="background: rgb(76, 29, 149); opacity: 0.64;"></span><span style="background: rgb(232, 121, 249); opacity: 0.78;"></span><span style="background: rgb(56, 189, 248); opacity: 0.48;"></span><span style="background: rgb(255, 79, 160); opacity: 0.62;"></span><span style="background: rgb(76, 29, 149); opacity: 0.76;"></span><span style="background: rgb(6, 182, 212); opacity: 0.32;"></span><span style="background: rgb(6, 182, 212); opacity: 0.48;"></span><span style="background: rgb(6, 182, 212); opacity: 0.54;"></span><span style="background: rgb(168, 85, 247); opacity: 0.76;"></span><span style="background: rgb(109, 40, 217); opacity: 0.41;"></span><span style="background: rgb(30, 64, 175); opacity: 0.84;"></span><span style="background: rgb(255, 79, 160); opacity: 0.65;"></span><span style="background: rgb(56, 189, 248); opacity: 0.85;"></span><span style="background: rgb(109, 40, 217); opacity: 0.56;"></span><span style="background: rgb(194, 24, 91); opacity: 0.44;"></span><span style="background: rgb(168, 85, 247); opacity: 0.45;"></span><span style="background: rgb(14, 116, 144); opacity: 0.45;"></span><span style="background: rgb(109, 40, 217); opacity: 0.45;"></span><span style="background: rgb(255, 79, 160); opacity: 0.39;"></span><span style="background: rgb(156, 0, 50); opacity: 0.5;"></span><span style="background: rgb(109, 40, 217); opacity: 0.45;"></span><span style="background: rgb(156, 0, 50); opacity: 0.38;"></span><span style="background: rgb(232, 121, 249); opacity: 0.31;"></span><span style="background: rgb(76, 29, 149); opacity: 0.8;"></span><span style="background: rgb(124, 58, 237); opacity: 0.41;"></span><span style="background: rgb(56, 189, 248); opacity: 0.87;"></span><span style="background: rgb(194, 24, 91); opacity: 0.64;"></span><span style="background: rgb(255, 45, 120); opacity: 0.44;"></span><span style="background: rgb(56, 189, 248); opacity: 0.32;"></span><span style="background: rgb(6, 182, 212); opacity: 0.66;"></span><span style="background: rgb(255, 45, 120); opacity: 0.82;"></span><span style="background: rgb(56, 189, 248); opacity: 0.37;"></span><span style="background: rgb(14, 116, 144); opacity: 0.39;"></span><span style="background: rgb(30, 64, 175); opacity: 0.46;"></span><span style="background: rgb(76, 29, 149); opacity: 0.63;"></span><span style="background: rgb(124, 58, 237); opacity: 0.52;"></span><span style="background: rgb(109, 40, 217); opacity: 0.61;"></span><span style="background: rgb(30, 64, 175); opacity: 0.44;"></span><span style="background: rgb(255, 45, 120); opacity: 0.5;"></span><span style="background: rgb(8, 145, 178); opacity: 0.75;"></span><span style="background: rgb(3, 105, 161); opacity: 0.55;"></span><span style="background: rgb(124, 58, 237); opacity: 0.77;"></span><span style="background: rgb(156, 0, 50); opacity: 0.72;"></span><span style="background: rgb(124, 58, 237); opacity: 0.4;"></span><span style="background: rgb(3, 105, 161); opacity: 0.54;"></span><span style="background: rgb(194, 24, 91); opacity: 0.64;"></span><span style="background: rgb(232, 121, 249); opacity: 0.45;"></span><span style="background: rgb(8, 145, 178); opacity: 0.86;"></span><span style="background: rgb(194, 24, 91); opacity: 0.77;"></span><span style="background: rgb(14, 116, 144); opacity: 0.38;"></span><span style="background: rgb(255, 79, 160); opacity: 0.48;"></span><span style="background: rgb(168, 85, 247); opacity: 0.5;"></span><span style="background: rgb(56, 189, 248); opacity: 0.88;"></span><span style="background: rgb(14, 116, 144); opacity: 0.89;"></span><span style="background: rgb(8, 145, 178); opacity: 0.77;"></span><span style="background: rgb(109, 40, 217); opacity: 0.85;"></span><span style="background: rgb(8, 145, 178); opacity: 0.49;"></span><span style="background: rgb(14, 116, 144); opacity: 0.53;"></span><span style="background: rgb(76, 29, 149); opacity: 0.65;"></span><span style="background: rgb(255, 79, 160); opacity: 0.9;"></span><span style="background: rgb(30, 64, 175); opacity: 0.46;"></span><span style="background: rgb(3, 105, 161); opacity: 0.5;"></span><span style="background: rgb(232, 121, 249); opacity: 0.8;"></span><span style="background: rgb(109, 40, 217); opacity: 0.77;"></span><span style="background: rgb(124, 58, 237); opacity: 0.65;"></span><span style="background: rgb(156, 0, 50); opacity: 0.32;"></span><span style="background: rgb(30, 64, 175); opacity: 0.87;"></span><span style="background: rgb(76, 29, 149); opacity: 0.59;"></span><span style="background: rgb(255, 45, 120); opacity: 0.56;"></span><span style="background: rgb(14, 116, 144); opacity: 0.55;"></span><span style="background: rgb(156, 0, 50); opacity: 0.48;"></span><span style="background: rgb(109, 40, 217); opacity: 0.71;"></span><span style="background: rgb(168, 85, 247); opacity: 0.75;"></span><span style="background: rgb(255, 79, 160); opacity: 0.71;"></span><span style="background: rgb(124, 58, 237); opacity: 0.64;"></span><span style="background: rgb(56, 189, 248); opacity: 0.56;"></span><span style="background: rgb(30, 64, 175); opacity: 0.75;"></span><span style="background: rgb(232, 121, 249); opacity: 0.36;"></span><span style="background: rgb(232, 121, 249); opacity: 0.54;"></span><span style="background: rgb(109, 40, 217); opacity: 0.64;"></span><span style="background: rgb(14, 116, 144); opacity: 0.61;"></span><span style="background: rgb(6, 182, 212); opacity: 0.84;"></span><span style="background: rgb(156, 0, 50); opacity: 0.75;"></span><span style="background: rgb(194, 24, 91); opacity: 0.73;"></span><span style="background: rgb(8, 145, 178); opacity: 0.79;"></span><span style="background: rgb(76, 29, 149); opacity: 0.32;"></span><span style="background: rgb(109, 40, 217); opacity: 0.32;"></span><span style="background: rgb(8, 145, 178); opacity: 0.37;"></span><span style="background: rgb(156, 0, 50); opacity: 0.64;"></span><span style="background: rgb(8, 145, 178); opacity: 0.45;"></span><span style="background: rgb(56, 189, 248); opacity: 0.43;"></span><span style="background: rgb(14, 116, 144); opacity: 0.69;"></span><span style="background: rgb(255, 79, 160); opacity: 0.72;"></span><span style="background: rgb(76, 29, 149); opacity: 0.65;"></span><span style="background: rgb(14, 116, 144); opacity: 0.46;"></span><span style="background: rgb(30, 64, 175); opacity: 0.55;"></span><span style="background: rgb(156, 0, 50); opacity: 0.61;"></span><span style="background: rgb(3, 105, 161); opacity: 0.49;"></span><span style="background: rgb(14, 116, 144); opacity: 0.66;"></span><span style="background: rgb(3, 105, 161); opacity: 0.36;"></span><span style="background: rgb(232, 121, 249); opacity: 0.54;"></span><span style="background: rgb(14, 116, 144); opacity: 0.32;"></span><span style="background: rgb(14, 116, 144); opacity: 0.57;"></span><span style="background: rgb(255, 79, 160); opacity: 0.86;"></span><span style="background: rgb(124, 58, 237); opacity: 0.56;"></span><span style="background: rgb(30, 64, 175); opacity: 0.33;"></span><span style="background: rgb(255, 79, 160); opacity: 0.66;"></span><span style="background: rgb(156, 0, 50); opacity: 0.62;"></span><span style="background: rgb(3, 105, 161); opacity: 0.38;"></span><span style="background: rgb(156, 0, 50); opacity: 0.57;"></span><span style="background: rgb(8, 145, 178); opacity: 0.56;"></span><span style="background: rgb(30, 64, 175); opacity: 0.42;"></span><span style="background: rgb(255, 45, 120); opacity: 0.49;"></span><span style="background: rgb(194, 24, 91); opacity: 0.55;"></span><span style="background: rgb(8, 145, 178); opacity: 0.53;"></span><span style="background: rgb(109, 40, 217); opacity: 0.71;"></span><span style="background: rgb(109, 40, 217); opacity: 0.9;"></span><span style="background: rgb(30, 64, 175); opacity: 0.48;"></span><span style="background: rgb(168, 85, 247); opacity: 0.63;"></span><span style="background: rgb(30, 64, 175); opacity: 0.89;"></span><span style="background: rgb(56, 189, 248); opacity: 0.34;"></span><span style="background: rgb(255, 79, 160); opacity: 0.44;"></span><span style="background: rgb(76, 29, 149); opacity: 0.53;"></span><span style="background: rgb(255, 45, 120); opacity: 0.77;"></span><span style="background: rgb(156, 0, 50); opacity: 0.51;"></span><span style="background: rgb(255, 45, 120); opacity: 0.84;"></span><span style="background: rgb(3, 105, 161); opacity: 0.54;"></span><span style="background: rgb(6, 182, 212); opacity: 0.57;"></span><span style="background: rgb(255, 45, 120); opacity: 0.76;"></span><span style="background: rgb(124, 58, 237); opacity: 0.71;"></span><span style="background: rgb(30, 64, 175); opacity: 0.67;"></span><span style="background: rgb(109, 40, 217); opacity: 0.84;"></span><span style="background: rgb(194, 24, 91); opacity: 0.51;"></span><span style="background: rgb(255, 45, 120); opacity: 0.89;"></span><span style="background: rgb(8, 145, 178); opacity: 0.74;"></span><span style="background: rgb(255, 79, 160); opacity: 0.87;"></span><span style="background: rgb(30, 64, 175); opacity: 0.31;"></span><span style="background: rgb(255, 45, 120); opacity: 0.45;"></span><span style="background: rgb(76, 29, 149); opacity: 0.7;"></span><span style="background: rgb(56, 189, 248); opacity: 0.59;"></span><span style="background: rgb(156, 0, 50); opacity: 0.69;"></span><span style="background: rgb(109, 40, 217); opacity: 0.85;"></span><span style="background: rgb(124, 58, 237); opacity: 0.46;"></span><span style="background: rgb(194, 24, 91); opacity: 0.32;"></span><span style="background: rgb(30, 64, 175); opacity: 0.53;"></span><span style="background: rgb(6, 182, 212); opacity: 0.38;"></span><span style="background: rgb(124, 58, 237); opacity: 0.74;"></span><span style="background: rgb(156, 0, 50); opacity: 0.33;"></span><span style="background: rgb(255, 79, 160); opacity: 0.46;"></span><span style="background: rgb(109, 40, 217); opacity: 0.48;"></span></div>
-        </div>
-        <div class="effect-card-overlay"></div>
-        <div class="effect-card-content">
-          <div class="effect-tag">Effect 04</div>
-          <div class="effect-name">Pixel Grid</div>
-          <div class="effect-desc">Album art rendered as a blocky retro mosaic. Lo-fi by design.</div>
-        </div>
-      </div>
-
-      <!-- Neon Haze -->
-      <div class="effect-card effect-neon-haze" data-pro="true" data-fx="neon-haze">
-        <div class="pro-lock-overlay fx-lock"><span class="pro-lock-badge">PRO</span></div>
-        <div class="effect-card-bg"></div>
-        <div class="effect-card-overlay"></div>
-        <div class="effect-card-content">
-          <div class="effect-tag">Effect 05</div>
-          <div class="effect-name">Neon Haze</div>
-          <div class="effect-desc">Electric color blooms pulsing in real time.</div>
-        </div>
-      </div>
-
-      <!-- Minimal Dark -->
-      <div class="effect-card effect-minimal" data-fx="minimal">
-        <div class="effect-card-bg"></div>
-        <div class="effect-card-overlay"></div>
-        <div class="effect-card-content">
-          <div class="effect-tag">Effect 06</div>
-          <div class="effect-name">Minimal Dark</div>
-          <div class="effect-desc">Pure near-black. Let the words do the talking.</div>
-        </div>
-      </div>
-
-      <!-- Plasma -->
-      <div class="effect-card effect-plasma" data-fx="plasma">
-        <div class="effect-card-bg"></div>
-        <div class="effect-card-overlay"></div>
-        <div class="effect-card-content">
-          <div class="effect-tag">Effect 07</div>
-          <div class="effect-name">Plasma</div>
-          <div class="effect-desc">WebGL turbulence shader — colors breathe with the bass frequency in real time.</div>
-        </div>
-      </div>
-      <!-- Waveform -->
-      <div class="effect-card effect-waveform" data-fx="waveform">
-        <div class="effect-card-bg"></div>
-        <div class="effect-card-overlay"></div>
-        <div class="effect-card-content">
-          <div class="effect-tag">Effect 08</div>
-          <div class="effect-name">Waveform</div>
-          <div class="effect-desc">Live spectrum bars and oscilloscope line — reacts to audio in real time.</div>
-        </div>
-      </div>
-
-    </div>
-  </section>
-
-  <!-- Customization options -->
+  </div>
+</section>
+<!-- Customization options -->
   <section class="customize-section">
     <div class="section-header">
       <span class="section-num">Your room, your rules</span>
@@ -2598,1294 +2612,60 @@
       </div>
 
     </div>
-  </section>
+  </section><!-- NEW CLOSING CTA -->
+<div style="text-align:center;padding:5rem 2rem;background:linear-gradient(180deg,transparent,rgba(0,217,255,.06),transparent)">
+  <div style="font-family:'Orbitron',monospace;font-size:.7rem;letter-spacing:.25em;color:var(--ch-cyan);opacity:.7;margin-bottom:1rem">YOUR ROOM. YOUR RULES.</div>
+  <h2 style="font-family:'Orbitron',monospace;font-size:clamp(2rem,5vw,3.5rem);font-weight:900;margin-bottom:1.5rem;background:linear-gradient(135deg,#fff,var(--ch-cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.2">Your song.<br>Your screen.<br><em style="font-style:normal;background:linear-gradient(135deg,var(--ch-pink),var(--ch-purple));-webkit-background-clip:text;background-clip:text">Your room.</em></h2>
+  <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;margin-bottom:1.5rem">
+    <span style="font-size:.78rem;color:rgba(255,255,255,.35);background:rgba(255,255,255,.05);border:1px solid var(--ch-border);border-radius:20px;padding:.3rem .8rem">&#10003; Free Forever</span>
+    <span style="font-size:.78rem;color:rgba(255,255,255,.35);background:rgba(255,255,255,.05);border:1px solid var(--ch-border);border-radius:20px;padding:.3rem .8rem">&#10003; No Install</span>
+    <span style="font-size:.78rem;color:rgba(255,255,255,.35);background:rgba(255,255,255,.05);border:1px solid var(--ch-border);border-radius:20px;padding:.3rem .8rem">&#10003; No Credit Card</span>
+  </div>
+  <a href="/auth/login" class="ch-btn-primary" style="font-size:1rem;padding:1rem 2.5rem">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
+    Start Singing Free
+  </a>
+  <div style="margin-top:1rem;font-size:.8rem;color:rgba(255,255,255,.25)">Free forever &middot; No card &middot; Works with Free &amp; Premium</div>
+</div>
 
-  <!-- Closing CTA -->
-  <div class="closing">
-    <h2 class="closing-headline">
-      Your song.<br>
-      Your screen.<br>
-      <em>Your room.</em>
-    </h2>
-    <div class="hero-cta-group">
-      <div class="trust-row">
-        <span class="trust-pill">✓ Free Forever</span>
-        <span class="trust-pill">✓ No Install</span>
-        <span class="trust-pill">✓ No Credit Card</span>
-      </div>
-      <a href="/auth/login" class="btn-connect">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"></path></svg>
-        Start Singing Free
-      </a>
-      <span class="cta-note">Free forever · No card · Works with Free &amp; Premium</span>
+<!-- NEW FOOTER -->
+<footer class="ch-new-footer">
+  <div class="ch-footer-inner">
+    <div class="ch-footer-brand">
+      <span class="ch-nav-logo">CHORUSHIVE</span>
+      <p>Sing into the light.<br>Your voice. Visualized.</p>
+    </div>
+    <div class="ch-footer-col">
+      <h5>Product</h5>
+      <a href="#features">Experience</a>
+      <a href="#ch-effects">Effects</a>
+      <a href="#ch-lyric-modes">Lyric Modes</a>
+      <a href="/auth/login">Enter App</a>
+    </div>
+    <div class="ch-footer-col">
+      <h5>App</h5>
+      <a href="https://lrclib.net" target="_blank" rel="noopener">Lyrics via lrclib.net</a>
+      <a href="#">Built with Spotify API</a>
+    </div>
+    <div class="ch-footer-col">
+      <h5>Legal</h5>
+      <a href="#">Privacy</a>
+      <a href="#">Terms</a>
     </div>
   </div>
-
-  <!-- Footer -->
-  <footer>
-    <span class="left">Chorushive &nbsp;·&nbsp; <a href="https://lrclib.net" target="_blank" rel="noopener">Lyrics via lrclib.net</a></span>
-    <span class="right">Built with Spotify Web API</span>
-  </footer>
-
-  <script>
-    // URL error
-    const err = new URLSearchParams(location.search).get('error');
-    if (err) document.getElementById('error-msg').textContent = 'Error: ' + err;
-
-    // ── PREVIEW THEMES: rotate randomly each visit ──
-    const previewThemes = [
-      {
-        cssClass: 'theme-aurora',
-        bg: 'radial-gradient(ellipse at 18% 22%, #c084fc 0%, transparent 52%), radial-gradient(ellipse at 72% 18%, #818cf8 0%, transparent 48%), radial-gradient(ellipse at 50% 75%, #7c3aed 0%, transparent 55%), radial-gradient(ellipse at 82% 72%, #e879f9 0%, transparent 40%), radial-gradient(ellipse at 12% 72%, #4c1d95 0%, transparent 48%), #080318'
-      },
-      {
-        cssClass: 'theme-neon',
-        bg: 'radial-gradient(ellipse at 12% 18%, #ff2d78 0%, transparent 52%), radial-gradient(ellipse at 82% 22%, #ff0a54 0%, transparent 48%), radial-gradient(ellipse at 50% 85%, #e91e8c 0%, transparent 58%), radial-gradient(ellipse at 78% 68%, #ff4fa0 0%, transparent 42%), radial-gradient(ellipse at 28% 60%, #9c0032 0%, transparent 44%), #08000e'
-      },
-      {
-        cssClass: 'theme-cinema',
-        bg: 'radial-gradient(ellipse at 50% 12%, #d4a847 0%, transparent 50%), radial-gradient(ellipse at 18% 68%, #b8860b 0%, transparent 52%), radial-gradient(ellipse at 78% 62%, #8b6914 0%, transparent 48%), radial-gradient(ellipse at 55% 82%, #5a3e10 0%, transparent 58%), radial-gradient(ellipse at 82% 20%, #c9a86c 0%, transparent 38%), #0a0806'
-      },
-      {
-        cssClass: 'theme-rave',
-        bg: 'radial-gradient(ellipse at 50% 45%, #ffe600 0%, transparent 45%), radial-gradient(ellipse at 12% 22%, #ffed4a 0%, transparent 48%), radial-gradient(ellipse at 88% 78%, #ffc107 0%, transparent 48%), radial-gradient(ellipse at 72% 14%, #ffe600 0%, transparent 40%), radial-gradient(ellipse at 30% 80%, #e6cc00 0%, transparent 44%), #000209'
-      },
-      {
-        cssClass: 'theme-midnight',
-        bg: 'radial-gradient(ellipse at 18% 20%, #1e40af 0%, transparent 52%), radial-gradient(ellipse at 78% 18%, #0369a1 0%, transparent 48%), radial-gradient(ellipse at 50% 80%, #172554 0%, transparent 55%), radial-gradient(ellipse at 82% 68%, #38bdf8 0%, transparent 36%), radial-gradient(ellipse at 14% 72%, #0c4a6e 0%, transparent 44%), #020a1a'
-      },
-      {
-        cssClass: 'theme-ember',
-        bg: 'radial-gradient(ellipse at 22% 18%, #ea580c 0%, transparent 50%), radial-gradient(ellipse at 76% 20%, #d97706 0%, transparent 46%), radial-gradient(ellipse at 50% 82%, #451a03 0%, transparent 54%), radial-gradient(ellipse at 80% 66%, #f97316 0%, transparent 36%), radial-gradient(ellipse at 14% 72%, #7c2d12 0%, transparent 44%), #120600'
-      },
-      {
-        cssClass: 'theme-vapor',
-        bg: 'radial-gradient(ellipse at 15% 18%, #7c3aed 0%, transparent 50%), radial-gradient(ellipse at 80% 18%, #0e7490 0%, transparent 48%), radial-gradient(ellipse at 50% 84%, #4c1d95 0%, transparent 54%), radial-gradient(ellipse at 82% 68%, #ec4899 0%, transparent 38%), radial-gradient(ellipse at 16% 70%, #06b6d4 0%, transparent 42%), #06000f'
-      },
-      {
-        cssClass: 'theme-forest',
-        bg: 'radial-gradient(ellipse at 20% 20%, #166534 0%, transparent 50%), radial-gradient(ellipse at 76% 18%, #065f46 0%, transparent 46%), radial-gradient(ellipse at 50% 82%, #022c22 0%, transparent 54%), radial-gradient(ellipse at 80% 66%, #4ade80 0%, transparent 32%), radial-gradient(ellipse at 14% 72%, #14532d 0%, transparent 44%), #020d05'
-      }
-    ];
-    const theme = previewThemes[Math.floor(Math.random() * previewThemes.length)];
-
-    // Apply theme class to preview body
-    const previewBodyEl = document.querySelector('.preview-body');
-    if (previewBodyEl) previewBodyEl.classList.add(theme.cssClass);
-
-    // Secondary layer gets a mirror/shifted version of the theme gradient
-    const themeBg2Map = {
-      'theme-aurora':   'radial-gradient(ellipse at 80% 80%, #a855f7 0%, transparent 48%), radial-gradient(ellipse at 25% 75%, #7c3aed 0%, transparent 45%), radial-gradient(ellipse at 50% 20%, #1e0a5e 0%, transparent 50%), radial-gradient(ellipse at 15% 30%, #c084fc 0%, transparent 35%), radial-gradient(ellipse at 85% 25%, #4c1d95 0%, transparent 45%), #08031a',
-      'theme-neon':     'radial-gradient(ellipse at 90% 85%, #ff2d78 0%, transparent 50%), radial-gradient(ellipse at 15% 80%, #ff0a54 0%, transparent 45%), radial-gradient(ellipse at 50% 10%, #c2185b 0%, transparent 55%), radial-gradient(ellipse at 20% 30%, #ff4fa0 0%, transparent 40%), #080010',
-      'theme-cinema':   'radial-gradient(ellipse at 50% 90%, #c9a86c 0%, transparent 45%), radial-gradient(ellipse at 80% 30%, #8b6914 0%, transparent 50%), radial-gradient(ellipse at 20% 35%, #6b4c0f 0%, transparent 45%), radial-gradient(ellipse at 45% 15%, #3d2b08 0%, transparent 55%), #0a0806',
-      'theme-rave':     'radial-gradient(ellipse at 50% 50%, #ffe600 0%, transparent 40%), radial-gradient(ellipse at 90% 80%, #fff176 0%, transparent 45%), radial-gradient(ellipse at 10% 20%, #ffc107 0%, transparent 45%), radial-gradient(ellipse at 25% 85%, #ffe600 0%, transparent 38%), #000309',
-      'theme-midnight': 'radial-gradient(ellipse at 85% 85%, #1e40af 0%, transparent 48%), radial-gradient(ellipse at 20% 80%, #0369a1 0%, transparent 45%), radial-gradient(ellipse at 50% 12%, #172554 0%, transparent 52%), radial-gradient(ellipse at 18% 28%, #38bdf8 0%, transparent 36%), radial-gradient(ellipse at 82% 22%, #0c4a6e 0%, transparent 44%), #010812',
-      'theme-ember':    'radial-gradient(ellipse at 82% 82%, #d97706 0%, transparent 46%), radial-gradient(ellipse at 18% 78%, #ea580c 0%, transparent 45%), radial-gradient(ellipse at 50% 12%, #451a03 0%, transparent 52%), radial-gradient(ellipse at 80% 20%, #7c2d12 0%, transparent 42%), radial-gradient(ellipse at 22% 25%, #f97316 0%, transparent 38%), #0e0500',
-      'theme-vapor':    'radial-gradient(ellipse at 88% 82%, #7c3aed 0%, transparent 48%), radial-gradient(ellipse at 14% 82%, #0e7490 0%, transparent 45%), radial-gradient(ellipse at 48% 12%, #4c1d95 0%, transparent 52%), radial-gradient(ellipse at 78% 20%, #06b6d4 0%, transparent 40%), radial-gradient(ellipse at 22% 22%, #ec4899 0%, transparent 38%), #04000c',
-      'theme-forest':   'radial-gradient(ellipse at 82% 82%, #065f46 0%, transparent 46%), radial-gradient(ellipse at 18% 80%, #166534 0%, transparent 45%), radial-gradient(ellipse at 50% 12%, #022c22 0%, transparent 52%), radial-gradient(ellipse at 80% 22%, #14532d 0%, transparent 40%), radial-gradient(ellipse at 20% 22%, #4ade80 0%, transparent 30%), #010a03'
-    };
-
-    // ── DEMO SONGS: pick one randomly per visit ──
-    const demoSongs = [
-      {
-        title: "Running Up That Hill", artist: "Kate Bush",
-        albumColor: "radial-gradient(ellipse at 15% 20%, #f09030 0%, transparent 52%), radial-gradient(ellipse at 80% 15%, #e85810 0%, transparent 48%), radial-gradient(ellipse at 55% 78%, #a03808 0%, transparent 52%), radial-gradient(ellipse at 25% 72%, #d06820 0%, transparent 42%), radial-gradient(ellipse at 70% 62%, #7a3205 0%, transparent 46%), #2a0d03",
-        lines: [
-          { prev: "C'mon baby",                words: ["Running","up","that","hill"],             next: "With no problems" },
-          { prev: "Running up that hill",       words: ["It","doesn't","hurt","me"],              next: "You want to feel how it feels" },
-          { prev: "It doesn't hurt me",         words: ["You","want","to","feel","how","it","feels"], next: "You want to know, know that" },
-          { prev: "You want to feel how it feels", words: ["Do","you","want","to","know?"],       next: "It doesn't hurt me" },
-        ]
-      },
-      {
-        title: "Bohemian Rhapsody", artist: "Queen",
-        albumColor: "radial-gradient(ellipse at 20% 20%, #a855f7 0%, transparent 48%), radial-gradient(ellipse at 75% 25%, #7c3aed 0%, transparent 45%), radial-gradient(ellipse at 50% 80%, #1e0a5e 0%, transparent 50%), radial-gradient(ellipse at 85% 70%, #d4a017 0%, transparent 35%), radial-gradient(ellipse at 15% 75%, #4c1d95 0%, transparent 45%), #08031a",
-        lines: [
-          { prev: "Is this the real life",  words: ["Is","this","just","fantasy"],               next: "Caught in a landslide" },
-          { prev: "Is this just fantasy",   words: ["Caught","in","a","landslide"],              next: "No escape from reality" },
-          { prev: "Caught in a landslide",  words: ["Open","your","eyes"],                       next: "Look up to the skies and see" },
-          { prev: "Open your eyes",         words: ["Look","up","to","the","skies","and","see"], next: "I'm just a poor boy" },
-        ]
-      },
-      {
-        title: "Don't Stop Believin'", artist: "Journey",
-        albumColor: "radial-gradient(ellipse at 20% 20%, #3b82f6 0%, transparent 48%), radial-gradient(ellipse at 75% 25%, #1d4ed8 0%, transparent 45%), radial-gradient(ellipse at 45% 78%, #0c1f6e 0%, transparent 52%), radial-gradient(ellipse at 82% 72%, #06b6d4 0%, transparent 35%), radial-gradient(ellipse at 15% 70%, #1e3a5f 0%, transparent 42%), #030d1f",
-        lines: [
-          { prev: "Born and raised in South Detroit", words: ["She","took","the","midnight","train"], next: "Going anywhere" },
-          { prev: "She took the midnight train",       words: ["Going","anywhere"],                   next: "A singer in a smoky room" },
-          { prev: "Don't stop believing",              words: ["Hold","on","to","the","feeling"],     next: "Streetlight — people" },
-          { prev: "Just a small town girl",            words: ["Living","in","a","lonely","world"],   next: "She took the midnight train" },
-        ]
-      },
-      {
-        title: "Mr. Brightside", artist: "The Killers",
-        albumColor: "radial-gradient(ellipse at 18% 22%, #ef4444 0%, transparent 48%), radial-gradient(ellipse at 78% 20%, #dc2626 0%, transparent 45%), radial-gradient(ellipse at 50% 82%, #450a0a 0%, transparent 52%), radial-gradient(ellipse at 80% 68%, #f97316 0%, transparent 38%), radial-gradient(ellipse at 20% 72%, #7f1d1d 0%, transparent 42%), #120404",
-        lines: [
-          { prev: "Coming out of my cage",       words: ["And","I've","been","doing","just","fine"],  next: "Gotta gotta be down" },
-          { prev: "It started out with a kiss",  words: ["How","did","it","end","up","like","this"],  next: "It was only a kiss" },
-          { prev: "How did it end up like this", words: ["It","was","only","a","kiss"],               next: "It was only a kiss" },
-          { prev: "It was only a kiss",          words: ["I","never","wanna","feel","this","way"],    next: "Now I'm falling asleep" },
-        ]
-      },
-      {
-        title: "Sweet Caroline", artist: "Neil Diamond",
-        albumColor: "radial-gradient(ellipse at 20% 22%, #22c55e 0%, transparent 48%), radial-gradient(ellipse at 78% 20%, #16a34a 0%, transparent 45%), radial-gradient(ellipse at 50% 80%, #052e16 0%, transparent 52%), radial-gradient(ellipse at 80% 65%, #84cc16 0%, transparent 35%), radial-gradient(ellipse at 18% 70%, #065f46 0%, transparent 42%), #021408",
-        lines: [
-          { prev: "Where it began",        words: ["I","can't","begin","to","knowing"],            next: "But then I know it's growing strong" },
-          { prev: "Hands, touching hands", words: ["Sweet","Caroline"],                            next: "Good times never seemed so good" },
-          { prev: "Sweet Caroline",        words: ["Good","times","never","seemed","so","good"],   next: "So good, so good, so good" },
-          { prev: "Good times never",      words: ["So","good","so","good","so","good"],           next: "Sweet Caroline" },
-        ]
-      },
-      {
-        title: "Cruel Summer", artist: "Taylor Swift",
-        albumColor: "radial-gradient(ellipse at 22% 18%, #fb7185 0%, transparent 50%), radial-gradient(ellipse at 75% 22%, #f43f5e 0%, transparent 46%), radial-gradient(ellipse at 50% 80%, #9f1239 0%, transparent 52%), radial-gradient(ellipse at 80% 65%, #fda4af 0%, transparent 36%), radial-gradient(ellipse at 15% 75%, #881337 0%, transparent 42%), #1a0208",
-        lines: [
-          { prev: "Fever dream high in the quiet of the night", words: ["You","know","exactly","what","you","do"],   next: "Baby, I'm losing my mind" },
-          { prev: "You know exactly what you do",               words: ["Baby","I'm","losing","my","mind"],          next: "Looking at you" },
-          { prev: "Baby I'm losing my mind",                    words: ["It's","a","cruel","summer"],                next: "With you" },
-          { prev: "It's a cruel summer",                        words: ["Leaving","me","wanting","you"],             next: "Band-aids don't fix bullet holes" },
-        ]
-      },
-      {
-        title: "Blinding Lights", artist: "The Weeknd",
-        albumColor: "radial-gradient(ellipse at 18% 20%, #ef4444 0%, transparent 50%), radial-gradient(ellipse at 78% 18%, #dc2626 0%, transparent 46%), radial-gradient(ellipse at 50% 82%, #2d0606 0%, transparent 52%), radial-gradient(ellipse at 82% 68%, #f97316 0%, transparent 35%), radial-gradient(ellipse at 15% 72%, #7f1d1d 0%, transparent 42%), #120202",
-        lines: [
-          { prev: "I've been running",        words: ["I","can't","stop","calling","you"],              next: "When I'm drunk, it's you" },
-          { prev: "I can't stop calling you", words: ["I'm","blinded","by","the","lights"],             next: "No, I can't sleep until I feel your touch" },
-          { prev: "I'm blinded by the lights",words: ["I","said","ooh","I'm","drowning"],               next: "In the night, I call your name" },
-          { prev: "I said ooh I'm drowning",  words: ["In","the","night","I","call","your","name"],     next: "It's blinding lights" },
-        ]
-      },
-      {
-        title: "Levitating", artist: "Dua Lipa",
-        albumColor: "radial-gradient(ellipse at 20% 18%, #818cf8 0%, transparent 50%), radial-gradient(ellipse at 76% 22%, #6366f1 0%, transparent 46%), radial-gradient(ellipse at 50% 80%, #1e1b4b 0%, transparent 52%), radial-gradient(ellipse at 80% 68%, #a78bfa 0%, transparent 36%), radial-gradient(ellipse at 15% 72%, #312e81 0%, transparent 44%), #050315",
-        lines: [
-          { prev: "Baby lay me down and let's pray", words: ["I","got","you","moonlight"],            next: "You're my starlight" },
-          { prev: "I got you moonlight",              words: ["I","need","you","all","night"],         next: "Come on, dance with me" },
-          { prev: "I need you all night",             words: ["I'm","levitating"],                    next: "The Milky Way, we're renegading" },
-          { prev: "I'm levitating",                   words: ["You","can","fly","away","with","me","tonight"], next: "Baby let me take you" },
-        ]
-      },
-      {
-        title: "As It Was", artist: "Harry Styles",
-        albumColor: "radial-gradient(ellipse at 18% 20%, #f472b6 0%, transparent 50%), radial-gradient(ellipse at 76% 20%, #ec4899 0%, transparent 46%), radial-gradient(ellipse at 50% 82%, #500724 0%, transparent 52%), radial-gradient(ellipse at 80% 65%, #fbbf24 0%, transparent 32%), radial-gradient(ellipse at 15% 72%, #831843 0%, transparent 42%), #150008",
-        lines: [
-          { prev: "Holding me back",         words: ["Gravity's","holding","me","back"],              next: "I want you to hold out the palm of your hand" },
-          { prev: "Gravity's holding me back",words: ["In","this","world","it's","just","us"],         next: "You know it's not the same" },
-          { prev: "In this world it's just us",words: ["You","know","it's","not","the","same"],        next: "As it was" },
-          { prev: "You know it's not the same",words: ["As","it","was"],                              next: "In this world it's just us" },
-        ]
-      },
-      {
-        title: "Flowers", artist: "Miley Cyrus",
-        albumColor: "radial-gradient(ellipse at 20% 18%, #fbbf24 0%, transparent 50%), radial-gradient(ellipse at 76% 20%, #f59e0b 0%, transparent 46%), radial-gradient(ellipse at 50% 80%, #451a03 0%, transparent 52%), radial-gradient(ellipse at 80% 68%, #fde68a 0%, transparent 34%), radial-gradient(ellipse at 16% 72%, #78350f 0%, transparent 42%), #180a00",
-        lines: [
-          { prev: "We were good",            words: ["We","were","gold","kind","of","dream"],          next: "I remember us dancing" },
-          { prev: "We were gold",            words: ["I","can","buy","myself","flowers"],              next: "Write my name in the sand" },
-          { prev: "I can buy myself flowers", words: ["Talk","to","myself","for","hours"],             next: "Say things you don't understand" },
-          { prev: "Talk to myself for hours", words: ["I","can","love","me","better","than","you","can"], next: "Paint my nails, cherry red" },
-        ]
-      },
-      {
-        title: "Dancing Queen", artist: "ABBA",
-        albumColor: "radial-gradient(ellipse at 20% 18%, #38bdf8 0%, transparent 50%), radial-gradient(ellipse at 76% 20%, #0284c7 0%, transparent 46%), radial-gradient(ellipse at 50% 80%, #082f49 0%, transparent 52%), radial-gradient(ellipse at 80% 68%, #7dd3fc 0%, transparent 35%), radial-gradient(ellipse at 16% 72%, #0c4a6e 0%, transparent 42%), #020e18",
-        lines: [
-          { prev: "See that girl",              words: ["Watch","that","scene"],                         next: "Dig in the dancing queen" },
-          { prev: "Watch that scene",           words: ["Friday","night","and","the","lights","are","low"], next: "Looking out for the place to go" },
-          { prev: "Friday night",               words: ["You","are","the","dancing","queen"],            next: "Young and sweet, only seventeen" },
-          { prev: "You are the dancing queen",  words: ["Young","and","sweet","only","seventeen"],       next: "Dancing queen, feel the beat" },
-        ]
-      },
-      {
-        title: "Billie Jean", artist: "Michael Jackson",
-        albumColor: "radial-gradient(ellipse at 20% 20%, #a3a3a3 0%, transparent 48%), radial-gradient(ellipse at 76% 22%, #737373 0%, transparent 46%), radial-gradient(ellipse at 50% 80%, #171717 0%, transparent 52%), radial-gradient(ellipse at 80% 65%, #d4d4d4 0%, transparent 32%), radial-gradient(ellipse at 16% 72%, #404040 0%, transparent 44%), #0a0a0a",
-        lines: [
-          { prev: "Billie Jean is not my lover", words: ["She's","just","a","girl","who","claims","that","I","am","the","one"], next: "But the kid is not my son" },
-          { prev: "She's just a girl",           words: ["But","the","kid","is","not","my","son"],        next: "She told me her name was Billie Jean" },
-          { prev: "But the kid is not my son",   words: ["People","always","told","me","be","careful"],   next: "What you do" },
-          { prev: "People always told me",       words: ["Don't","go","around","breaking","young","girls","hearts"], next: "And mother always told me" },
-        ]
-      },
-      {
-        title: "Hotel California", artist: "Eagles",
-        albumColor: "radial-gradient(ellipse at 20% 18%, #d97706 0%, transparent 50%), radial-gradient(ellipse at 76% 22%, #b45309 0%, transparent 46%), radial-gradient(ellipse at 50% 80%, #431407 0%, transparent 52%), radial-gradient(ellipse at 80% 65%, #fbbf24 0%, transparent 32%), radial-gradient(ellipse at 16% 72%, #78350f 0%, transparent 44%), #180800",
-        lines: [
-          { prev: "On a dark desert highway", words: ["Cool","wind","in","my","hair"],               next: "Warm smell of colitas" },
-          { prev: "Cool wind in my hair",     words: ["Warm","smell","of","colitas"],                 next: "Rising up through the air" },
-          { prev: "Welcome to the Hotel California", words: ["Such","a","lovely","place"],          next: "Such a lovely face" },
-          { prev: "Such a lovely place",      words: ["Plenty","of","room","at","the","Hotel","California"], next: "Any time of year" },
-        ]
-      },
-      {
-        title: "September", artist: "Earth, Wind & Fire",
-        albumColor: "radial-gradient(ellipse at 20% 18%, #facc15 0%, transparent 50%), radial-gradient(ellipse at 76% 22%, #eab308 0%, transparent 46%), radial-gradient(ellipse at 50% 80%, #422006 0%, transparent 52%), radial-gradient(ellipse at 80% 65%, #fde047 0%, transparent 35%), radial-gradient(ellipse at 16% 72%, #713f12 0%, transparent 44%), #180e00",
-        lines: [
-          { prev: "Do you remember",        words: ["The","twenty-first","night","of","September"],   next: "Love was changing the minds of pretenders" },
-          { prev: "The twenty-first night", words: ["Love","was","changing","the","minds"],          next: "Of pretenders while chasing the clouds away" },
-          { prev: "Ba-dee-ya",              words: ["Say","do","you","remember"],                    next: "Dancing in September" },
-          { prev: "Say do you remember",    words: ["Never","was","a","cloudy","day"],               next: "Ba-dee-ya" },
-        ]
-      },
-      {
-        title: "Africa", artist: "Toto",
-        albumColor: "radial-gradient(ellipse at 20% 18%, #16a34a 0%, transparent 50%), radial-gradient(ellipse at 76% 22%, #15803d 0%, transparent 46%), radial-gradient(ellipse at 50% 80%, #052e16 0%, transparent 52%), radial-gradient(ellipse at 80% 65%, #4ade80 0%, transparent 32%), radial-gradient(ellipse at 16% 72%, #166534 0%, transparent 44%), #011208",
-        lines: [
-          { prev: "The moonlit wings",       words: ["Reflect","the","stars","that","guide","me","towards","salvation"], next: "I stopped an old man along the way" },
-          { prev: "The rains down in Africa", words: ["Gonna","take","some","time","to","do","the","things","we","never","had"], next: "Sure as Kilimanjaro" },
-          { prev: "I hear the drums echoing tonight", words: ["She","hears","only","whispers","of","some","quiet","conversation"], next: "She's coming in twelve-thirty flight" },
-          { prev: "Gonna stop those dreams", words: ["I","bless","the","rains","down","in","Africa"], next: "Gonna take some time" },
-        ]
-      },
-      {
-        title: "Eye of the Tiger", artist: "Survivor",
-        albumColor: "radial-gradient(ellipse at 20% 18%, #f97316 0%, transparent 50%), radial-gradient(ellipse at 76% 22%, #ea580c 0%, transparent 46%), radial-gradient(ellipse at 50% 80%, #431407 0%, transparent 52%), radial-gradient(ellipse at 80% 65%, #fed7aa 0%, transparent 32%), radial-gradient(ellipse at 16% 72%, #7c2d12 0%, transparent 44%), #160500",
-        lines: [
-          { prev: "Rising up",              words: ["Back","on","the","street"],                      next: "Did my time, took my chances" },
-          { prev: "Back on the street",     words: ["Went","the","distance","now","I'm","back","on","my","feet"], next: "Just a man and his will to survive" },
-          { prev: "It's the eye of the tiger", words: ["It's","the","thrill","of","the","fight"],    next: "Rising up to the challenge of our rival" },
-          { prev: "It's the thrill of the fight", words: ["And","the","last","known","survivor"],    next: "Stalks his prey in the night" },
-        ]
-      },
-      {
-        title: "Shape of You", artist: "Ed Sheeran",
-        albumColor: "radial-gradient(ellipse at 20% 18%, #34d399 0%, transparent 50%), radial-gradient(ellipse at 76% 22%, #10b981 0%, transparent 46%), radial-gradient(ellipse at 50% 80%, #022c22 0%, transparent 52%), radial-gradient(ellipse at 80% 65%, #6ee7b7 0%, transparent 32%), radial-gradient(ellipse at 16% 72%, #065f46 0%, transparent 44%), #011510",
-        lines: [
-          { prev: "The club isn't the best place", words: ["To","find","a","lover"],                  next: "So the bar is where I go" },
-          { prev: "To find a lover",               words: ["Me","and","my","friends","at","the","table","doing","shots"], next: "Drinking fast and then we talk slow" },
-          { prev: "I'm in love with your body",    words: ["Oh-I-oh-I-oh-I-oh-I"],                    next: "And last night you were in my room" },
-          { prev: "Come on be my baby",            words: ["I'm","in","love","with","the","shape","of","you"], next: "We push and pull like a magnet do" },
-        ]
-      },
-      {
-        title: "Take On Me", artist: "a-ha",
-        albumColor: "radial-gradient(ellipse at 20% 18%, #60a5fa 0%, transparent 50%), radial-gradient(ellipse at 76% 22%, #3b82f6 0%, transparent 46%), radial-gradient(ellipse at 50% 80%, #1e3a8a 0%, transparent 52%), radial-gradient(ellipse at 80% 65%, #93c5fd 0%, transparent 32%), radial-gradient(ellipse at 16% 72%, #1d4ed8 0%, transparent 44%), #020a1f",
-        lines: [
-          { prev: "We're talking away",      words: ["I","don't","know","what","I'm","to","say"], next: "I'll say it anyway" },
-          { prev: "I don't know",            words: ["Today's","another","day","to","find","you"], next: "Shying away" },
-          { prev: "Take on me",              words: ["Take","me","on"],                            next: "I'll be gone in a day or two" },
-          { prev: "Take me on",              words: ["In","a","day","or","two"],                   next: "So needless to say" },
-        ]
-      },
-      {
-        title: "Waterloo", artist: "ABBA",
-        albumColor: "radial-gradient(ellipse at 20% 18%, #fbbf24 0%, transparent 50%), radial-gradient(ellipse at 76% 22%, #f59e0b 0%, transparent 46%), radial-gradient(ellipse at 50% 80%, #78350f 0%, transparent 52%), radial-gradient(ellipse at 80% 65%, #fde68a 0%, transparent 32%), radial-gradient(ellipse at 16% 72%, #b45309 0%, transparent 44%), #1a0e00",
-        lines: [
-          { prev: "My, my",                 words: ["At","Waterloo","Napoleon","did","surrender"],   next: "Oh yeah" },
-          { prev: "Napoleon did surrender", words: ["And","I","have","met","my","destiny"],          next: "In quite a similar way" },
-          { prev: "Waterloo",               words: ["Knowing","my","fate","is","to","be","with","you"], next: "Waterloo" },
-          { prev: "Knowing my fate",        words: ["Waterloo","finally","facing","my","Waterloo"],  next: "My my I tried to hold you back" },
-        ]
-      },
-      {
-        title: "Lose Yourself", artist: "Eminem",
-        albumColor: "radial-gradient(ellipse at 20% 18%, #6b7280 0%, transparent 50%), radial-gradient(ellipse at 76% 22%, #374151 0%, transparent 46%), radial-gradient(ellipse at 50% 80%, #111827 0%, transparent 52%), radial-gradient(ellipse at 80% 65%, #9ca3af 0%, transparent 32%), radial-gradient(ellipse at 16% 72%, #1f2937 0%, transparent 44%), #080a0d",
-        lines: [
-          { prev: "Look, if you had one shot",    words: ["Or","one","opportunity"],                        next: "To seize everything you ever wanted" },
-          { prev: "Or one opportunity",           words: ["Would","you","capture","it"],                    next: "Or just let it slip?" },
-          { prev: "You only get one shot",        words: ["Do","not","miss","your","chance","to","blow"],   next: "This opportunity comes once in a lifetime" },
-          { prev: "Do not miss your chance",      words: ["Yo","his","palms","are","sweaty"],               next: "Knees weak, arms are heavy" },
-        ]
-      },
-    ];
-
-    // Pick random song once per visit
-    const song = demoSongs[Math.floor(Math.random() * demoSongs.length)];
-
-    // ── UPDATE TRACK INFO ──
-    const trackNameEl   = document.getElementById('mockTrackName');
-    const trackArtistEl = document.getElementById('mockArtistName');
-    const albumEl       = document.getElementById('mockAlbum');
-    const previewBgEl   = document.getElementById('previewBg');
-    if (trackNameEl)   trackNameEl.textContent  = song.title;
-    if (trackArtistEl) trackArtistEl.textContent = song.artist;
-
-    // Set theme gradient as fallback on both layers
-    const previewBg2El = document.getElementById('previewBg2');
-    if (previewBgEl) previewBgEl.style.background = theme.bg;
-    if (previewBg2El) previewBg2El.style.background = themeBg2Map[theme.cssClass] || theme.bg;
-    // Save theme gradients so fx switcher can restore them
-    window.__themeBg  = theme.bg;
-    window.__themeBg2 = themeBg2Map[theme.cssClass] || theme.bg;
-
-    // ── REAL ALBUM ART via iTunes Search API (no auth required) ──
-    // Fetches 8 candidates and prefers original studio albums over compilations/greatest hits
-    async function fetchAlbumArt(title, artist) {
-      try {
-        const q = encodeURIComponent(title + ' ' + artist);
-        const res = await fetch('https://itunes.apple.com/search?term=' + q + '&media=music&entity=song&limit=8&country=us');
-        const data = await res.json();
-        if (!data.results || !data.results.length) return null;
-        // Prefer non-compilation albums — filter out "greatest hits", "collection", "platinum", "remaster" in album name
-        const skipWords = /greatest hits|collection|platinum|anthology|essential|best of|definitive|legacy|deluxe edition|live in|live at|live from|symphony|orchestra|philharmonic|direct hits|the very best|remaster/i;
-        const preferred = data.results.find(r =>
-          r.artworkUrl100 && r.collectionName && !skipWords.test(r.collectionName)
-        );
-        const fallback = data.results.find(r => r.artworkUrl100);
-        const pick = preferred || fallback;
-        if (pick) return pick.artworkUrl100.replace('100x100bb', '600x600bb');
-      } catch(e) { /* silent fallback */ }
-      return null;
-    }
-
-    function applyAlbumBackground(artUrl) {
-      // Use background shorthand — unambiguous, no property ordering conflicts
-      const val = 'url(' + artUrl + ') center / cover no-repeat';
-      [previewBgEl, document.getElementById('previewBg2')].forEach(el => {
-        if (el) el.style.background = val;
-      });
-      if (albumEl) albumEl.style.background = 'url(' + artUrl + ') center / cover no-repeat';
-      // If album art mode is active, rebuild the sharp centered overlay with the new art
-      if (window.__fxMode === 'album' && window.__applyFxMode) {
-        window.__applyFxMode('album');
-      }
-    }
-
-    fetchAlbumArt(song.title, song.artist).then(artUrl => {
-      if (!artUrl) return;
-      // Save for fx mode switcher
-      if (window.__setCurrentArtUrl) window.__setCurrentArtUrl(artUrl);
-
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-
-      img.onload = () => {
-        // ── PIXEL DISSOLVE: draw art at 24x24 grid, show it first, then fade out ──
-        try {
-          const canvas = document.createElement('canvas');
-          const CELLS  = 24;
-          const ratio  = img.naturalHeight / (img.naturalWidth || 1);
-          canvas.width  = CELLS;
-          canvas.height = Math.round(CELLS * ratio) || CELLS;
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-          const pixelDataUrl = canvas.toDataURL('image/jpeg', 0.85);
-
-          const isPixelModeNow = window.__fxMode === 'pixel';
-
-          if (isPixelModeNow) {
-            // PIXEL MODE: restart canvas scrambler with live art
-            buildPixelScramble(fxEl, artUrl);
-          } else {
-            // Non-pixel modes: show temporary pixelated dissolve overlay, then full-res underneath
-            const pixelOverlay = document.createElement('div');
-            pixelOverlay.className = 'pixel-bg-overlay';
-            pixelOverlay.style.cssText = [
-              'position:absolute;inset:-20%;z-index:1;pointer-events:none;',
-              'background-image:url(' + pixelDataUrl + ');',
-              'background-size:cover;background-position:center;',
-              'image-rendering:pixelated;-ms-interpolation-mode:nearest-neighbor;',
-              'filter:saturate(2.2) brightness(0.75);',
-              'opacity:1;transition:opacity 1.6s cubic-bezier(0.4,0,0.2,1), filter 1.6s ease;'
-            ].join('');
-
-            const previewBody = previewBgEl ? previewBgEl.parentElement : null;
-            if (previewBody) previewBody.insertBefore(pixelOverlay, previewBgEl.nextSibling);
-
-            // Load full-res behind the dissolve
-            applyAlbumBackground(artUrl);
-
-            // Dissolve the pixel overlay out to reveal full-res
-            requestAnimationFrame(() => requestAnimationFrame(() => {
-              pixelOverlay.style.opacity = '0';
-              pixelOverlay.style.filter  = 'saturate(2.4) brightness(0.72) blur(8px)';
-              setTimeout(() => { if (pixelOverlay.parentNode) pixelOverlay.remove(); }, 1700);
-            }));
-          }
-
-        } catch (e) {
-          // CORS / canvas security error — skip dissolve, apply directly
-          applyAlbumBackground(artUrl);
-        }
-      };
-
-      img.onerror = () => applyAlbumBackground(artUrl);
-      img.src = artUrl;
-    });
-
-    // ── LYRIC ANIMATION — smooth cross-fade between lines ──
-    let lineIdx = 0, wordTimer = null;
-    const LINE_INTERVAL = 5500; // ms per line
-
-    function runLine(lineData, instant) {
-      const stage = document.querySelector('.mock-lyrics-stage');
-      if (!stage) return;
-
-      function applyLine() {
-        const prevEl   = stage.querySelector('.mock-prev');
-        const activeEl = stage.querySelector('.mock-active');
-        const nextEl   = stage.querySelector('.mock-next');
-
-        prevEl.textContent = lineData.prev;
-        nextEl.textContent = lineData.next;
-        activeEl.innerHTML = lineData.words.map(w => `<span class="mock-word">${w}</span>`).join(' ');
-
-        // Force re-trigger lineEnter animation (reflow trick)
-        activeEl.style.animation = 'none';
-        void activeEl.offsetHeight;
-        activeEl.style.animation = '';
-
-        // Fade back in
-        stage.style.opacity   = '1';
-        stage.style.transform = 'translateY(0)';
-
-        // Adaptive word timing: fill ~80% of line duration evenly across all words
-        const wordEls = activeEl.querySelectorAll('.mock-word');
-        const totalMs = instant ? LINE_INTERVAL * 0.78 : (LINE_INTERVAL - 240) * 0.78;
-        const wordInterval = Math.min(640, Math.max(220, Math.floor(totalMs / wordEls.length)));
-
-        let wi = 0;
-        if (wordTimer) clearInterval(wordTimer);
-        wordTimer = setInterval(() => {
-          if (wi < wordEls.length) {
-            if (wi > 0) {
-              wordEls[wi - 1].classList.remove('lit');
-              wordEls[wi - 1].classList.add('done');
-            }
-            wordEls[wi].classList.add('lit');
-            wi++;
-          } else {
-            clearInterval(wordTimer);
-            // Mark last word done after a beat
-            setTimeout(() => {
-              if (wordEls[wi - 1]) {
-                wordEls[wi - 1].classList.remove('lit');
-                wordEls[wi - 1].classList.add('done');
-              }
-            }, wordInterval);
-          }
-        }, wordInterval);
-      }
-
-      if (instant) {
-        applyLine();
-      } else {
-        // Fade out, then swap content, then fade in
-        stage.style.opacity   = '0';
-        stage.style.transform = 'translateY(8px)';
-        setTimeout(applyLine, 230);
-      }
-    }
-
-    // First line: no transition (instant on load)
-    runLine(song.lines[0], true);
-
-    setInterval(() => {
-      lineIdx = (lineIdx + 1) % song.lines.length;
-      runLine(song.lines[lineIdx], false);
-    }, LINE_INTERVAL);
-
-  // ── EFFECT MODE SWITCHER ──
-  (function() {
-    let currentFxMode = 'lava';
-    let currentArtUrl = null;
-    window.__fxMode = 'lava'; // initialize global so img.onload can read it
-    const previewBodyEl = document.getElementById('previewBody');
-    const previewBgEl2  = document.getElementById('previewBg');
-    const previewBg2El2 = document.getElementById('previewBg2');
-    const fxEl = document.getElementById('previewFx');
-
-    // Expose art URL to this scope — patch the fetch callback
-    window.__setCurrentArtUrl = function(url) { currentArtUrl = url; };
-
-    function buildPreviewPixelGrid(el) {
-      if (el.dataset.built) return;
-      el.dataset.built = '1';
-      el.innerHTML = '';
-      const grid = document.createElement('div');
-      const cols = 20, rows = 16;
-      grid.style.cssText = 'position:absolute;inset:0;display:grid;grid-template-columns:repeat(' + cols + ',1fr);grid-template-rows:repeat(' + rows + ',1fr);';
-      const colors = ['#ff2d78','#ff4fa0','#7c3aed','#38bdf8','#06b6d4','#6d28d9','#a855f7','#e879f9','#0369a1','#1db954'];
-      for (let i = 0; i < cols * rows; i++) {
-        const cell = document.createElement('span');
-        cell.style.background = colors[Math.floor(Math.random() * colors.length)];
-        cell.style.opacity = (0.28 + Math.random() * 0.55).toFixed(2);
-        grid.appendChild(cell);
-      }
-      el.appendChild(grid);
-    }
-
-    function buildPixelScramble(el, artUrl) {
-      el.innerHTML = '';
-      delete el.dataset.built;
-
-      const canvas = document.createElement('canvas');
-      canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated;filter:blur(0.8px);';
-      el.appendChild(canvas);
-
-      // Use fxEl's own dimensions — it has inset:-20% so it's ~40% larger than previewBody.
-      // Sizing the canvas to previewBody was causing a stretch upscale on mobile.
-      const pb = document.getElementById('previewBody');
-      const W = el.offsetWidth  || (pb ? pb.offsetWidth  : 320);
-      const H = el.offsetHeight || (pb ? pb.offsetHeight : 400);
-      canvas.width  = W;
-      canvas.height = H;
-      const ctx = canvas.getContext('2d');
-
-      const BLOCK = 92; // large chunky pixels
-      const cols  = Math.ceil(W / BLOCK);
-      const rows  = Math.ceil(H / BLOCK);
-      const total = cols * rows;
-
-      // positions[destIdx] = srcIdx
-      const positions = Array.from({length: total}, function(_, i) { return i; });
-      for (var i = total - 1; i > 0; i--) {
-        var j = (Math.random() * (i + 1)) | 0;
-        var t = positions[i]; positions[i] = positions[j]; positions[j] = t;
-      }
-
-      var rafId = null;
-      var timer = null;
-      var alive = true;
-      canvas.__stopScramble = function() {
-        alive = false;
-        if (rafId) cancelAnimationFrame(rafId);
-        if (timer) clearTimeout(timer);
-        rafId = null; timer = null;
-      };
-
-      if (artUrl) {
-        var img = new Image();
-        img.crossOrigin = 'anonymous';
-        img.onload = function() {
-          if (!alive) return;
-          var srcCanvas = document.createElement('canvas');
-          srcCanvas.width = cols; srcCanvas.height = rows;
-          srcCanvas.getContext('2d').drawImage(img, 0, 0, cols, rows);
-
-          // transitions[destIdx] = { fromSrc, toSrc, startTime }
-          var transitions = {};
-          var FADE_MS = 2600; // ms each block cross-fades
-
-          function easeInOut(t) { return t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2,2)/2; }
-
-          function drawFrame(ts) {
-            if (!alive) return;
-            ctx.clearRect(0, 0, W, H);
-            for (var d = 0; d < total; d++) {
-              var dc = d % cols, dr = (d / cols) | 0;
-              var tr = transitions[d];
-              if (tr) {
-                var p = Math.min(1, (ts - tr.startTime) / FADE_MS);
-                var ep = easeInOut(p);
-                // old block fading out
-                var fsc = tr.fromSrc % cols, fsr = (tr.fromSrc / cols) | 0;
-                ctx.globalAlpha = 1 - ep;
-                ctx.drawImage(srcCanvas, fsc, fsr, 1, 1, dc*BLOCK, dr*BLOCK, BLOCK, BLOCK);
-                // new block fading in
-                var s = positions[d];
-                var sc = s % cols, sr = (s / cols) | 0;
-                ctx.globalAlpha = ep;
-                ctx.drawImage(srcCanvas, sc, sr, 1, 1, dc*BLOCK, dr*BLOCK, BLOCK, BLOCK);
-                ctx.globalAlpha = 1;
-                if (p >= 1) delete transitions[d];
-              } else {
-                var s = positions[d];
-                var sc = s % cols, sr = (s / cols) | 0;
-                ctx.drawImage(srcCanvas, sc, sr, 1, 1, dc*BLOCK, dr*BLOCK, BLOCK, BLOCK);
-              }
-            }
-            rafId = requestAnimationFrame(drawFrame);
-          }
-          rafId = requestAnimationFrame(drawFrame);
-
-          function scrambleTick() {
-            if (!alive) return;
-            var swaps = 2 + ((Math.random() * 2) | 0); // 2–3 blocks change per tick
-            var now = performance.now();
-            for (var s = 0; s < swaps; s++) {
-              var a = (Math.random() * total) | 0;
-              var b = (Math.random() * total) | 0;
-              transitions[a] = { fromSrc: positions[a], startTime: now };
-              transitions[b] = { fromSrc: positions[b], startTime: now };
-              var tmp = positions[a]; positions[a] = positions[b]; positions[b] = tmp;
-            }
-            timer = setTimeout(scrambleTick, 2200 + Math.random() * 1400); // 2.2–3.6s between ticks
-          }
-          scrambleTick();
-        };
-        img.onerror = function() { buildPreviewPixelGrid(el); };
-        img.src = artUrl;
-      } else {
-        // No art — slow colour wash: redraw all blocks every ~3s
-        var pixColors = ['#ff2d78','#7c3aed','#38bdf8','#06b6d4','#1db954','#ffe600','#ff7800'];
-        function drawColorScramble() {
-          if (!alive) return;
-          for (var r = 0; r < rows; r++) {
-            for (var c = 0; c < cols; c++) {
-              ctx.fillStyle = pixColors[(Math.random() * pixColors.length) | 0];
-              ctx.globalAlpha = 0.45 + Math.random() * 0.45;
-              ctx.fillRect(c * BLOCK, r * BLOCK, BLOCK, BLOCK);
-            }
-          }
-          ctx.globalAlpha = 1;
-        }
-        drawColorScramble();
-        function colorTick() { drawColorScramble(); timer = setTimeout(colorTick, 3000); }
-        colorTick();
-      }
-    }
-
-    var _lavaRaf = null;
-    function buildLavaLamp(el) {
-      if (_lavaRaf) { cancelAnimationFrame(_lavaRaf); _lavaRaf = null; }
-      el.innerHTML = '';
-      var prevOverlay = previewBodyEl && previewBodyEl.querySelector('.lava-overlay');
-      if (prevOverlay) prevOverlay.remove();
-
-      var ns = 'http://www.w3.org/2000/svg';
-      // Narrow tall viewBox like a real lava lamp tube.
-      // Small VW = blobs are ~15% of tube width, same proportions as reference implementations.
-      var VW = 180, VH = 500;
-
-      var svg = document.createElementNS(ns, 'svg');
-      // translateZ(0) forces GPU composited layer — dramatically reduces jank from the goo filter
-      svg.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block;overflow:hidden;transform:translateZ(0);will-change:transform;backface-visibility:hidden';
-      svg.setAttribute('viewBox', '0 0 ' + VW + ' ' + VH);
-      svg.setAttribute('preserveAspectRatio', 'xMidYMid slice');
-
-      var defs = document.createElementNS(ns, 'defs');
-
-      // Goo filter: blur -> alpha threshold -> feBlend (same chain as LofiLamp).
-      // feBlend instead of feComposite-atop lets blob colors actually mix
-      // in the neck zone as they merge, producing natural organic blending.
-      var filt = document.createElementNS(ns, 'filter');
-      filt.setAttribute('id', 'lgoo');
-      filt.setAttribute('x', '-30%'); filt.setAttribute('y', '-20%');
-      filt.setAttribute('width', '160%'); filt.setAttribute('height', '140%');
-      filt.setAttribute('color-interpolation-filters', 'sRGB');
-
-      var fBlur = document.createElementNS(ns, 'feGaussianBlur');
-      fBlur.setAttribute('in', 'SourceGraphic');
-      fBlur.setAttribute('stdDeviation', '4');
-      fBlur.setAttribute('result', 'blur');
-
-      var fMat = document.createElementNS(ns, 'feColorMatrix');
-      fMat.setAttribute('in', 'blur'); fMat.setAttribute('type', 'matrix');
-      fMat.setAttribute('values', '1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 20 -8');
-      fMat.setAttribute('result', 'goo');
-
-      filt.appendChild(fBlur); filt.appendChild(fMat);
-      defs.appendChild(filt);
-
-      // Single shared gradient for ALL rising blobs -- uniform color = seamless merging.
-      // If every blob uses a different gradient the neck between them shows a color seam.
-      var blobGrad = document.createElementNS(ns, 'radialGradient');
-      blobGrad.setAttribute('id', 'lg');
-      blobGrad.setAttribute('cx', '38%'); blobGrad.setAttribute('cy', '32%'); blobGrad.setAttribute('r', '65%');
-      [['0%','#fff6d0'],['20%','#ffcc60'],['55%','#ff6800'],['85%','#e83800'],['100%','#d02800']].forEach(function(s){
-        var st = document.createElementNS(ns, 'stop');
-        st.setAttribute('offset', s[0]); st.setAttribute('stop-color', s[1]);
-        blobGrad.appendChild(st);
-      });
-      defs.appendChild(blobGrad);
-
-      // Pool gradient -- slightly richer/darker for the settled lava at the bottom
-      var poolGrad = document.createElementNS(ns, 'radialGradient');
-      poolGrad.setAttribute('id', 'pg');
-      poolGrad.setAttribute('cx', '50%'); poolGrad.setAttribute('cy', '25%'); poolGrad.setAttribute('r', '60%');
-      [['0%','#ffe090'],['30%','#ffaa40'],['65%','#ff6200'],['100%','#d03000']].forEach(function(s){
-        var st = document.createElementNS(ns, 'stop');
-        st.setAttribute('offset', s[0]); st.setAttribute('stop-color', s[1]);
-        poolGrad.appendChild(st);
-      });
-      defs.appendChild(poolGrad);
-
-      // Heat glow gradient at bottom
-      var heatGrad = document.createElementNS(ns, 'radialGradient');
-      heatGrad.setAttribute('id', 'lheat');
-      heatGrad.setAttribute('cx', '50%'); heatGrad.setAttribute('cy', '100%'); heatGrad.setAttribute('r', '65%');
-      [['0%','rgba(255,120,0,0.65)'],['40%','rgba(210,55,0,0.28)'],['75%','rgba(160,20,0,0.10)'],['100%','transparent']].forEach(function(p){
-        var s = document.createElementNS(ns, 'stop');
-        s.setAttribute('offset', p[0]); s.setAttribute('stop-color', p[1]);
-        heatGrad.appendChild(s);
-      });
-      defs.appendChild(heatGrad);
-
-      // Top shadow gradient
-      var topGrad = document.createElementNS(ns, 'linearGradient');
-      topGrad.setAttribute('id', 'ltop');
-      topGrad.setAttribute('x1','0'); topGrad.setAttribute('y1','0');
-      topGrad.setAttribute('x2','0'); topGrad.setAttribute('y2','1');
-      [['0%','rgba(0,0,0,0.75)'],['100%','rgba(0,0,0,0)']].forEach(function(p){
-        var s = document.createElementNS(ns, 'stop');
-        s.setAttribute('offset', p[0]); s.setAttribute('stop-color', p[1]);
-        topGrad.appendChild(s);
-      });
-      defs.appendChild(topGrad);
-
-      svg.appendChild(defs);
-
-      // Dark background
-      var bg = document.createElementNS(ns, 'rect');
-      // fill:none — preview-body (#060606) shows through; blobs-only overlay works during blob-over
-      bg.setAttribute('width', '100%'); bg.setAttribute('height', '100%'); bg.setAttribute('fill', 'none');
-      svg.appendChild(bg);
-
-      // Heat glow (outside goo group -- not filtered)
-      var heatEl = document.createElementNS(ns, 'ellipse');
-      heatEl.setAttribute('cx', (VW*0.5).toFixed(1)); heatEl.setAttribute('cy', '336');
-      heatEl.setAttribute('rx', (VW*0.95).toFixed(1)); heatEl.setAttribute('ry', '80');
-      heatEl.setAttribute('fill', 'url(#lheat)');
-      svg.appendChild(heatEl);
-
-      // Goo group -- filter applied to the whole group atomically
-      var gooG = document.createElementNS(ns, 'g');
-      gooG.setAttribute('filter', 'url(#lgoo)');
-
-      // Pool: two FLAT wide ellipses anchored below visible area.
-      // ry is small so they look like a pool, not round blobs.
-      [{cx:0.38*VW, cy:330, rx:40, ry:11},
-       {cx:0.62*VW, cy:332, rx:36, ry:9}].forEach(function(p){
-        var e = document.createElementNS(ns, 'ellipse');
-        e.setAttribute('cx', p.cx.toFixed(1)); e.setAttribute('cy', p.cy.toFixed(1));
-        e.setAttribute('rx', p.rx); e.setAttribute('ry', p.ry);
-        e.setAttribute('fill', 'url(#pg)');
-        gooG.appendChild(e);
-      });
-
-      // 8 rising blobs -- radii 22-36 units in 180-unit VW = 12-20% of width.
-      // Spread cx across full tube width so blobs are sometimes isolated,
-      // sometimes merging -- more like a real lava lamp.
-      var blobDefs = [
-        {cx:0.30*VW, rx:14, ry:15, dur:72000,  delay:0,       lat:4,  off:0.3},
-        {cx:0.46*VW, rx:16, ry:17, dur:88000,  delay:-11000,  lat:-4, off:-0.35},
-        {cx:0.55*VW, rx:13, ry:14, dur:79000,  delay:-22000,  lat:4,  off:0.28},
-        {cx:0.64*VW, rx:15, ry:16, dur:97000,  delay:-33000,  lat:-3, off:-0.3},
-        {cx:0.38*VW, rx:17, ry:18, dur:84000,  delay:-44000,  lat:5,  off:0.32},
-        {cx:0.22*VW, rx:12, ry:13, dur:106000, delay:-55000,  lat:-3, off:-0.26},
-        {cx:0.50*VW, rx:13, ry:14, dur:116000, delay:-66000,  lat:3,  off:0.28},
-        {cx:0.42*VW, rx:18, ry:19, dur:75000,  delay:-77000,  lat:5,  off:-0.33},
-      ];
-
-      var baseY  = 325; // resting y -- within the visible viewport (165-335)
-      var travel = 148; // full traversal of visible area
-
-      // Each blob is a cluster of 2 overlapping circles slightly offset from each other.
-      // The goo filter merges them into an organic irregular shape -- not a perfect bubble.
-      // The secondary circle is ~70% size, offset by ~40% of primary radius.
-      var blobEls = blobDefs.map(function(b){
-        var r = Math.round((b.rx + b.ry) / 2);
-        var r2 = Math.round(r * 0.72);
-        // Primary circle
-        var e1 = document.createElementNS(ns, 'circle');
-        e1.setAttribute('cx', b.cx.toFixed(1));
-        e1.setAttribute('cy', baseY);
-        e1.setAttribute('r', r);
-        e1.setAttribute('fill', 'url(#lg)');
-        gooG.appendChild(e1);
-        // Secondary circle -- offset gives the irregular lava-drop shape
-        var e2 = document.createElementNS(ns, 'circle');
-        e2.setAttribute('cx', (b.cx + r * b.off).toFixed(1));
-        e2.setAttribute('cy', (baseY + r * 0.35).toFixed(1));
-        e2.setAttribute('r', r2);
-        e2.setAttribute('fill', 'url(#lg)');
-        gooG.appendChild(e2);
-        return [e1, e2];
-      });
-
-      svg.appendChild(gooG);
-
-      // Top shadow (outside goo group)
-      var topShadow = document.createElementNS(ns, 'rect');
-      topShadow.setAttribute('x', '0'); topShadow.setAttribute('y', '148');
-      topShadow.setAttribute('width', '100%'); topShadow.setAttribute('height', '52');
-      topShadow.setAttribute('fill', 'url(#ltop)');
-      svg.appendChild(topShadow);
-
-      el.appendChild(svg);
-
-      // Lava physics curve: viscous fluid feel.
-      // 30% at bottom (warming/gathering), slow rise, 15% at top (cooling), slow fall.
-      function ss(t){ return t*t*(3-2*t); }
-      function lavaCurve(p){
-        if(p < 0.30){ return ss(p/0.30)*0.03; }                    // gather at bottom
-        if(p < 0.58){ var t=(p-0.30)/0.28; return ss(t); }         // slow rise
-        if(p < 0.73){ return 1 - ss((p-0.58)/0.15)*0.03; }         // linger at top
-        var t=(p-0.73)/0.27; return 1 - ss(t);                     // slow fall
-      }
-
-      // Absorb time gaps (tab backgrounded/refocused) so blobs never teleport
-      var _tickLast = 0;
-      var _timeOffset = 0;
-
-      function tick(now){
-        // If more than 200ms since last frame, absorb the gap (minus one normal 16ms frame)
-        if (_tickLast > 0 && now - _tickLast > 200) {
-          _timeOffset += (now - _tickLast - 16);
-        }
-        _tickLast = now;
-        var t = now - _timeOffset;
-
-        blobDefs.forEach(function(b,i){
-          var phase = ((t + b.delay) % b.dur) / b.dur;
-          if(phase < 0) phase += 1;
-          var yNorm = lavaCurve(phase);
-          var ang = phase * 2 * Math.PI;
-          // Two-frequency lateral drift -- organic, not pendulum-like
-          var xOff = b.lat * Math.sin(ang*1.3 + 0.8) + b.lat*0.3 * Math.sin(ang*0.72 + 1.5);
-          // Squash-stretch: flat+wide at rest, tall+narrow mid-travel
-          var mid = 4*yNorm*(1-yNorm);
-          var scX = 1.0 + 0.08*(1-mid) - 0.05*mid;
-          var scY = 1.0 - 0.05*(1-mid) + 0.10*mid;
-          // Use fractional radii to avoid 1px integer jumps through the goo threshold
-          var r = (b.rx + b.ry) / 2;
-          var r2 = r * 0.72;
-          var cx = b.cx + xOff;
-          var cy = baseY - travel*yNorm;
-          // Primary circle
-          blobEls[i][0].setAttribute('cx', cx.toFixed(1));
-          blobEls[i][0].setAttribute('cy', cy.toFixed(1));
-          blobEls[i][0].setAttribute('r', (r * (0.97 + 0.06*scX)).toFixed(2));
-          // Secondary circle -- maintains offset, grows/shrinks inversely
-          blobEls[i][1].setAttribute('cx', (cx + r*b.off).toFixed(1));
-          blobEls[i][1].setAttribute('cy', (cy + r*0.35*scY).toFixed(1));
-          blobEls[i][1].setAttribute('r', (r2 * scY).toFixed(2));
-        });
-        _lavaRaf = requestAnimationFrame(tick);
-      }
-      _lavaRaf = requestAnimationFrame(tick);
-
-      // ── BLOB PROMOTION: periodically raise fxEl above lyrics so a real blob passes in front ──
-      // Simplest approach: add class 'blob-over' to previewBodyEl which sets #previewFx z-index:2
-      // (above .mock-lyrics-stage z-index:1). No circle shuffling — blobs keep full goo physics.
-      if (window.__fgBlobTimeout) { clearTimeout(window.__fgBlobTimeout); window.__fgBlobTimeout = null; }
-
-      var _promoteHoldTimer = null;
-
-      function demoteBlob() {
-        if (previewBodyEl) previewBodyEl.classList.remove('blob-over');
-        window.__fgBlobTimeout = setTimeout(promoteBlob, 18000 + Math.random() * 18000);
-      }
-
-      function promoteBlob() {
-        if (window.__fxMode !== 'lava') return;
-        if (previewBodyEl) previewBodyEl.classList.add('blob-over');
-        _promoteHoldTimer = setTimeout(demoteBlob, 10000 + Math.random() * 6000);
-      }
-
-      // Store cleanup so applyFxMode can tear down properly on mode switch
-      window.__lavaCleanup = function() {
-        if (window.__fgBlobTimeout) { clearTimeout(window.__fgBlobTimeout); window.__fgBlobTimeout = null; }
-        if (_promoteHoldTimer) { clearTimeout(_promoteHoldTimer); _promoteHoldTimer = null; }
-        if (previewBodyEl) previewBodyEl.classList.remove('blob-over');
-      };
-
-      // First promotion after 6–12s so the lamp feels settled
-      window.__fgBlobTimeout = setTimeout(promoteBlob, 6000 + Math.random() * 6000);
-    }
-
-    function applyFxMode(mode) {
-      if (!previewBodyEl) return;
-      const prevMode = currentFxMode;
-      currentFxMode = mode;
-      window.__fxMode = mode; // expose for img.onload dissolve check
-
-      // Swap class on previewBody
-      previewBodyEl.className = (previewBodyEl.className || '')
-        .replace(/\bfx-\S+/g, '').trim() + ' fx-' + mode;
-
-      // Update active card highlight in effects section
-      document.querySelectorAll('.effect-card[data-fx]').forEach(c => c.classList.remove('active'));
-      const activeCard = document.querySelector('.effect-card[data-fx="' + mode + '"]');
-      if (activeCard) activeCard.classList.add('active');
-
-      // Update active state in hero fx switcher buttons
-      document.querySelectorAll('.fx-btn[data-mode]').forEach(b => b.classList.remove('active'));
-      const activeBtn = document.querySelector('.fx-btn[data-mode="' + mode + '"]');
-      if (activeBtn) activeBtn.classList.add('active');
-
-      // Leaving pixel mode: stop scrambler rAF loop
-      if (mode !== 'pixel' && mode !== 'plasma' && mode !== 'waveform' && fxEl) {
-        var oldCanvas = fxEl.querySelector('canvas');
-        if (oldCanvas && oldCanvas.__stopScramble) oldCanvas.__stopScramble();
-      }
-
-      // Leaving plasma mode: stop shader loop
-      if (mode !== 'plasma' && typeof _plasmaRaf !== 'undefined' && _plasmaRaf) {
-        cancelAnimationFrame(_plasmaRaf); _plasmaRaf = null;
-      }
-      // Leaving waveform mode: stop canvas loop
-      if (mode !== 'waveform' && typeof _waveRaf !== 'undefined' && _waveRaf) {
-        cancelAnimationFrame(_waveRaf); _waveRaf = null;
-      }
-
-      // Leaving lava mode: tear down overlay SVG + blob promotion timers
-      if (mode !== 'lava') {
-        if (typeof window.__lavaCleanup === 'function') { window.__lavaCleanup(); window.__lavaCleanup = null; }
-        // legacy fallback for stale overlay/fg-blob elements (should be gone after cleanup)
-        if (previewBodyEl) {
-          var oldOverlay = previewBodyEl.querySelector('.lava-overlay');
-          if (oldOverlay) oldOverlay.remove();
-        }
-      }
-
-      // Clear injected content from previous mode if it used fxEl
-      // album is included — it injects a Ken Burns div that must be removed on mode switch
-      if (fxEl && (prevMode === 'lava' || prevMode === 'pixel' || prevMode === 'album' || prevMode === 'plasma' || prevMode === 'waveform') && fxEl.children.length) {
-        fxEl.innerHTML = '';
-        delete fxEl.dataset.built;
-      }
-
-      // Handle background content per mode
-      if (mode === 'lava') {
-        buildLavaLamp(fxEl);
-      } else if (mode === 'album') {
-        if (currentArtUrl) {
-          const val = 'url(' + currentArtUrl + ') center / cover no-repeat';
-          if (previewBgEl2) previewBgEl2.style.background = val;
-          if (previewBg2El2) previewBg2El2.style.background = val;
-          const albumEl2 = document.getElementById('mockAlbum');
-          if (albumEl2) albumEl2.style.background = val;
-          if (fxEl) {
-            fxEl.innerHTML = '';
-            // Inject Ken Burns keyframes once
-            if (!document.getElementById('kb-style')) {
-              var kbStyle = document.createElement('style');
-              kbStyle.id = 'kb-style';
-              kbStyle.textContent =
-                '@keyframes kenBurns{' +
-                  '0%{transform:scale(1.0) translate(0%,0%)}' +
-                  '50%{transform:scale(1.09) translate(-2%,1.5%)}' +
-                  '100%{transform:scale(1.04) translate(2%,-1%)}' +
-                '}';
-              document.head.appendChild(kbStyle);
-            }
-            // Full-bleed album art with gentle Ken Burns zoom + very slight blur
-            var artDiv = document.createElement('div');
-            artDiv.style.cssText = [
-              'position:absolute',
-              'inset:0',
-              'background:url(' + currentArtUrl + ') center/cover no-repeat',
-              'filter:blur(1.5px)',
-              'animation:kenBurns 28s ease-in-out infinite alternate',
-              'transform-origin:center center',
-              'will-change:transform',
-            ].join(';');
-            fxEl.appendChild(artDiv);
-            // Vignette overlay — strong enough to read lyrics on any album art
-            var vigDiv = document.createElement('div');
-            vigDiv.style.cssText = [
-              'position:absolute',
-              'inset:0',
-              'background:linear-gradient(to bottom,' +
-                'rgba(0,0,0,0.55) 0%,' +
-                'rgba(0,0,0,0.28) 22%,' +
-                'rgba(0,0,0,0.28) 58%,' +
-                'rgba(0,0,0,0.78) 100%)',
-              'pointer-events:none',
-            ].join(';');
-            fxEl.appendChild(vigDiv);
-          }
-        }
-      } else if (mode === 'plasma') {
-        buildPlasma(fxEl);
-      } else if (mode === 'waveform') {
-        buildWaveform(fxEl);
-      } else if (mode === 'pixel') {
-        // Canvas pixel scramble — randomly relocates blocks from album art each tick
-        buildPixelScramble(fxEl, currentArtUrl);
-      }
-    }
-
-    // Wire up effect CARD clicks — scroll hero into view so user sees the change
-    document.querySelectorAll('.effect-card[data-fx]').forEach(card => {
-      card.addEventListener('click', () => {
-        applyFxMode(card.dataset.fx);
-        const heroEl = document.querySelector('.hero-outer');
-        if (heroEl) heroEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      });
-    });
-
-    // Wire up hero switcher buttons — switch in place, no scroll needed
-    document.querySelectorAll('.fx-btn[data-mode]').forEach(btn => {
-      btn.addEventListener('click', () => applyFxMode(btn.dataset.mode));
-    });
-
-    // Expose applyFxMode globally so album art fetch can trigger mode restoration
-    window.__applyFxMode = applyFxMode;
-
-    // ── PLASMA (WebGL GLSL shader) ──────────────────────────────────────
-    var _plasmaRaf = null;
-    function buildPlasma(el) {
-      if (_plasmaRaf) { cancelAnimationFrame(_plasmaRaf); _plasmaRaf = null; }
-      el.innerHTML = '';
-      if (typeof THREE === 'undefined') return;
-
-      var canvas = document.createElement('canvas');
-      canvas.className = 'plasma-canvas';
-      el.appendChild(canvas);
-
-      var W = el.offsetWidth  || 320;
-      var H = el.offsetHeight || 500;
-      canvas.width  = W;
-      canvas.height = H;
-
-      var renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: false });
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
-      renderer.setSize(W, H);
-
-      var scene  = new THREE.Scene();
-      var camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 2);
-      camera.position.z = 1;
-
-      var mat = new THREE.ShaderMaterial({
-        uniforms: { uTime: { value: 0 }, uBass: { value: 0 },
-          uC1: { value: new THREE.Color('#c084fc') },
-          uC2: { value: new THREE.Color('#818cf8') },
-          uC3: { value: new THREE.Color('#38bdf8') } },
-        vertexShader: 'varying vec2 vUv; void main(){ vUv=uv; gl_Position=vec4(position.xy,0.,1.); }',
-        fragmentShader: [
-          'precision mediump float;',
-          'uniform float uTime,uBass; uniform vec3 uC1,uC2,uC3; varying vec2 vUv;',
-          'float hash(vec2 p){ return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5); }',
-          'float noise(vec2 p){ vec2 i=floor(p),f=fract(p); f=f*f*(3.-2.*f);',
-          '  float a=hash(i),b=hash(i+vec2(1,0)),c=hash(i+vec2(0,1)),d=hash(i+vec2(1,1));',
-          '  return mix(mix(a,b,f.x),mix(c,d,f.x),f.y); }',
-          'void main(){',
-          '  float t=uTime*.22; float bass=uBass;',
-          '  float n1=noise(vUv*3.2+vec2(t,t*.55));',
-          '  float n2=noise(vUv*5.8-vec2(t*.38,t*1.05));',
-          '  float n3=noise(vUv*2.0+vec2(-t*.32,t*.48));',
-          '  float p=sin(n1*6.28+t+bass)*.5+.5;',
-          '  p+=sin(n2*6.28-t*.85)*.5+.5;',
-          '  p+=sin(n3*6.28+t*1.35)*.5+.5; p/=3.;',
-          '  p=pow(p,1.65-bass*.45);',
-          '  vec3 col; if(p<.5) col=mix(uC1*.3,uC2*.55,p*2.); else col=mix(uC2*.55,uC3*.72,(p-.5)*2.);',
-          '  vec2 d=vUv-.5; col*=clamp(1.-dot(d,d)*2.1,.04,1.);',
-          '  gl_FragColor=vec4(col,1.); }'
-        ].join('\n'),
-      });
-      var mesh = new THREE.Mesh(new THREE.PlaneBufferGeometry(2, 2), mat);
-      scene.add(mesh);
-
-      var start = performance.now();
-      function frame() {
-        _plasmaRaf = requestAnimationFrame(frame);
-        mat.uniforms.uTime.value = (performance.now() - start) / 1000;
-        renderer.render(scene, camera);
-      }
-      frame();
-    }
-
-    // ── WAVEFORM (Canvas 2D spectrum) ────────────────────────────────────
-    var _waveRaf = null;
-    function buildWaveform(el) {
-      if (_waveRaf) { cancelAnimationFrame(_waveRaf); _waveRaf = null; }
-      el.innerHTML = '';
-
-      var canvas = document.createElement('canvas');
-      canvas.className = 'wave-canvas';
-      canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block;';
-      el.appendChild(canvas);
-
-      function resize() {
-        canvas.width  = el.offsetWidth  || 320;
-        canvas.height = el.offsetHeight || 500;
-      }
-      resize();
-      var ctx = canvas.getContext('2d');
-
-      var t = 0;
-      function frame() {
-        _waveRaf = requestAnimationFrame(frame);
-        t += 0.016;
-        var W = canvas.width, H = canvas.height;
-        ctx.clearRect(0, 0, W, H);
-
-        // Dark background
-        ctx.fillStyle = '#04020a';
-        ctx.fillRect(0, 0, W, H);
-
-        // Spectrum bars
-        var bars = 80, bw = W / bars;
-        for (var i = 0; i < bars; i++) {
-          var f = i / bars;
-          var env = Math.exp(-f * 2.5);
-          var val = (0.3 + Math.sin(f * 18 + t * 2.2) * 0.25 * env + Math.abs(Math.sin(f * 7 + t * 3.5)) * 0.2) * (0.6 + env * 0.4);
-          val = Math.max(0, Math.min(1, val));
-          var h = val * H * 0.42;
-          var hue = 260 + i * 0.7;
-          ctx.fillStyle = 'hsla(' + hue + ',72%,62%,' + (0.4 + val * 0.55) + ')';
-          ctx.fillRect(i * bw, H/2 - h, bw - 1.5, h * 2);
-        }
-
-        // Oscilloscope glow line
-        ctx.beginPath();
-        ctx.strokeStyle = 'rgba(192,132,252,0.6)';
-        ctx.lineWidth = 1.8;
-        ctx.shadowColor = '#c084fc';
-        ctx.shadowBlur = 7;
-        for (var x = 0; x < W; x++) {
-          var tx = x / W;
-          var y = H/2
-            + Math.sin(tx * Math.PI * 9  + t * 2.6) * 28
-            + Math.sin(tx * Math.PI * 18 + t * 4.8) * 14
-            + Math.sin(tx * Math.PI * 4  + t * 1.3) * 44;
-          x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-        }
-        ctx.stroke();
-        ctx.shadowBlur = 0;
-      }
-      frame();
-    }
-
-    // ── LYRIC MODE SYSTEM ───────────────────────────────────────────────
-    var currentLyricMode = 'default';
-
-    function setLyricMode(mode) {
-      currentLyricMode = mode;
-      var body = document.getElementById('previewBody');
-      if (!body) return;
-      body.classList.remove('lyric-mode-default','lyric-mode-focused','lyric-mode-sweep');
-      body.classList.add('lyric-mode-' + mode);
-      document.querySelectorAll('.lm-btn').forEach(function(b) {
-        b.classList.toggle('active', b.dataset.lm === mode);
-      });
-      // Rebuild current line for sweep mode so words get sw-wrap markup
-      var stage = document.querySelector('.mock-lyrics-stage');
-      if (!stage) return;
-      var activeEl = stage.querySelector('.mock-active');
-      if (!activeEl) return;
-      if (mode === 'sweep') {
-        var words = [...activeEl.querySelectorAll('.mock-word')].map(w => w.textContent);
-        activeEl.innerHTML = words.map(function(w) {
-          return '<span class="sw-wrap"><span class="sw-base">' + w + '</span>' +
-                 '<span class="sw-fill-clip"><span class="sw-fill-text">' + w + '</span></span></span>';
-        }).join(' ');
-      } else {
-        // Restore plain mock-word spans
-        var words2 = [...activeEl.querySelectorAll('.sw-wrap,.mock-word')].map(function(el) {
-          return el.querySelector('.sw-base') ? el.querySelector('.sw-base').textContent : el.textContent;
-        });
-        activeEl.innerHTML = words2.map(function(w) { return '<span class="mock-word done">' + w + '</span>'; }).join(' ');
-      }
-    }
-
-    document.querySelectorAll('.lm-btn').forEach(function(btn) {
-      btn.addEventListener('click', function() { setLyricMode(btn.dataset.lm); });
-    });
-
-    // Patch runLine to support sweep mode word rendering
-    var _origRunLine = runLine;
-    window.__patchedRunLine = true;
-
-    // Augment word highlight to also drive focused-mode per-word states
-    var _origWordTimer = null;
-    (function patchWordHighlight() {
-      // We hook into the existing word timer by observing DOM changes on mock-active
-      var stage = document.querySelector('.mock-lyrics-stage');
-      if (!stage) return;
-      var obs = new MutationObserver(function() {
-        if (currentLyricMode === 'focused') {
-          var activeEl = stage.querySelector('.mock-active');
-          if (!activeEl) return;
-          activeEl.querySelectorAll('.mock-word').forEach(function(w) {
-            if (w.classList.contains('lit')) {
-              w.classList.add('w-active');
-              w.classList.remove('w-past','w-future');
-              var prev = w.previousElementSibling;
-              while(prev) { prev.classList.add('w-past'); prev.classList.remove('w-active','w-future'); prev = prev.previousElementSibling; }
-              var next = w.nextElementSibling;
-              while(next) { next.classList.add('w-future'); next.classList.remove('w-active','w-past'); next = next.nextElementSibling; }
-            }
-          });
-        }
-        if (currentLyricMode === 'sweep') {
-          var activeEl2 = stage.querySelector('.mock-active');
-          if (!activeEl2) return;
-          // Convert any newly-created mock-word spans to sw-wrap
-          var hasWraps = activeEl2.querySelector('.sw-wrap');
-          if (!hasWraps) {
-            var words = [...activeEl2.querySelectorAll('.mock-word')].map(function(w) { return w.textContent; });
-            if (!words.length) return;
-            activeEl2.innerHTML = words.map(function(w) {
-              return '<span class="sw-wrap"><span class="sw-base">' + w + '</span>' +
-                     '<span class="sw-fill-clip"><span class="sw-fill-text">' + w + '</span></span></span>';
-            }).join(' ');
-          }
-          // Drive sweep fills based on lit/done state
-          activeEl2.querySelectorAll('.sw-wrap').forEach(function(wrap, wi) {
-            var origWord = activeEl2.querySelectorAll('.sw-wrap')[wi];
-            // We watch for .lit changes on corresponding mock-word — but in sweep mode
-            // the words are already sw-wraps. We use a simple stagger instead.
-          });
-        }
-      });
-      obs.observe(stage, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
-
-      // Sweep: drive fills on interval matching the word timer
-      var sweepTimer = null;
-      var _origSetInterval = window.setInterval;
-      // Override the word timer setup to also drive sweep
-      var origRunLineRef = window.runLine;
-    })();
-
-    // Simple sweep driver: watches for .lit additions and maps them to sw-wrap fills
-    (function sweepDriver() {
-      var stage = document.querySelector('.mock-lyrics-stage');
-      if (!stage) return;
-      var lastLitCount = 0;
-      setInterval(function() {
-        if (currentLyricMode !== 'sweep') { lastLitCount = 0; return; }
-        var activeEl = stage.querySelector('.mock-active');
-        if (!activeEl) { lastLitCount = 0; return; }
-        var wraps = activeEl.querySelectorAll('.sw-wrap');
-        if (!wraps.length) return;
-        // Count currently lit/done words from original word timer
-        // We approximate by checking how many wraps should be illuminated
-        var totalWords = wraps.length;
-        var elapsed = (Date.now() % 5500) / 5500; // rough estimate
-        var targetLit = Math.floor(elapsed * totalWords);
-        wraps.forEach(function(wrap, i) {
-          var fill = wrap.querySelector('.sw-fill-clip');
-          if (!fill) return;
-          if (i < targetLit) {
-            wrap.classList.add('done');
-            wrap.classList.remove('active');
-          } else if (i === targetLit) {
-            wrap.classList.add('active');
-            wrap.classList.remove('done');
-            fill.style.setProperty('--sw-dur', (5500 / totalWords / 1000) + 's');
-          } else {
-            wrap.classList.remove('done','active');
-            fill.style.width = '0%';
-          }
-        });
-      }, 80);
-    })();
-
-    // Boot into lava lamp mode — builds the lamp DOM and sets active states
-    applyFxMode('lava');
-  })();
-
-  // ── PIXEL MOSAIC: fill effect card with colorful pixel grid ──
-  (function() {
-    const mosaic = document.getElementById('pixelMosaic');
-    if (!mosaic) return;
-    const cols = 14, rows = 11;
-    const colors = [
-      '#ff2d78','#ff4fa0','#7c3aed','#0369a1','#38bdf8',
-      '#06b6d4','#6d28d9','#c2185b','#1e40af','#0891b2',
-      '#a855f7','#e879f9','#0e7490','#4c1d95','#9c0032',
-    ];
-    mosaic.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
-    mosaic.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
-    for (let i = 0; i < cols * rows; i++) {
-      const cell = document.createElement('span');
-      cell.style.background = colors[Math.floor(Math.random() * colors.length)];
-      cell.style.opacity = (0.3 + Math.random() * 0.6).toFixed(2);
-      mosaic.appendChild(cell);
-    }
-  })();
-  </script>
-
-  <!-- SVG filter definitions — hidden, referenced by CSS filter: url() -->
-
-
-
-  <!-- Upgrade Modal -->
-  <div class="upgrade-overlay" id="upgradeOverlay">
+  <div class="ch-footer-bottom">
+    <span class="ch-footer-copy">&copy; 2026 Chorushive. Where the whole room sings.</span>
+    <span class="ch-footer-copy">Built with love &amp; WebGL.</span>
+  </div>
+</footer>
+
+<script>
+function chSetMood(card){document.querySelectorAll('.ch-mood-card').forEach(c=>c.classList.remove('active'));card.classList.add('active');}
+function chSelectEffect(card,mode){document.querySelectorAll('.ch-effect-card').forEach(c=>c.classList.remove('selected'));card.classList.add('selected');var btn=document.querySelector('button.fx-btn[data-mode="'+mode+'"]');if(btn){btn.click();document.getElementById('ch-hero').scrollIntoView({behavior:'smooth'});}}
+function chSetTab(tab,idx){document.querySelectorAll('.ch-tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.ch-panel').forEach(p=>p.classList.remove('active'));tab.classList.add('active');document.querySelectorAll('.ch-panel')[idx].classList.add('active');}
+window.addEventListener('scroll',function(){var nav=document.getElementById('main-nav');if(window.scrollY>50){nav.classList.add('nav-scrolled');}else{nav.classList.remove('nav-scrolled');}});
+</script>
+<div class="upgrade-overlay" id="upgradeOverlay">
     <div class="upgrade-modal">
       <button class="upgrade-close" id="upgradeClose" aria-label="Close">×</button>
       <div class="upgrade-eyebrow">Chorushive Pro</div>
@@ -4047,10 +2827,282 @@
       checkUpgradeSuccess();
       if (session?.spotify_id) {
         checkSubscription();
+        // Show launch button — user is already connected
+        const lb = document.getElementById('launchKaraokeBtn');
+        if (lb) lb.classList.add('visible');
+        // Hide the connect button since they're already logged in
+        const cb = document.querySelector('.btn-connect');
+        if (cb) cb.style.display = 'none';
       } else {
         applyPaywall(); // lock everything for non-authed
       }
     });
+  })();
+
+  // ── REAL-TIME SPOTIFY PLAYER ──────────────────────────────────────────────
+  (function() {
+    'use strict';
+
+    // ── DOM refs ─────────────────────────────────────────────────────────
+    const previewBody  = document.getElementById('previewBody');
+    const mockStage    = document.querySelector('.mock-lyrics-stage');
+    const prevEl       = mockStage && mockStage.querySelector('.mock-prev');
+    const activeEl     = mockStage && mockStage.querySelector('.mock-active');
+    const nextEl       = mockStage && mockStage.querySelector('.mock-next');
+    const statusEl     = document.getElementById('playerStatus');
+    const statusMsg    = document.getElementById('playerStatusMsg');
+    const albumEl      = document.getElementById('mockAlbum');
+    const titleEl      = document.getElementById('mockTrackName');
+    const artistEl     = document.getElementById('mockArtistName');
+    const bgEl         = document.getElementById('previewBg');
+    const bg2El        = document.getElementById('previewBg2');
+
+    // ── State ─────────────────────────────────────────────────────────────
+    let playerSess     = null;
+    let pollTimer      = null;
+    let currentTrackId = null;
+    let lrcLines       = [];   // [{ms, text}]
+    let currentLineIdx = -1;
+    let playerWordTimers = [];
+
+    // ── Syllable helper (same heuristic as demo) ──────────────────────────
+    function syllables(word) {
+      const w = word.toLowerCase().replace(/[^a-z]/g, '');
+      if (!w) return 1;
+      const m = w.match(/[aeiouy]+/g);
+      let n = m ? m.length : 1;
+      if (w.length > 2 && w.endsWith('e') && !w.match(/[aeiouy]e$/)) n = Math.max(1, n - 1);
+      return Math.max(1, n);
+    }
+
+    function clearPWT() { playerWordTimers.forEach(clearTimeout); playerWordTimers = []; }
+
+    // ── Status overlay ────────────────────────────────────────────────────
+    function setStatus(msg) {
+      if (statusMsg) statusMsg.textContent = msg;
+      if (statusEl)  statusEl.classList.toggle('hidden', !msg);
+      if (mockStage) mockStage.style.opacity = msg ? '0' : '1';
+    }
+
+    // ── Token refresh ─────────────────────────────────────────────────────
+    async function refreshToken() {
+      try {
+        const r = await fetch('/auth/refresh', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refresh_token: playerSess.refresh_token }),
+        });
+        const d = await r.json();
+        if (d.access_token) {
+          playerSess.access_token = d.access_token;
+          playerSess.expires_at   = Date.now() + (d.expires_in || 3600) * 1000;
+          try { sessionStorage.setItem('ch_session', JSON.stringify(playerSess)); } catch(e) {}
+          return true;
+        }
+      } catch(e) {}
+      return false;
+    }
+
+    async function spotifyGet(path) {
+      if (Date.now() > (playerSess.expires_at || 0) - 60000) await refreshToken();
+      let r = await fetch('https://api.spotify.com/v1' + path, {
+        headers: { Authorization: 'Bearer ' + playerSess.access_token },
+      });
+      if (r.status === 401) {
+        if (await refreshToken()) {
+          r = await fetch('https://api.spotify.com/v1' + path, {
+            headers: { Authorization: 'Bearer ' + playerSess.access_token },
+          });
+        }
+      }
+      return r;
+    }
+
+    // ── LRC fetch + parse ──────────────────────────────────────────────────
+    function parseLrc(lrc) {
+      const out = [];
+      for (const line of lrc.split('\n')) {
+        const m = line.match(/^\[(\d+):(\d+\.\d+)\]\s*(.*)/);
+        if (!m) continue;
+        const ms   = (parseInt(m[1]) * 60 + parseFloat(m[2])) * 1000;
+        const text = m[3].trim();
+        if (text) out.push({ ms, text });
+      }
+      return out.sort((a, b) => a.ms - b.ms);
+    }
+
+    async function fetchLrc(track) {
+      const p = new URLSearchParams({
+        track_name:  track.name,
+        artist_name: track.artists?.[0]?.name || '',
+        album_name:  track.album?.name || '',
+        duration:    Math.round((track.duration_ms || 0) / 1000),
+      });
+      try {
+        const r = await fetch('https://lrclib.net/api/get?' + p, {
+          headers: { 'Lrclib-Client': 'Chorushive/1.0 (https://chorushive.com)' },
+        });
+        if (!r.ok) return null;
+        const d = await r.json();
+        if (d.syncedLyrics) return parseLrc(d.syncedLyrics);
+        if (d.plainLyrics) {
+          // Distribute plain lyrics evenly across the song duration
+          const lines = d.plainLyrics.split('\n').filter(l => l.trim());
+          const dur   = track.duration_ms || 200000;
+          const step  = dur / (lines.length + 1);
+          return lines.map((text, i) => ({ ms: Math.round(step * (i + 0.5)), text }));
+        }
+      } catch(e) {}
+      return null;
+    }
+
+    // ── Lyrics display ────────────────────────────────────────────────────
+    function showLine(idx) {
+      if (!prevEl || !activeEl || !nextEl) return;
+
+      prevEl.textContent = lrcLines[idx - 1]?.text || '';
+      nextEl.textContent = lrcLines[idx + 1]?.text || '';
+
+      const text    = lrcLines[idx]?.text || '';
+      const lineMs  = lrcLines[idx]?.ms   || 0;
+      const nextMs  = lrcLines[idx + 1]?.ms;
+      const durMs   = nextMs ? Math.max(1200, nextMs - lineMs) : 5000;
+
+      const words = text.split(/\s+/).filter(Boolean);
+      activeEl.innerHTML = words.map(w => `<span class="mock-word">${w}</span>`).join(' ');
+      activeEl.style.animation = 'none'; void activeEl.offsetHeight; activeEl.style.animation = '';
+
+      // Syllable-weighted word highlight over 85% of line duration
+      const wordEls   = Array.from(activeEl.querySelectorAll('.mock-word'));
+      const sylls     = wordEls.map(el => syllables(el.textContent));
+      const total     = sylls.reduce((a, b) => a + b, 0);
+      const budget    = durMs * 0.85;
+      clearPWT();
+      let offset = 0;
+      wordEls.forEach((el, i) => {
+        const startMs = Math.round((offset / total) * budget);
+        const wDur    = Math.round((sylls[i] / total) * budget);
+        playerWordTimers.push(setTimeout(() => {
+          if (i > 0) { wordEls[i-1].classList.remove('lit'); wordEls[i-1].classList.add('done'); }
+          el.classList.add('lit');
+        }, startMs));
+        if (i === wordEls.length - 1) {
+          playerWordTimers.push(setTimeout(() => {
+            el.classList.remove('lit'); el.classList.add('done');
+          }, startMs + wDur));
+        }
+        offset += sylls[i];
+      });
+    }
+
+    // ── Sync: find current line from progress_ms ──────────────────────────
+    function syncLyrics(progressMs) {
+      if (!lrcLines.length) return;
+      let lo = 0, hi = lrcLines.length - 1, idx = 0;
+      while (lo <= hi) {
+        const mid = (lo + hi) >> 1;
+        if (lrcLines[mid].ms <= progressMs) { idx = mid; lo = mid + 1; } else hi = mid - 1;
+      }
+      if (idx === currentLineIdx) return;
+      currentLineIdx = idx;
+      showLine(idx);
+    }
+
+    // ── Track info ────────────────────────────────────────────────────────
+    function updateTrackUI(track) {
+      const artUrl = track.album?.images?.[0]?.url;
+      const title  = track.name;
+      const artist = track.artists?.map(a => a.name).join(', ') || '';
+      if (albumEl && artUrl) albumEl.style.background = `url(${artUrl}) center/cover no-repeat`;
+      if (titleEl)  titleEl.textContent  = title;
+      if (artistEl) artistEl.textContent = artist;
+      if (artUrl) {
+        const bg = `url(${artUrl}) center/cover no-repeat`;
+        if (bgEl)  bgEl.style.background  = bg;
+        if (bg2El) bg2El.style.background = bg;
+        // If album art mode is active, re-apply it so the Ken Burns div updates
+        if (window.__applyFxMode && previewBody?.classList.contains('fx-album')) {
+          window.__applyFxMode('album');
+        }
+      }
+    }
+
+    // ── Poll loop ──────────────────────────────────────────────────────────
+    async function poll() {
+      if (!window.__playerActive) return;
+      try {
+        const r = await spotifyGet('/me/player');
+        if (r.status === 204) {
+          setStatus('PLAY SOMETHING ON SPOTIFY');
+          currentTrackId = null; lrcLines = []; currentLineIdx = -1;
+          pollTimer = setTimeout(poll, 2500); return;
+        }
+        if (!r.ok) throw new Error(r.status);
+        const state = await r.json();
+        if (!state.is_playing || !state.item) {
+          setStatus('PAUSED — RESUME ON SPOTIFY');
+          pollTimer = setTimeout(poll, 2000); return;
+        }
+        const trackId    = state.item.id;
+        const progressMs = state.progress_ms;
+
+        if (trackId !== currentTrackId) {
+          currentTrackId = trackId; currentLineIdx = -1; clearPWT();
+          updateTrackUI(state.item);
+          setStatus('LOADING LYRICS…');
+          const lines = await fetchLrc(state.item);
+          if (lines?.length) { lrcLines = lines; setStatus(''); }
+          else               { lrcLines = [];    setStatus('NO LYRICS FOUND'); }
+        }
+
+        if (lrcLines.length) { setStatus(''); syncLyrics(progressMs); }
+
+      } catch(e) { console.warn('Player poll:', e); }
+      pollTimer = setTimeout(poll, 1000);
+    }
+
+    // ── Enter / exit ───────────────────────────────────────────────────────
+    window.__enterPlayer = function() {
+      const stored = sessionStorage.getItem('ch_session');
+      if (!stored) { alert('Connect Spotify first'); return; }
+      try { playerSess = JSON.parse(stored); } catch(e) { return; }
+
+      window.__playerActive = true;
+      currentTrackId = null; lrcLines = []; currentLineIdx = -1;
+
+      if (previewBody) previewBody.classList.add('player-mode');
+      setStatus('CONNECTING…');
+      poll();
+    };
+
+    window.__exitPlayer = function() {
+      window.__playerActive = false;
+      clearPWT();
+      if (pollTimer) { clearTimeout(pollTimer); pollTimer = null; }
+      if (previewBody) previewBody.classList.remove('player-mode');
+      if (statusEl) statusEl.classList.add('hidden');
+      if (mockStage) mockStage.style.opacity = '1';
+      currentTrackId = null; lrcLines = []; currentLineIdx = -1;
+    };
+
+    // Player fx bar — reuses same applyFxMode as homepage
+    document.querySelectorAll('.pfx-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.pfx-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        if (window.__applyFxMode) window.__applyFxMode(btn.dataset.pfx);
+      });
+    });
+
+    // Close button
+    const closeBtn = document.getElementById('playerCloseBtn');
+    if (closeBtn) closeBtn.addEventListener('click', window.__exitPlayer);
+
+    // ESC to exit
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && window.__playerActive) window.__exitPlayer();
+    });
+
   })();
   </script>
 
