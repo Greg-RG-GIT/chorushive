@@ -3738,6 +3738,7 @@
       // ── Single source of truth: rAF starts/stops via audio play/pause events.
       // Covers ALL play paths: pill tap, fxPlayBtn, programmatic play calls.
       audio.addEventListener('play', () => {
+        clearInterval(demoIntervalId); // hand off from visual fallback loop to audio sync
         if (!rafActive) {
           rafActive = true;
           requestAnimationFrame(audioSyncTick);
@@ -3764,35 +3765,15 @@
         pillText.textContent = 'Tap to hear demo';
       }
 
-      if (pill) {
-        // ── Blob-URL preload strategy ──
-        // Use the Deezer proxy (not song.previewUrl) — iTunes CDN serves M4P (FairPlay DRM),
-        // which Chrome refuses to decode (canPlayType returns empty string).
-        // Deezer proxy serves plain MP3. We fetch → Blob URL to avoid Chrome's
-        // <audio> Range-request stall-loop (audio element retries 200 as 206 mismatch).
-        const previewApiUrl = '/api/audio-preview?artist=' + encodeURIComponent(song.artist) + '&title=' + encodeURIComponent(song.title);
-        let blobReady = false;
-        fetch(previewApiUrl)
-          .then(function(r) { return r.ok ? r.blob() : Promise.reject(r.status); })
-          .then(function(blob) {
-            audio.src = URL.createObjectURL(blob);
-            blobReady = true;
-          })
-          .catch(function() {
-            // iTunes URL failed — interval keeps running as visual-only demo
-          });
-
-        pill.addEventListener('click', () => {
-          if (!blobReady) return; // blob still loading — tap ignored, interval keeps cycling
-          clearInterval(demoIntervalId); // hand off from timed loop to audio sync
-          if (audio.paused) {
-            audio.play().then(() => { setPillPlaying(); }).catch(() => { setPillTap(); });
-          } else {
-            audio.pause();
-            setPillTap();
-          }
-        });
-      }
+      // ── Blob-URL preload strategy ──
+      // Pill was removed; fxPlayBtn in mock player header is the sole play trigger.
+      // Use the Deezer proxy — iTunes CDN serves M4P (FairPlay DRM), Chrome can't decode it.
+      // Fetch → Blob URL avoids Chrome's Range-request stall-loop on <audio>.
+      const previewApiUrl = '/api/audio-preview?artist=' + encodeURIComponent(song.artist) + '&title=' + encodeURIComponent(song.title);
+      fetch(previewApiUrl)
+        .then(function(r) { return r.ok ? r.blob() : Promise.reject(r.status); })
+        .then(function(blob) { audio.src = URL.createObjectURL(blob); })
+        .catch(function() { /* Deezer proxy failed — interval keeps running as visual-only demo */ });
     })();
 
   // ── EFFECT MODE SWITCHER ──
