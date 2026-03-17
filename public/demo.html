@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>ChorusHive Demo — Live Karaoke Experience</title>
+  <meta name="description" content="See ChorusHive in action: word-by-word lyrics across 8 visual themes. No Spotify needed. Try the live demo now.">
+  <meta property="og:title" content="ChorusHive Demo — Live Karaoke Experience">
+  <meta property="og:description" content="Word-by-word lyrics. 8 visual themes. Your Spotify library. See it live — no login required.">
+  <meta property="og:image" content="https://chorushive.com/logo.svg">
+  <meta property="og:url" content="https://chorushive.com/demo">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="theme-color" content="#1db954">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300;1,9..144,400&family=Instrument+Serif:ital@0;1&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Space+Mono:wght@400;700&family=Inter:wght@400;500;600&family=Syne:wght@400;700;800&family=Bebas+Neue&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --green: #1db954;
+      --white: #fff;
+      --off: rgba(255,255,255,0.75);
+      --dim: rgba(255,255,255,0.42);
+      --rule: rgba(255,255,255,0.12);
+      --preview-accent: #c084fc;
+    }
+
+    html, body {
+      background: #06000e;
+      color: #fff;
+      font-family: 'Space Mono', monospace;
+      overflow: hidden;
+      height: 100%;
+      width: 100%;
+    }
+
+    /* ── FULLSCREEN DEMO CONTAINER ── */
+    .demo-stage {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── BACKGROUND LAYERS ── */
+    .demo-bg, .demo-bg-2 {
+      position: absolute;
+      inset: -20%;
+      z-index: 0;
+      animation: bgDrift 22s linear infinite;
+      filter: blur(26px) saturate(2.8) brightness(0.88);
+      transition: background 1.8s ease;
+    }
+    .demo-bg-2 {
+      animation: bgDrift 22s linear infinite reverse;
+      animation-delay: -11s;
+      opacity: 0.5;
+    }
+    @keyframes bgDrift {
+      0%   { transform: rotate(0deg)   scale(1.18); filter: blur(26px) saturate(2.8) brightness(0.88) hue-rotate(0deg); }
+      25%  { transform: rotate(90deg)  scale(1.24); filter: blur(28px) saturate(3.2) brightness(0.84) hue-rotate(18deg); }
+      50%  { transform: rotate(180deg) scale(1.18); filter: blur(26px) saturate(2.8) brightness(0.90) hue-rotate(0deg); }
+      75%  { transform: rotate(270deg) scale(1.24); filter: blur(28px) saturate(3.2) brightness(0.84) hue-rotate(-18deg); }
+      100% { transform: rotate(360deg) scale(1.18); filter: blur(26px) saturate(2.8) brightness(0.88) hue-rotate(0deg); }
+    }
+
+    /* ── LYRICS STAGE ── */
+    .lyrics-stage {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      padding: 80px 32px 140px;
+      text-align: center;
+      transition: opacity 0.22s ease, transform 0.22s ease;
+      transform: translateZ(0);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .lyric-line {
+      text-align: center;
+      font-family: 'Bebas Neue', 'Syne', system-ui, sans-serif;
+      font-style: normal;
+      font-weight: 400;
+      line-height: 1.05;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .lyric-prev, .lyric-next {
+      color: rgba(255,255,255,0.55);
+      font-size: clamp(16px, 2.8vw, 30px);
+      letter-spacing: 0.05em;
+      text-shadow: 0 1px 8px rgba(0,0,0,0.98), 0 0 20px rgba(0,0,0,0.75);
+      margin: 12px 0;
+    }
+    .lyric-active {
+      font-size: clamp(36px, 7vw, 90px);
+      color: #fff;
+      letter-spacing: 0.06em;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.75);
+      animation: lineEnter 0.3s ease forwards;
+      margin: 16px 0;
+    }
+    @keyframes lineEnter {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .lyric-word {
+      display: inline;
+      color: rgba(255,255,255,0.22);
+      transition: color 0.2s ease, text-shadow 0.2s ease;
+    }
+    .lyric-word.lit {
+      color: #fff;
+      text-shadow: 0 0 8px var(--preview-accent, #1db954);
+    }
+    .lyric-word.done {
+      color: rgba(255,255,255,0.80);
+      text-shadow: none;
+    }
+
+    /* ── THEME-SPECIFIC TYPOGRAPHY ── */
+    .demo-stage.theme-aurora { --preview-accent: #c084fc; }
+    .demo-stage.theme-aurora .lyric-active {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: normal; font-weight: 300;
+      font-size: clamp(28px, 4.2vw, 50px);
+      letter-spacing: 0.03em;
+    }
+    .demo-stage.theme-aurora .lyric-prev,
+    .demo-stage.theme-aurora .lyric-next {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: normal; font-weight: 300;
+    }
+
+    .demo-stage.theme-neon { --preview-accent: #ff2d78; }
+    .demo-stage.theme-neon .lyric-active {
+      font-family: 'Space Mono', monospace;
+      font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+      font-size: clamp(18px, 2.8vw, 32px);
+    }
+    .demo-stage.theme-neon .lyric-prev,
+    .demo-stage.theme-neon .lyric-next {
+      font-family: 'Space Mono', monospace;
+      font-size: clamp(9px, 1.1vw, 12px);
+      letter-spacing: 0.1em; text-transform: uppercase;
+    }
+    .demo-stage.theme-neon::after {
+      content: '';
+      position: absolute; inset: 0; z-index: 1; pointer-events: none;
+      background: repeating-linear-gradient(
+        0deg, transparent, transparent 3px,
+        rgba(255,45,120,0.07) 3px, rgba(255,45,120,0.07) 4px
+      );
+    }
+
+    .demo-stage.theme-cinema { --preview-accent: #f0d080; }
+    .demo-stage.theme-cinema .lyric-active {
+      font-family: 'Fraunces', serif;
+      font-weight: 400;
+      font-size: clamp(24px, 3.5vw, 44px); letter-spacing: 0.01em;
+      font-variation-settings: 'opsz' 144;
+    }
+    .demo-stage.theme-cinema .lyric-prev,
+    .demo-stage.theme-cinema .lyric-next {
+      font-family: 'Fraunces', serif; font-weight: 300;
+      font-variation-settings: 'opsz' 36;
+    }
+    .demo-stage.theme-cinema::after {
+      content: '';
+      position: absolute; inset: 0; pointer-events: none; z-index: 1;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='grain'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23grain)' opacity='0.08'/%3E%3C/svg%3E");
+      background-size: 200px 200px;
+      mix-blend-mode: overlay;
+    }
+
+    .demo-stage.theme-rave { --preview-accent: #ffe600; }
+    .demo-stage.theme-rave .lyric-active {
+      font-family: 'Syne', system-ui, sans-serif;
+      font-weight: 800; text-transform: uppercase;
+      letter-spacing: -0.01em;
+      font-size: clamp(30px, 4.5vw, 46px);
+    }
+    .demo-stage.theme-rave .lyric-prev,
+    .demo-stage.theme-rave .lyric-next {
+      text-transform: uppercase; font-weight: 700; letter-spacing: 0.06em;
+    }
+
+    .demo-stage.theme-midnight { --preview-accent: #38bdf8; }
+    .demo-stage.theme-midnight .lyric-active {
+      font-family: 'Inter', system-ui, sans-serif;
+      font-weight: 800;
+      font-size: clamp(28px, 4.2vw, 52px);
+      letter-spacing: -0.04em;
+    }
+    .demo-stage.theme-midnight .lyric-prev,
+    .demo-stage.theme-midnight .lyric-next {
+      font-family: 'Inter', system-ui, sans-serif;
+      font-weight: 500; letter-spacing: -0.02em;
+    }
+
+    .demo-stage.theme-ember { --preview-accent: #fb923c; }
+    .demo-stage.theme-ember .lyric-active {
+      font-family: 'Fraunces', serif;
+      font-weight: 400;
+      font-size: clamp(26px, 3.8vw, 46px);
+      letter-spacing: 0.01em;
+      font-variation-settings: 'opsz' 72;
+    }
+    .demo-stage.theme-ember .lyric-prev,
+    .demo-stage.theme-ember .lyric-next {
+      font-family: 'Fraunces', serif; font-weight: 300;
+      font-variation-settings: 'opsz' 18;
+    }
+
+    .demo-stage.theme-vapor { --preview-accent: #22d3ee; }
+    .demo-stage.theme-vapor .lyric-active {
+      font-family: 'Space Mono', monospace;
+      font-weight: 700;
+      font-size: clamp(22px, 3.2vw, 38px);
+      letter-spacing: 0.05em;
+      text-shadow: 0 0 20px rgba(34,211,238,0.5), 0 0 40px rgba(34,211,238,0.2);
+    }
+    .demo-stage.theme-vapor .lyric-prev,
+    .demo-stage.theme-vapor .lyric-next {
+      font-family: 'Space Mono', monospace;
+      font-weight: 400; letter-spacing: 0.04em; opacity: 0.6;
+    }
+    .demo-stage.theme-vapor .lyric-word.done {
+      text-shadow: -1.5px 0 0 rgba(236,72,153,0.6), 1.5px 0 0 rgba(34,211,238,0.6);
+    }
+
+    .demo-stage.theme-forest { --preview-accent: #4ade80; }
+    .demo-stage.theme-forest .lyric-active {
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 400;
+      font-size: clamp(28px, 4.0vw, 48px);
+      letter-spacing: 0.02em;
+    }
+    .demo-stage.theme-forest .lyric-prev,
+    .demo-stage.theme-forest .lyric-next {
+      font-family: 'Cormorant Garamond', serif; font-weight: 300; letter-spacing: 0.01em;
+    }
+
+    /* ── THEME TRANSITION OVERLAY ── */
+    .theme-transition {
+      position: absolute;
+      inset: 0;
+      z-index: 10;
+      background: #06000e;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.6s ease;
+    }
+    .theme-transition.active { opacity: 1; }
+
+    /* ── TOP BAR ── */
+    .demo-top-bar {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 24px;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, transparent 100%);
+    }
+    .demo-logo {
+      font-family: 'Space Mono', monospace;
+      font-size: 13px;
+      letter-spacing: 0.05em;
+      color: #fff;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      opacity: 0.8;
+      transition: opacity 0.2s;
+    }
+    .demo-logo:hover { opacity: 1; }
+
+    .demo-theme-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.5);
+      transition: color 0.3s;
+    }
+
+    /* ── TRACK INFO ── */
+    .demo-track-info {
+      position: absolute;
+      bottom: 120px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 20;
+      text-align: center;
+      pointer-events: none;
+      transition: opacity 0.5s ease;
+    }
+    .demo-track-name {
+      font-family: 'Inter', system-ui, sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.75);
+      letter-spacing: 0.02em;
+    }
+    .demo-track-artist {
+      font-family: 'Inter', system-ui, sans-serif;
+      font-size: 11px;
+      font-weight: 400;
+      color: rgba(255,255,255,0.45);
+      margin-top: 2px;
+    }
+
+    /* ── THEME PROGRESS DOTS ── */
+    .demo-dots {
+      position: absolute;
+      bottom: 96px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 20;
+      display: flex;
+      gap: 8px;
+    }
+    .demo-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.25);
+      transition: background 0.3s, transform 0.3s;
+    }
+    .demo-dot.active {
+      background: var(--green);
+      transform: scale(1.4);
+    }
+
+    /* ── CTA BAR ── */
+    .demo-cta-bar {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      z-index: 20;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0 24px 28px;
+      gap: 10px;
+      background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 60%, transparent 100%);
+    }
+    .demo-cta-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--green);
+      color: #000;
+      font-family: 'Space Mono', monospace;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 14px 28px;
+      border-radius: 2px;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
+      box-shadow: 0 6px 20px rgba(29, 185, 84, 0.25);
+      white-space: nowrap;
+    }
+    .demo-cta-btn:hover {
+      background: #1ed760;
+      transform: translateY(-2px);
+      box-shadow: 0 10px 28px rgba(29, 185, 84, 0.4);
+    }
+    .demo-cta-note {
+      font-family: 'Inter', system-ui, sans-serif;
+      font-size: 11px;
+      color: rgba(255,255,255,0.4);
+    }
+
+    /* ── PLAY HINT ── */
+    .demo-play-hint {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 15;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+      pointer-events: none;
+    }
+    .demo-play-hint.visible {
+      opacity: 1;
+      pointer-events: all;
+    }
+    .demo-play-circle {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.3);
+      backdrop-filter: blur(8px);
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .demo-play-hint:hover .demo-play-circle {
+      border-color: var(--green);
+      background: rgba(29,185,84,0.15);
+    }
+    .demo-play-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.5);
+    }
+
+    /* ── MOBILE RESPONSIVE ── */
+    @media (max-width: 640px) {
+      .lyrics-stage {
+        padding: 70px 20px 150px;
+      }
+      .lyric-active {
+        font-size: clamp(28px, 8vw, 48px) !important;
+      }
+      .lyric-prev, .lyric-next {
+        font-size: clamp(12px, 3.5vw, 18px) !important;
+      }
+      .demo-top-bar { padding: 12px 16px; }
+      .demo-cta-bar { padding: 0 16px 20px; }
+      .demo-cta-btn { font-size: 11px; padding: 12px 22px; }
+      .demo-track-info { bottom: 110px; }
+      .demo-dots { bottom: 88px; }
+    }
+
+    @supports (padding-bottom: env(safe-area-inset-bottom)) {
+      .demo-cta-bar {
+        padding-bottom: calc(28px + env(safe-area-inset-bottom));
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="demo-stage theme-aurora" id="demoStage">
+  <div class="demo-bg" id="demoBg"></div>
+  <div class="demo-bg-2" id="demoBg2"></div>
+  <div class="theme-transition" id="themeTransition"></div>
+
+  <div class="demo-top-bar">
+    <a href="/" class="demo-logo">
+      <svg viewBox="0 0 32 32" width="20" height="20" aria-hidden="true" style="flex-shrink:0">
+        <polygon points="16,2 28.1,9 28.1,23 16,30 3.9,23 3.9,9" fill="none" stroke="#1db954" stroke-width="2.2" stroke-linejoin="round"/>
+        <rect x="9.5"  y="15" width="3" height="8"  rx="1.5" fill="#1db954"/>
+        <rect x="14.5" y="9"  width="3" height="14" rx="1.5" fill="#1db954"/>
+        <rect x="19.5" y="12" width="3" height="11" rx="1.5" fill="#1db954"/>
+      </svg>
+      <span>ChorusHive</span>
+    </a>
+    <div class="demo-theme-label" id="themeLabel">Aurora</div>
+  </div>
+
+  <div class="lyrics-stage" id="lyricsStage">
+    <div class="lyric-line lyric-prev" id="lyricPrev"></div>
+    <div class="lyric-line lyric-active" id="lyricActive"></div>
+    <div class="lyric-line lyric-next" id="lyricNext"></div>
+  </div>
+
+  <div class="demo-track-info" id="trackInfo">
+    <div class="demo-track-name" id="trackName"></div>
+    <div class="demo-track-artist" id="trackArtist"></div>
+  </div>
+
+  <div class="demo-dots" id="themeDots"></div>
+
+  <div class="demo-play-hint" id="playHint">
+    <div class="demo-play-circle">
+      <svg width="20" height="24" viewBox="0 0 20 24" fill="white"><polygon points="0,0 20,12 0,24"/></svg>
+    </div>
+    <div class="demo-play-label">Tap to hear audio</div>
+  </div>
+
+  <div class="demo-cta-bar">
+    <a href="/auth/login" class="demo-cta-btn">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"></path></svg>
+      Connect Spotify to use with your music
+    </a>
+    <span class="demo-cta-note">Free forever. No install. Works on any screen.</span>
+  </div>
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  // ── DEMO SONGS ──
+  var demoSongs = [
+    {
+      title: "Running Up That Hill", artist: "Kate Bush",
+      lines: [
+        { prev: "Let's exchange the experience, oh", words: ["And","if","I","only","could"], next: "I'd make a deal with God" },
+        { prev: "Be running up that hill",          words: ["With","no","problem"],               next: "Say if I only could" },
+        { prev: "With no problem",                  words: ["Say","if","I","only","could"],       next: "I'd make a deal with God" },
+        { prev: "Be running up that hill",          words: ["With","no","problem"],               next: "Say if I only could" },
+      ]
+    },
+    {
+      title: "Bohemian Rhapsody", artist: "Queen",
+      lines: [
+        { prev: "Galileo, Galileo, Galileo Figaro",   words: ["But","I'm","just","a","poor","boy","nobody","loves","me"], next: "He's just a poor boy from a poor family" },
+        { prev: "Spare him his life from this monstrosity", words: ["Easy","come","easy","go","will","you","let","me","go"], next: "No, we will not let you go" },
+        { prev: "No, we will not let you go",          words: ["We","will","not","let","you","go"],     next: "Will not let you go" },
+        { prev: "Will not let you go",                 words: ["Never","never","never","let","you","go"],       next: "No, no, no, no, no, no, no" },
+      ]
+    },
+    {
+      title: "Don't Stop Believin'", artist: "Journey",
+      lines: [
+        { prev: "Hidin', somewhere in the night",    words: ["Don't","stop","believin'"],             next: "Hold on to that feelin'" },
+        { prev: "Don't stop believin'",              words: ["Hold","on","to","that","feelin'"],      next: "Streetlights, people" },
+        { prev: "Streetlights, people",              words: ["Don't","stop","believin'"],             next: "Hold on" },
+        { prev: "Hold on",                           words: ["Streetlights","people"],              next: "Don't stop believin'" },
+      ]
+    },
+    {
+      title: "Mr. Brightside", artist: "The Killers",
+      lines: [
+        { prev: "I just can't look, it's killing me",   words: ["And","taking","control"],            next: "Jealousy, turning saints into the sea" },
+        { prev: "Jealousy, turning saints into the sea", words: ["Swimming","through","sick","lullabies"], next: "Choking on your alibis" },
+        { prev: "Choking on your alibis",                words: ["But","it's","just","the","price","I","pay"], next: "Destiny is calling me" },
+        { prev: "Destiny is calling me",                 words: ["Open","up","my","eager","eyes"],    next: "I'm Mr. Brightside" },
+      ]
+    },
+    {
+      title: "Africa", artist: "Toto",
+      lines: [
+        { prev: "I hear the drums echoing tonight",      words: ["But","she","hears","only","whispers"],          next: "Of some quiet conversation" },
+        { prev: "The wild dogs cry out in the night",    words: ["As","they","grow","restless","longing"],        next: "For some solitary company" },
+        { prev: "Hurry boy, she's waiting there for you", words: ["I","bless","the","rains","down","in","Africa"], next: "Gonna take some time" },
+        { prev: "Gonna take some time",                  words: ["We","never","had"],                            next: "I bless the rains down in Africa" },
+      ]
+    },
+    {
+      title: "Blinding Lights", artist: "The Weeknd",
+      lines: [
+        { prev: "Sin City's cold and empty",               words: ["No","one's","around","to","judge","me"],  next: "I can't see clearly when you're gone" },
+        { prev: "I can't see clearly when you're gone",    words: ["I'm","blinded","by","the","lights"], next: "No I can't sleep until I feel your touch" },
+        { prev: "No I can't sleep until I feel your touch", words: ["I'm","drowning","in","the","night"], next: "When I'm like this you're the one I trust" },
+        { prev: "When I'm like this",                      words: ["You're","the","one","I","trust"],         next: "I'm blinded by the lights" },
+      ]
+    },
+    {
+      title: "September", artist: "Earth, Wind & Fire",
+      lines: [
+        { prev: "Say do you remember",                      words: ["Dancing","in","September"], next: "Never was a cloudy day" },
+        { prev: "Ba de ya, dancing in September",           words: ["Ba","de","ya","golden","dreams"], next: "Were shiny days" },
+        { prev: "Holding close to your treasure",           words: ["Do","you","remember","the","twenty-first","night"], next: "Of September" },
+        { prev: "Say do you remember",                      words: ["Dancing","in","September"],                next: "Never was a cloudy day" },
+      ]
+    },
+    {
+      title: "Lose Yourself", artist: "Eminem",
+      lines: [
+        { prev: "His palms are sweaty, knees weak",         words: ["Arms","are","heavy"],                        next: "Vomit on his sweater already" },
+        { prev: "He's nervous, but on the surface",         words: ["He","looks","calm","and","ready"],            next: "To drop bombs" },
+        { prev: "He better go capture this moment",         words: ["Lose","yourself","in","the","music"], next: "You own it, you better never let it go" },
+        { prev: "You only get one shot",                    words: ["This","opportunity","comes","once","in","a","lifetime"], next: "You better lose yourself" },
+      ]
+    },
+  ];
+
+  // ── VISUAL THEMES ──
+  var themes = [
+    {
+      name: 'aurora', label: 'Aurora',
+      bg: 'radial-gradient(ellipse at 18% 22%, #c084fc 0%, transparent 52%), radial-gradient(ellipse at 72% 18%, #818cf8 0%, transparent 48%), radial-gradient(ellipse at 50% 75%, #7c3aed 0%, transparent 55%), radial-gradient(ellipse at 82% 72%, #e879f9 0%, transparent 40%), radial-gradient(ellipse at 12% 72%, #4c1d95 0%, transparent 48%), #080318',
+      bg2: 'radial-gradient(ellipse at 80% 80%, #a855f7 0%, transparent 48%), radial-gradient(ellipse at 25% 75%, #7c3aed 0%, transparent 45%), radial-gradient(ellipse at 50% 20%, #1e0a5e 0%, transparent 50%), #08031a'
+    },
+    {
+      name: 'neon', label: 'Neon',
+      bg: 'radial-gradient(ellipse at 12% 18%, #ff2d78 0%, transparent 52%), radial-gradient(ellipse at 82% 22%, #ff0a54 0%, transparent 48%), radial-gradient(ellipse at 50% 85%, #e91e8c 0%, transparent 58%), radial-gradient(ellipse at 78% 68%, #ff4fa0 0%, transparent 42%), #08000e',
+      bg2: 'radial-gradient(ellipse at 90% 85%, #ff2d78 0%, transparent 50%), radial-gradient(ellipse at 15% 80%, #ff0a54 0%, transparent 45%), radial-gradient(ellipse at 50% 10%, #c2185b 0%, transparent 55%), #080010'
+    },
+    {
+      name: 'cinema', label: 'Cinema',
+      bg: 'radial-gradient(ellipse at 50% 12%, #d4a847 0%, transparent 50%), radial-gradient(ellipse at 18% 68%, #b8860b 0%, transparent 52%), radial-gradient(ellipse at 78% 62%, #8b6914 0%, transparent 48%), radial-gradient(ellipse at 55% 82%, #5a3e10 0%, transparent 58%), #0a0806',
+      bg2: 'radial-gradient(ellipse at 50% 90%, #c9a86c 0%, transparent 45%), radial-gradient(ellipse at 80% 30%, #8b6914 0%, transparent 50%), radial-gradient(ellipse at 20% 35%, #6b4c0f 0%, transparent 45%), #0a0806'
+    },
+    {
+      name: 'rave', label: 'Rave',
+      bg: 'radial-gradient(ellipse at 50% 45%, #ffe600 0%, transparent 45%), radial-gradient(ellipse at 12% 22%, #ffed4a 0%, transparent 48%), radial-gradient(ellipse at 88% 78%, #ffc107 0%, transparent 48%), radial-gradient(ellipse at 72% 14%, #ffe600 0%, transparent 40%), #000209',
+      bg2: 'radial-gradient(ellipse at 50% 50%, #ffe600 0%, transparent 40%), radial-gradient(ellipse at 90% 80%, #fff176 0%, transparent 45%), radial-gradient(ellipse at 10% 20%, #ffc107 0%, transparent 45%), #000309'
+    },
+    {
+      name: 'midnight', label: 'Midnight',
+      bg: 'radial-gradient(ellipse at 18% 20%, #1e40af 0%, transparent 52%), radial-gradient(ellipse at 78% 18%, #0369a1 0%, transparent 48%), radial-gradient(ellipse at 50% 80%, #172554 0%, transparent 55%), radial-gradient(ellipse at 82% 68%, #38bdf8 0%, transparent 36%), #020a1a',
+      bg2: 'radial-gradient(ellipse at 85% 85%, #1e40af 0%, transparent 48%), radial-gradient(ellipse at 20% 80%, #0369a1 0%, transparent 45%), radial-gradient(ellipse at 50% 12%, #172554 0%, transparent 52%), #010812'
+    },
+    {
+      name: 'ember', label: 'Ember',
+      bg: 'radial-gradient(ellipse at 22% 18%, #ea580c 0%, transparent 50%), radial-gradient(ellipse at 76% 20%, #d97706 0%, transparent 46%), radial-gradient(ellipse at 50% 82%, #451a03 0%, transparent 54%), radial-gradient(ellipse at 80% 66%, #f97316 0%, transparent 36%), #120600',
+      bg2: 'radial-gradient(ellipse at 82% 82%, #d97706 0%, transparent 46%), radial-gradient(ellipse at 18% 78%, #ea580c 0%, transparent 45%), radial-gradient(ellipse at 50% 12%, #451a03 0%, transparent 52%), #0e0500'
+    },
+    {
+      name: 'vapor', label: 'Vapor',
+      bg: 'radial-gradient(ellipse at 15% 18%, #7c3aed 0%, transparent 50%), radial-gradient(ellipse at 80% 18%, #0e7490 0%, transparent 48%), radial-gradient(ellipse at 50% 84%, #4c1d95 0%, transparent 54%), radial-gradient(ellipse at 82% 68%, #ec4899 0%, transparent 38%), radial-gradient(ellipse at 16% 70%, #06b6d4 0%, transparent 42%), #06000f',
+      bg2: 'radial-gradient(ellipse at 88% 82%, #7c3aed 0%, transparent 48%), radial-gradient(ellipse at 14% 82%, #0e7490 0%, transparent 45%), radial-gradient(ellipse at 48% 12%, #4c1d95 0%, transparent 52%), #04000c'
+    },
+    {
+      name: 'forest', label: 'Forest',
+      bg: 'radial-gradient(ellipse at 20% 20%, #166534 0%, transparent 50%), radial-gradient(ellipse at 76% 18%, #065f46 0%, transparent 46%), radial-gradient(ellipse at 50% 82%, #022c22 0%, transparent 54%), radial-gradient(ellipse at 80% 66%, #4ade80 0%, transparent 32%), radial-gradient(ellipse at 14% 72%, #14532d 0%, transparent 44%), #020d05',
+      bg2: 'radial-gradient(ellipse at 82% 82%, #065f46 0%, transparent 46%), radial-gradient(ellipse at 18% 80%, #166534 0%, transparent 45%), radial-gradient(ellipse at 50% 12%, #022c22 0%, transparent 52%), #010a03'
+    }
+  ];
+
+  // ── ELEMENTS ──
+  var stage       = document.getElementById('demoStage');
+  var bgEl        = document.getElementById('demoBg');
+  var bg2El       = document.getElementById('demoBg2');
+  var transEl     = document.getElementById('themeTransition');
+  var lyricsStage = document.getElementById('lyricsStage');
+  var prevEl      = document.getElementById('lyricPrev');
+  var activeEl    = document.getElementById('lyricActive');
+  var nextEl      = document.getElementById('lyricNext');
+  var themeLabel  = document.getElementById('themeLabel');
+  var trackNameEl = document.getElementById('trackName');
+  var trackArtistEl = document.getElementById('trackArtist');
+  var dotsEl      = document.getElementById('themeDots');
+  var playHint    = document.getElementById('playHint');
+
+  // ── BUILD DOTS ──
+  themes.forEach(function(t, i) {
+    var dot = document.createElement('div');
+    dot.className = 'demo-dot' + (i === 0 ? ' active' : '');
+    dotsEl.appendChild(dot);
+  });
+  var dots = dotsEl.querySelectorAll('.demo-dot');
+
+  // ── STATE ──
+  var themeIdx  = 0;
+  var songIdx   = 0;
+  var lineIdx   = 0;
+  var wordTimer = null;
+  var lineTimer = null;
+  var themeTimer = null;
+  var LINE_INTERVAL  = 4200;
+  var THEME_INTERVAL = 10000;
+  var audioReady = false;
+
+  // ── AUDIO ──
+  var audio = document.createElement('audio');
+  audio.volume = 0.5;
+  document.body.appendChild(audio);
+
+  // Shuffle songs
+  function shuffle(arr) {
+    var a = arr.slice();
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+  var shuffledSongs = shuffle(demoSongs);
+
+  // ── APPLY THEME ──
+  function applyTheme(idx) {
+    var t = themes[idx];
+    themes.forEach(function(th) { stage.classList.remove('theme-' + th.name); });
+    stage.classList.add('theme-' + t.name);
+    bgEl.style.background  = t.bg;
+    bg2El.style.background = t.bg2;
+    themeLabel.textContent  = t.label;
+    dots.forEach(function(d, i) { d.classList.toggle('active', i === idx); });
+  }
+
+  // ── RUN LINE ──
+  function runLine(lineData, instant) {
+    if (wordTimer) clearInterval(wordTimer);
+
+    function apply() {
+      prevEl.textContent = lineData.prev;
+      nextEl.textContent = lineData.next;
+      activeEl.textContent = '';
+      lineData.words.forEach(function(w, i) {
+        if (i > 0) activeEl.appendChild(document.createTextNode(' '));
+        var sp = document.createElement('span');
+        sp.className = 'lyric-word';
+        sp.textContent = w;
+        activeEl.appendChild(sp);
+      });
+
+      activeEl.style.animation = 'none';
+      void activeEl.offsetHeight;
+      activeEl.style.animation = '';
+
+      lyricsStage.style.opacity   = '1';
+      lyricsStage.style.transform = 'translateY(0)';
+
+      var wordEls = activeEl.querySelectorAll('.lyric-word');
+      var totalMs = LINE_INTERVAL * 0.78;
+      var wordInterval = Math.min(640, Math.max(220, Math.floor(totalMs / wordEls.length)));
+      var wi = 0;
+      wordTimer = setInterval(function() {
+        if (wi < wordEls.length) {
+          if (wi > 0) {
+            wordEls[wi - 1].classList.remove('lit');
+            wordEls[wi - 1].classList.add('done');
+          }
+          wordEls[wi].classList.add('lit');
+          wi++;
+        } else {
+          clearInterval(wordTimer);
+          setTimeout(function() {
+            if (wordEls[wi - 1]) {
+              wordEls[wi - 1].classList.remove('lit');
+              wordEls[wi - 1].classList.add('done');
+            }
+          }, wordInterval);
+        }
+      }, wordInterval);
+    }
+
+    if (instant) {
+      apply();
+    } else {
+      lyricsStage.style.opacity   = '0';
+      lyricsStage.style.transform = 'translateY(8px)';
+      setTimeout(apply, 230);
+    }
+  }
+
+  // ── SWITCH THEME (with transition + new song) ──
+  function switchTheme() {
+    themeIdx = (themeIdx + 1) % themes.length;
+    songIdx  = (songIdx + 1) % shuffledSongs.length;
+
+    transEl.classList.add('active');
+    setTimeout(function() {
+      applyTheme(themeIdx);
+
+      var song = shuffledSongs[songIdx];
+      trackNameEl.textContent  = song.title;
+      trackArtistEl.textContent = song.artist;
+      lineIdx = 0;
+      runLine(song.lines[0], true);
+      loadAudioForSong(song);
+
+      setTimeout(function() { transEl.classList.remove('active'); }, 100);
+    }, 600);
+  }
+
+  // ── LINE CYCLING ──
+  function startLineCycle() {
+    if (lineTimer) clearInterval(lineTimer);
+    lineTimer = setInterval(function() {
+      var song = shuffledSongs[songIdx];
+      lineIdx = (lineIdx + 1) % song.lines.length;
+      runLine(song.lines[lineIdx], false);
+    }, LINE_INTERVAL);
+  }
+
+  // ── THEME CYCLING ──
+  function startThemeCycle() {
+    if (themeTimer) clearInterval(themeTimer);
+    themeTimer = setInterval(switchTheme, THEME_INTERVAL);
+  }
+
+  // ── AUDIO LOADING ──
+  function loadAudioForSong(song) {
+    var url = '/api/audio-preview?artist=' + encodeURIComponent(song.artist) + '&title=' + encodeURIComponent(song.title);
+    fetch(url)
+      .then(function(r) { return r.ok ? r.blob() : Promise.reject(r.status); })
+      .then(function(blob) {
+        audio.src = URL.createObjectURL(blob);
+        if (audioReady) audio.play().catch(function() {});
+      })
+      .catch(function() {});
+  }
+
+  audio.addEventListener('ended', function() {
+    audio.currentTime = 0;
+    audio.play().catch(function() {});
+  });
+
+  // ── PLAY HINT ──
+  setTimeout(function() {
+    if (!audioReady) playHint.classList.add('visible');
+  }, 1500);
+
+  function enableAudio() {
+    audioReady = true;
+    playHint.classList.remove('visible');
+    audio.play().catch(function() {});
+  }
+
+  playHint.addEventListener('click', enableAudio);
+  stage.addEventListener('click', function(e) {
+    if (e.target.closest('.demo-cta-btn') || e.target.closest('.demo-logo')) return;
+    if (!audioReady) enableAudio();
+  });
+
+  // ── INITIALIZE ──
+  var firstSong = shuffledSongs[songIdx];
+  applyTheme(0);
+  trackNameEl.textContent  = firstSong.title;
+  trackArtistEl.textContent = firstSong.artist;
+  runLine(firstSong.lines[0], true);
+  loadAudioForSong(firstSong);
+
+  startLineCycle();
+  startThemeCycle();
+})();
+</script>
+
+</body>
+</html>

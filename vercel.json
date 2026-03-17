@@ -7,7 +7,8 @@
   "rewrites": [
     { "source": "/auth/login", "destination": "/api/auth/login" },
     { "source": "/auth/callback", "destination": "/api/auth/callback" },
-    { "source": "/auth/refresh", "destination": "/api/auth/refresh" }
+    { "source": "/auth/refresh", "destination": "/api/auth/refresh" },
+    { "source": "/demo", "destination": "/demo.html" }
   ],
   "headers": [
     {
