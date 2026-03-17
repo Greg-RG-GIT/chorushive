@@ -2625,6 +2625,23 @@
     /* Don't show on mobile — tap targets conflict with fx-switcher */
     @media (max-width: 768px) {
       .preview-hover-cta { display: none; }
+
+      /* ── Mobile cascade fixes ──
+         The base hiw-steps/lava rules below line 2216 come after the first
+         @media (max-width: 768px) block, overriding it. Re-apply here so
+         this block (which is after the base styles) wins. */
+
+      /* Fix: hiw-steps base style uses repeat(3,1fr) which overrides the 1fr
+         in the earlier mobile block — re-apply single column here */
+      .hiw-steps { grid-template-columns: 1fr; }
+      .hiw-step { border-right: none; border-bottom: 1px solid var(--rule); padding: 28px 0; gap: 16px; }
+      .hiw-step:last-child { border-bottom: none; }
+      .hiw-step:not(:first-child) { padding-left: 0; }
+
+      /* Fix: lava-svg-front blob has z-index:2 (set inline by JS), which overlaps
+         the mock-lyrics-stage (z-index:1) on mobile where the preview is shorter.
+         Raise lyrics above the blob so next-line text is never obscured. */
+      .mock-lyrics-stage { z-index: 3; }
     }
   </style>
   <!-- Three.js (plasma WebGL) + GSAP (lyric animations) -->
