@@ -3658,11 +3658,12 @@
     (function() {
       const audio = document.createElement('audio');
       audio.volume = 0.55;
-      audio.preload = 'auto';
       document.body.appendChild(audio);
       window.__demoAudio = audio;
 
-      clearInterval(demoIntervalId);
+      // NOTE: Do NOT clearInterval(demoIntervalId) here.
+      // The fallback timed loop keeps lyrics cycling on load until the user taps play.
+      // It is cleared on pill tap once audio sync takes over.
 
       const lines      = song.lines;
       const PREVIEW_S  = 30;
@@ -3712,24 +3713,26 @@
       if (pill) {
         // Proxy URL: server-side fetch bypasses Deezer CDN hotlink protection
         const previewApiUrl = '/api/audio-preview?artist=' + encodeURIComponent(song.artist) + '&title=' + encodeURIComponent(song.title);
-        let audioLoaded = false;
-        // Fallback: if proxy errors, restart timed interval so lyrics still advance
-        audio.addEventListener('error', function() {
-          demoIntervalId = setInterval(function() {
-            lineIdx = (lineIdx + 1) % lines.length;
-            runLine(lines[lineIdx], false);
-          }, LINE_INTERVAL);
-        }, { once: true });
-        // Load audio ONLY on first tap (inside trusted user gesture).
-        // Chrome suspends media loading when play() is called without a gesture,
-        // so we defer src assignment until the user actually taps.
+
+        // ── Blob-URL preload strategy ──
+        // Chrome's <audio> element sends Range requests. Our proxy returns 200 (not 206),
+        // causing Chrome to retry in a stall-loop — audio never buffers.
+        // Fix: fetch() the MP3 up front (no range requests), create a Blob URL,
+        // set audio.src to the blob. Then play() on tap is instant and reliable.
+        let blobReady = false;
+        fetch(previewApiUrl)
+          .then(function(r) { return r.ok ? r.blob() : Promise.reject(r.status); })
+          .then(function(blob) {
+            audio.src = URL.createObjectURL(blob);
+            blobReady = true;
+          })
+          .catch(function() {
+            // Proxy failed — interval keeps running as visual-only demo, nothing to do
+          });
+
         pill.addEventListener('click', () => {
-          if (!audioLoaded) {
-            audioLoaded = true;
-            clearInterval(demoIntervalId);
-            audio.src = previewApiUrl;
-            audio.load();
-          }
+          if (!blobReady) return; // blob still loading — tap ignored, interval keeps cycling
+          clearInterval(demoIntervalId); // hand off from timed loop to audio sync
           if (audio.paused) {
             audio.play().then(() => { setPillPlaying(); }).catch(() => { setPillTap(); });
           } else {
