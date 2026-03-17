@@ -2833,18 +2833,7 @@
           </div>
         </div>
       </div>
-      <!-- Demo audio now-playing pill -->
-      <button class="demo-audio-pill" id="demoAudioPill" aria-label="Play demo audio">
-        <svg class="pill-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-          <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-          <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
-        </svg>
-        <div class="pill-bars" aria-hidden="true">
-          <span></span><span></span><span></span><span></span><span></span>
-        </div>
-        <span id="demoAudioPillText">Tap to hear demo</span>
-      </button>
+      <!-- demo-audio-pill removed; play button in mock player header handles audio -->
     </div>
   </header>
   </div><!-- /hero-outer -->
@@ -3577,7 +3566,7 @@
     let lineIdx = 0, wordTimer = null;
     const LINE_INTERVAL = 5500; // ms per line
 
-    function runLine(lineData, instant) {
+    function runLine(lineData, instant, lineDurationMs) {
       const stage = document.querySelector('.mock-lyrics-stage');
       if (!stage) return;
 
@@ -3608,7 +3597,9 @@
 
         // Adaptive word timing: fill ~80% of line duration evenly across all words
         const wordEls = activeEl.querySelectorAll('.mock-word');
-        const totalMs = instant ? LINE_INTERVAL * 0.78 : (LINE_INTERVAL - 240) * 0.78;
+        const totalMs = lineDurationMs
+          ? lineDurationMs * 0.78
+          : (instant ? LINE_INTERVAL * 0.78 : (LINE_INTERVAL - 240) * 0.78);
         const wordInterval = Math.min(640, Math.max(220, Math.floor(totalMs / wordEls.length)));
 
         let wi = 0;
@@ -3667,16 +3658,79 @@
 
       const lines      = song.lines;
       const PREVIEW_S  = 30;
-      const lineSlot   = (PREVIEW_S - 1) / lines.length;
+      const lineSlot   = (PREVIEW_S - 1) / lines.length; // fallback equal-slot
       let audioLineIdx = -1;
       let rafActive    = false;
+      let lineTimes    = null; // per-line start times (seconds into preview), set by LRC calibration
+
+      // ── LRC calibration: fetch real timestamps and align to Deezer preview ──
+      // Runs in parallel with blob fetch; audioSyncTick falls back to lineSlot if it fails.
+      (async function tryCalibrateLrc() {
+        try {
+          const r = await fetch(
+            'https://lrclib.net/api/search?track_name=' + encodeURIComponent(song.title) +
+            '&artist_name=' + encodeURIComponent(song.artist),
+            { headers: { 'Lrclib-Client': 'ChorusHive/1.0 (chorushive.com)' }, signal: AbortSignal.timeout(4000) }
+          );
+          if (!r.ok) return;
+          const results = await r.json();
+          const hit = (results || []).find(x => x.syncedLyrics);
+          if (!hit || !hit.syncedLyrics) return;
+
+          const lrc = hit.syncedLyrics.split('\n').reduce((acc, line) => {
+            const m = line.match(/^\[(\d+):(\d+\.\d+)\](.*)/);
+            if (m) acc.push({ time: parseInt(m[1]) * 60 + parseFloat(m[2]), text: m[3].trim().toLowerCase() });
+            return acc;
+          }, []);
+
+          // Match each demo line to the best-fitting LRC line by word overlap
+          const times = lines.map(function(demoLine) {
+            let bestScore = 0, bestTime = null;
+            lrc.forEach(function(l) {
+              const score = demoLine.words.filter(function(w) {
+                return l.text.includes(w.toLowerCase());
+              }).length;
+              if (score > bestScore) { bestScore = score; bestTime = l.time; }
+            });
+            const threshold = Math.max(1, Math.floor(demoLine.words.length * 0.5));
+            return bestScore >= threshold ? bestTime : null;
+          });
+
+          if (times.some(function(t) { return t === null; })) return; // partial match — skip
+
+          // Deezer preview starts at approximately times[0] in the full song.
+          // Express all timestamps relative to that preview start.
+          const previewStart = times[0];
+          const rel = times.map(function(t) { return t - previewStart; });
+
+          // Sanity: ascending, all within 30s
+          const valid = rel.every(function(t, i) {
+            return t >= 0 && t < PREVIEW_S && (i === 0 || t > rel[i - 1]);
+          });
+          if (valid) lineTimes = rel;
+        } catch(e) { /* silent — fall back to equal slots */ }
+      })();
 
       function audioSyncTick() {
-        const t   = audio.currentTime;
-        const idx = Math.min(Math.floor(t / lineSlot), lines.length - 1);
+        const t = audio.currentTime;
+        let idx;
+        if (lineTimes) {
+          // Use LRC-calibrated timestamps
+          idx = 0;
+          for (let i = 1; i < lineTimes.length; i++) {
+            if (t >= lineTimes[i]) idx = i; else break;
+          }
+        } else {
+          // Fall back to equal time slots
+          idx = Math.min(Math.floor(t / lineSlot), lines.length - 1);
+        }
         if (idx !== audioLineIdx) {
           audioLineIdx = idx;
-          runLine(lines[idx], idx === 0);
+          const nextTime = lineTimes
+            ? (lineTimes[idx + 1] !== undefined ? lineTimes[idx + 1] : PREVIEW_S)
+            : (idx + 1) * lineSlot;
+          const lineDur = (nextTime - (lineTimes ? lineTimes[idx] : idx * lineSlot)) * 1000;
+          runLine(lines[idx], idx === 0, lineDur);
         }
         if (rafActive) requestAnimationFrame(audioSyncTick);
       }
@@ -4903,9 +4957,13 @@
         });
         const lineStart = lrcLines[idx].time;
         const lineEnd   = lrcLines[idx + 1]?.time || lineStart + 4;
-        const dur = (lineEnd - lineStart) * 1000;
+        const dur     = (lineEnd - lineStart) * 1000;
+        const elapsed = Math.max(0, (sec - lineStart) * 1000); // how far we are into this line already
         activeEl.querySelectorAll('.mock-word').forEach((w, i, arr) => {
-          setTimeout(() => w.classList.add('done'), (i / arr.length) * dur * 0.8);
+          const targetMs = (i / arr.length) * dur * 0.8;
+          const delay = Math.max(0, targetMs - elapsed);
+          if (delay === 0) { w.classList.add('done'); }
+          else { setTimeout(() => w.classList.add('done'), delay); }
         });
       }
     }
