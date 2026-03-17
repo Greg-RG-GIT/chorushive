@@ -3656,7 +3656,7 @@
       // The fallback timed loop keeps lyrics cycling on load until the user taps play.
       // It is cleared on pill tap once audio sync takes over.
 
-      const lines      = song.lines;
+      let lines        = song.lines;
       const PREVIEW_S  = 30;
       const lineSlot   = (PREVIEW_S - 1) / lines.length; // fallback equal-slot
       let audioLineIdx = -1;
@@ -3679,55 +3679,93 @@
 
           const lrc = hit.syncedLyrics.split('\n').reduce((acc, line) => {
             const m = line.match(/^\[(\d+):(\d+\.\d+)\](.*)/);
-            if (m) acc.push({ time: parseInt(m[1]) * 60 + parseFloat(m[2]), text: m[3].trim().toLowerCase() });
+            if (m && m[3].trim()) acc.push({ time: parseInt(m[1]) * 60 + parseFloat(m[2]), text: m[3].trim().toLowerCase() });
             return acc;
           }, []);
+          if (lrc.length < 4) return;
 
-          // Match each demo line to the best-fitting LRC line by word overlap.
-          // Sequential: each match must come AFTER the previous one so that
-          // repeated phrases (chorus lines, "Waterloo", "Billie Jean is not my
-          // lover", etc.) always map to consecutive LRC entries rather than all
-          // collapsing onto the first global occurrence.
-          let minTime = 0;
-          const times = lines.map(function(demoLine) {
-            let bestScore = 0, bestTime = null;
-            lrc.forEach(function(l) {
-              if (l.time <= minTime) return; // sequential constraint
-              const score = demoLine.words.filter(function(w) {
-                return l.text.includes(w.toLowerCase());
-              }).length;
-              if (score > bestScore) { bestScore = score; bestTime = l.time; }
-            });
-            const threshold = Math.max(1, Math.floor(demoLine.words.length * 0.5));
-            const matched = bestScore >= threshold ? bestTime : null;
-            if (matched !== null) minTime = matched;
-            return matched;
-          });
+          // ── Find the best 28s preview window ──────────────────────────────
+          // Slide a 28s window across every section boundary (gap ≥ 3s).
+          // Score: +1 per LRC line (density), +3 per title word in window,
+          //        −5 if the window starts before 10s (skip short intros).
+          // This finds the section the preview most likely plays — typically
+          // the first chorus — without needing to know preview_start_ms.
+          const WINDOW_S = 28;
+          const _stopW = new Set(['the','a','an','and','of','in','on','at','to','it',
+                                   'was','is','as','i','my','me','you','we','be','for',
+                                   'so','do','not','no','but','or','are','he','she']);
+          const _titleWords = song.title.toLowerCase()
+            .replace(/[',\-]/g,' ').split(/\s+/)
+            .filter(function(w){ return w.length > 1 && !_stopW.has(w); });
 
-          if (times.some(function(t) { return t === null; })) return; // partial match — skip
-
-          // Find where the Deezer preview most likely starts.
-          // Deezer previews begin on section boundaries (gap > 2.5s in the LRC),
-          // not necessarily at the first word of the first demo line.
-          // Scan backwards from times[0] for the most recent section boundary
-          // within 10s — that's our best estimate of preview start.
-          let previewStart = times[0];
-          let prevLrcTime = 0;
-          lrc.forEach(function(l) {
-            if (l.time >= times[0]) return;
-            if ((l.time - prevLrcTime) > 2.5 && l.time >= times[0] - 10) {
-              previewStart = l.time;
+          var bestWinScore = -Infinity, bestWinStart = -1;
+          for (var _i = 0; _i < lrc.length; _i++) {
+            var _gap = _i === 0 ? Infinity : lrc[_i].time - lrc[_i - 1].time;
+            if (_i > 0 && _gap < 3.0) continue;          // section boundaries only
+            var _end = lrc[_i].time + WINDOW_S;
+            var _winLen = 0;
+            var _wText = '';
+            for (var _j = _i; _j < lrc.length && lrc[_j].time <= _end; _j++) {
+              _winLen++;
+              _wText += ' ' + lrc[_j].text;
             }
-            prevLrcTime = l.time;
-          });
-          const rel = times.map(function(t) { return t - previewStart; });
+            if (_winLen < 4) continue;
+            var _tHits = _titleWords.filter(function(w){ return _wText.includes(w); }).length;
+            var _score = _winLen + _tHits * 3 - (lrc[_i].time < 10 ? 5 : 0);
+            if (_score > bestWinScore) { bestWinScore = _score; bestWinStart = lrc[_i].time; }
+          }
+          if (bestWinStart < 0) return;
 
-          // Sanity: ascending, all within 30s
-          const valid = rel.every(function(t, i) {
-            return t >= 0 && t < PREVIEW_S && (i === 0 || t > rel[i - 1]);
+          // ── Collect lines in the best window ──────────────────────────────
+          var win = lrc.filter(function(l){
+            return l.time >= bestWinStart && l.time <= bestWinStart + WINDOW_S;
           });
-          if (valid) lineTimes = rel;
-        } catch(e) { /* silent — fall back to equal slots */ }
+          if (win.length < 4) return;
+
+          // ── Pick 4 evenly-spread indices ──────────────────────────────────
+          var wn = win.length;
+          var _idxs = wn <= 4 ? [0,1,2,3].slice(0,wn)
+                    : wn <= 6 ? [0, 1, Math.floor(wn/2), wn-1]
+                    : [0, Math.max(1,Math.floor(wn/4)),
+                          Math.max(2,Math.floor(wn/2)),
+                          Math.max(3,Math.floor(3*wn/4))];
+          // Deduplicate and pad to 4
+          var _seen = {}, _clean = [];
+          _idxs.forEach(function(p){ if(!_seen[p]){ _seen[p]=1; _clean.push(p); } });
+          while (_clean.length < 4 && _clean[_clean.length-1]+1 < wn) {
+            var _n = _clean[_clean.length-1]+1;
+            if (!_seen[_n]) { _seen[_n]=1; _clean.push(_n); }
+          }
+          var picks = _clean.slice(0, 4);
+          if (picks.length < 4) return;
+
+          // ── Compute relative timestamps and sanity-check ──────────────────
+          var rel = picks.map(function(pi){ return win[pi].time - bestWinStart; });
+          var valid = rel.every(function(t, i){
+            return t >= 0 && t < PREVIEW_S && (i === 0 || t > rel[i-1]);
+          });
+          if (!valid) return;
+
+          // ── Update display lines from LRC ─────────────────────────────────
+          // Replaces song.lines for audio-synced playback (song.lines is kept
+          // for the pre-play visual carousel and the equal-slot fallback).
+          function _lrcWords(text) {
+            return text.replace(/[,!?.;:()\[\]]/g,'').split(/\s+/).filter(Boolean)
+              .slice(0, 8)
+              .map(function(w){ return w.charAt(0).toUpperCase() + w.slice(1); });
+          }
+          function _cap(s){ return s ? s.charAt(0).toUpperCase() + s.slice(1) : ''; }
+
+          lines = picks.map(function(pi, i) {
+            return {
+              prev:  _cap(pi > 0       ? win[pi - 1].text : ''),
+              words: _lrcWords(win[pi].text),
+              next:  _cap(pi < wn - 1  ? win[pi + 1].text : ''),
+            };
+          });
+
+          lineTimes = rel;
+        } catch(e) { /* silent — fall back to equal slots with song.lines */ }
       })();
 
       function audioSyncTick() {
