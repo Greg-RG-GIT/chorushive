@@ -2638,10 +2638,7 @@
       .hiw-step:last-child { border-bottom: none; }
       .hiw-step:not(:first-child) { padding-left: 0; }
 
-      /* Fix: lava-svg-front blob has z-index:2 (set inline by JS), which overlaps
-         the mock-lyrics-stage (z-index:1) on mobile where the preview is shorter.
-         Raise lyrics above the blob so next-line text is never obscured. */
-      .mock-lyrics-stage { z-index: 3; }
+
     }
   </style>
   <!-- Three.js (plasma WebGL) + GSAP (lyric animations) -->
