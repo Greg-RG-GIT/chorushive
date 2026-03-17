@@ -36,9 +36,9 @@ export default async function handler(req, res) {
       return res.status(404).json({ error: 'no preview found' });
     }
 
-    // 2. Fetch and stream the MP3 bytes — server-side, so CDN hotlink protection is bypassed
+    // 2. Fetch the MP3 bytes server-side — bypasses CDN hotlink protection
     const audioRes = await fetch(match.preview, {
-      signal: AbortSignal.timeout(15000),
+      signal: AbortSignal.timeout(20000),
       headers: {
         'User-Agent': 'Mozilla/5.0 (compatible; ChorusHive/1.0)',
         'Referer': 'https://www.deezer.com/',
@@ -46,22 +46,18 @@ export default async function handler(req, res) {
     });
 
     if (!audioRes.ok) {
-      return res.status(audioRes.status).json({ error: 'audio stream failed' });
+      return res.status(audioRes.status).json({ error: 'audio fetch failed' });
     }
 
-    // Cache at CDN for 1 hour — the MP3 bytes are stable
+    // Buffer the full MP3 (~480KB for 30s preview) then send in one shot
+    const buffer = Buffer.from(await audioRes.arrayBuffer());
+
+    // Cache at CDN for 1 hour — MP3 bytes are stable
     res.setHeader('Content-Type', 'audio/mpeg');
+    res.setHeader('Content-Length', String(buffer.byteLength));
     res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate=86400');
     res.setHeader('Accept-Ranges', 'bytes');
-
-    // Pipe response body to browser
-    const reader = audioRes.body.getReader();
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      if (!res.writableEnded) res.write(Buffer.from(value));
-    }
-    if (!res.writableEnded) res.end();
+    res.status(200).end(buffer);
   } catch (err) {
     console.error('audio-preview error:', err);
     if (!res.headersSent) {
