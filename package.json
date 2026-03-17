@@ -2,6 +2,10 @@
   "name": "chorushive",
   "version": "1.0.0",
   "private": true,
+  "scripts": {
+    "test": "node tests/sync.test.js",
+    "test:offline": "SKIP_NETWORK=1 node tests/sync.test.js"
+  },
   "dependencies": {
     "node-fetch": "^2.6.7",
     "stripe": "^14.25.0"
