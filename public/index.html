@@ -3698,9 +3698,20 @@
 
           if (times.some(function(t) { return t === null; })) return; // partial match — skip
 
-          // Deezer preview starts at approximately times[0] in the full song.
-          // Express all timestamps relative to that preview start.
-          const previewStart = times[0];
+          // Find where the Deezer preview most likely starts.
+          // Deezer previews begin on section boundaries (gap > 2.5s in the LRC),
+          // not necessarily at the first word of the first demo line.
+          // Scan backwards from times[0] for the most recent section boundary
+          // within 10s — that's our best estimate of preview start.
+          let previewStart = times[0];
+          let prevLrcTime = 0;
+          lrc.forEach(function(l) {
+            if (l.time >= times[0]) return;
+            if ((l.time - prevLrcTime) > 2.5 && l.time >= times[0] - 10) {
+              previewStart = l.time;
+            }
+            prevLrcTime = l.time;
+          });
           const rel = times.map(function(t) { return t - previewStart; });
 
           // Sanity: ascending, all within 30s
