@@ -3720,22 +3720,21 @@
         });
       }
 
-      // Fetch a playable 30s preview via our server-side Deezer proxy.
-      // Deezer returns standard MP3s (no DRM) — iTunes returns FairPlay M4P which browsers can't decode.
+      // Stream a 30s MP3 preview via our server-side proxy.
+      // The proxy fetches and pipes the audio bytes — browser loads from our domain,
+      // bypassing Deezer CDN hotlink protection and CORS restrictions.
       const previewApiUrl = '/api/audio-preview?artist=' + encodeURIComponent(song.artist) + '&title=' + encodeURIComponent(song.title);
-      fetch(previewApiUrl, { signal: AbortSignal.timeout(5000) })
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
-          const url = data.previewUrl || null;
-          if (url) { audio.src = url; startPlayback(); }
-        })
-        .catch(function() {
-          // Deezer proxy failed — restart the timed lyric cycle so lyrics still advance
-          demoIntervalId = setInterval(function() {
-            lineIdx = (lineIdx + 1) % lines.length;
-            runLine(lines[lineIdx], false);
-          }, LINE_INTERVAL);
-        });
+
+      // If audio can't load (proxy error, network), restart demo interval so lyrics still advance
+      audio.addEventListener('error', function() {
+        demoIntervalId = setInterval(function() {
+          lineIdx = (lineIdx + 1) % lines.length;
+          runLine(lines[lineIdx], false);
+        }, LINE_INTERVAL);
+      }, { once: true });
+
+      audio.src = previewApiUrl;
+      startPlayback();
     })();
 
   // ── EFFECT MODE SWITCHER ──
