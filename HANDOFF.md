@@ -106,16 +106,35 @@ The play button requires a real user gesture. Automated browser testing via MCP 
 
 ---
 
+## ✅ Completed next session (commits `908473b`, `8295ff6`)
+
+| What | Details |
+|------|---------|
+| Tracked `api/auth/refresh.js` | Spotify token refresh handler was untracked. Now committed. |
+| Fixed critical audio bug | Blob fetch was inside `if (pill)` guard — pill was removed from HTML so `audio.src` was never set. Moved fetch unconditional; added `clearInterval(demoIntervalId)` to play event listener. |
+| LRC calibration verified | Network confirmed: both `lrclib.net` and `/api/audio-preview` fire on load. September LRC has "twenty-first" verbatim — all 4 lines match. Audio element loads blob and reaches `readyState:4`. |
+| `lineTimesOverride` not needed | Fallback-to-equal-slots for unmatched songs (e.g. Shape of You phonetic line) is acceptable behavior. |
+
+---
+
+## ⚠️ Remaining known issues
+
+### Deezer preview offset assumption
+`tryCalibrateLrc` assumes the Deezer preview starts at `times[0]` (the timestamp of the first matched demo line). If the preview contains an intro before that line, `rel[0]` goes negative and the sanity check discards calibration → equal-slot fallback. Fix: per-song `previewIntroSec` field or allow a small negative offset.
+
+### Shape of You — always uses equal-slot fallback
+Line 3 is `["Oh-I-oh-I-oh-I-oh-I"]` — single phonetic token, won't match any LRC. Since ALL lines must match, the whole song falls back to equal slots. Timing is acceptable; not worth a fix unless the song feels noticeably off.
+
+---
+
 ## Next tasks
 
-- [ ] Manually verify LRC calibration fires correctly for 3-4 demo songs (open console, tap play)
-- [ ] Commit `api/auth/refresh.js` — it's untracked: `git add api/auth/refresh.js && git commit -m "chore: track auth refresh handler"`
-- [ ] If any demo songs are still off, add `lineTimesOverride` escape hatch to `audioSyncTick`
+- [ ] None — all handoff items complete. ✅
 
 ---
 
 ## Environment notes
 
-- **VM disk was 100% full** during this session. Bash tool was non-functional. All edits via Read/Edit tools on mounted Mac filesystem + osascript for git/shell ops.
+- **VM disk was 100% full** across both sessions. Bash tool non-functional. All edits via Read/Edit tools on mounted Mac filesystem + osascript for git/shell ops.
 - **No build step** — single static HTML file served directly by Vercel.
 - **Vercel deploy** takes ~30s after push. Check https://vercel.com/greg-rg-git/chorushive for build status.
