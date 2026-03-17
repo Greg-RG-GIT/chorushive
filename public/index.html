@@ -3238,7 +3238,8 @@
           { prev: "Be running up that hill",       words: ["Be","Running","Up","That","Building"],         next: "Say if I only could, oh" },
           { prev: "Be running up that building",   words: ["Say","If","I","Only","Could","Oh"],            next: "You don't wanna hurt me" },
           { prev: "You don't wanna hurt me",       words: ["But","See","How","Deep","The","Bullet","Lies"], next: "" },
-        ]
+        ],
+        lineTimes: [0.0, 2.14, 6.01, 26.8],
       },
       {
         title: "Bohemian Rhapsody", artist: "Queen",
@@ -3249,7 +3250,8 @@
           { prev: "He's just a poor boy from a poor family", words: ["Spare","Him","His","Life","From","This","Monstrosity"], next: "Easy come, easy go, will you let me go?" },
           { prev: "No, we will not let you go (let him go)", words: ["We","Will","Not","Let","You","Go","Let","Him"],          next: "We will not let you go (let me go)" },
           { prev: "We will not let you go (let me go)",      words: ["Will","Not","Let","You","Go","Let","Me","Go"],           next: "Never, never, never, never let me go" },
-        ]
+        ],
+        lineTimes: [0.0, 5.56, 18.59, 23.56],
       },
       {
         title: "Don't Stop Believin'", artist: "Journey",
@@ -3260,7 +3262,8 @@
           { prev: "Don't stop believin'", words: ["Hold","On","To","That","Feelin'"],        next: "Streetlights, people" },
           { prev: "Streetlights, people", words: ["Don't","Stop","Believin'"],               next: "Hold on" },
           { prev: "Hold on",              words: ["Streetlights","People"],                  next: "" },
-        ]
+        ],
+        lineTimes: [0.0, 4.29, 15.97, 23.98],
       },
       {
         title: "Mr. Brightside", artist: "The Killers",
@@ -3271,7 +3274,9 @@
           { prev: "Open up my eager eyes, I'm Mr. Brightside",  words: ["I'm","Coming","Out","Of","My","Cage","And","I've"],       next: "Gotta, gotta be down because I want it all" },
           { prev: "I'm coming out of my cage and I've been doing just fine", words: ["Gotta","Gotta","Be","Down","Because","I","Want","It"], next: "It started out with a kiss, how did it end up like this?" },
           { prev: "Gotta, gotta be down because I want it all",  words: ["It","Started","Out","With","A","Kiss","How","Did"],      next: "" },
-        ]
+        ],
+        // Mr. Brightside: LRC timestamps cluster at the end of the window; equal-slot fallback intentionally omitted
+        // lineTimes deliberately left out — let equal-slot (7.25s/line) handle this one
       },
       {
         title: "Sweet Caroline", artist: "Neil Diamond",
@@ -3282,7 +3287,8 @@
           { prev: "Sweet Caroline",              words: ["Good","Times","Never","Seemed","So","Good"],  next: "I've been inclined" },
           { prev: "I've been inclined",          words: ["To","Believe","They","Never","Would"],        next: "But now I look at the night" },
           { prev: "But now I look at the night", words: ["And","It","Don't","Seem","So","Lonely"],     next: "" },
-        ]
+        ],
+        lineTimes: [0.0, 4.81, 15.9, 27.44],
       },
       {
         title: "Cruel Summer", artist: "Taylor Swift",
@@ -3293,7 +3299,8 @@
           { prev: "No rules in breakable heaven",  words: ["But","Ooh","Whoa","Oh"],                               next: "It's a cruel summer" },
           { prev: "With you",                      words: ["Hang","Your","Head","Low"],                            next: "In the glow of the vending machine" },
           { prev: "I'm not dying",                 words: ["You","Say","That","We'll","Just","Screw","It","Up"],   next: "We're not trying" },
-        ]
+        ],
+        lineTimes: [0.0, 8.43, 17.22, 22.56],
       },
       {
         title: "Blinding Lights", artist: "The Weeknd",
@@ -3304,7 +3311,8 @@
           { prev: "I said, ooh, I'm blinded by the lights",    words: ["No","I","Can't","Sleep","Until","I","Feel","Your"],      next: "I said, ooh, I'm drowning in the night" },
           { prev: "No, I can't sleep until I feel your touch", words: ["I","Said","Ooh","I'm","Drowning","In","The","Night"],    next: "Oh, when I'm like this, you're the one I trust" },
           { prev: "Oh, when I'm like this, you're the one I trust", words: ["Hey","Hey","Hey"],                                  next: "" },
-        ]
+        ],
+        lineTimes: [0.0, 6.03, 11.21, 21.9],
       },
       {
         title: "Levitating", artist: "Dua Lipa",
@@ -3315,7 +3323,8 @@
           { prev: "I'm levitating",    words: ["You","Moonlight","You're","My","Starlight","You're","The","Moonlight"], next: "I need you all night, come on, dance with me" },
           { prev: "I need you all night, come on, dance with me", words: ["I'm","Levitating"],                    next: "I believe that you're for me, I feel it in our energy" },
           { prev: "I believe that you're for me, I feel it in our energy", words: ["I","See","Us","Written","In","The","Stars"], next: "We can go wherever, so let's do it now or never, baby" },
-        ]
+        ],
+        lineTimes: [0.0, 3.59, 11.45, 24.55],
       },
       {
         title: "As It Was", artist: "Harry Styles",
@@ -3326,7 +3335,8 @@
           { prev: "As it was",                  words: ["You","Know","It's","Not","The","Same"],                next: "Answer the phone" },
           { prev: "Harry, you're no good alone", words: ["Why","Are","You","Sitting","At","Home","On","The"],   next: "What kind of pills are you on?" },
           { prev: "Ringing the bell",           words: ["And","Nobody's","Coming","To","Help"],                 next: "Your daddy lives by himself" },
-        ]
+        ],
+        lineTimes: [0.0, 6.13, 13.87, 22.12],
       },
       {
         title: "Flowers", artist: "Miley Cyrus",
@@ -3337,7 +3347,8 @@
           { prev: "I can buy myself flowers",  words: ["Write","My","Name","In","The","Sand"],          next: "Talk to myself for hours" },
           { prev: "Talk to myself for hours",  words: ["Say","Things","You","Don't","Understand"],      next: "I can take myself dancing" },
           { prev: "I can take myself dancing", words: ["And","I","Can","Hold","My","Own","Hand"],       next: "Yeah, I can love me better than you can" },
-        ]
+        ],
+        lineTimes: [0.0, 4.31, 11.82, 19.59],
       },
       {
         title: "Dancing Queen", artist: "ABBA",
@@ -3348,7 +3359,8 @@
           { prev: "Dancing queen",                 words: ["Feel","The","Beat","From","The","Tambourine","Oh","Yeah"], next: "You can dance, you can jive" },
           { prev: "You can dance, you can jive",   words: ["Having","The","Time","Of","Your","Life","Ooh"],           next: "See that girl, watch that scene" },
           { prev: "See that girl, watch that scene", words: ["Dig","In","The","Dancing","Queen"],                    next: "" },
-        ]
+        ],
+        lineTimes: [0.0, 2.29, 14.09, 23.06],
       },
       {
         title: "Billie Jean", artist: "Michael Jackson",
@@ -3359,7 +3371,8 @@
           { prev: "Billie Jean is not my lover",     words: ["She's","Just","A","Girl","Who","Claims","That","I"], next: "But the kid is not my son" },
           { prev: "But the kid is not my son",       words: ["She","Says","I","Am","The","One"],                   next: "But the kid is not my son" },
           { prev: "But the kid is not my son",       words: ["For","Forty","Days","And","Forty","Nights"],         next: "The law was on her side" },
-        ]
+        ],
+        lineTimes: [0.0, 4.58, 15.02, 25.31],
       },
       {
         title: "Hotel California", artist: "Eagles",
@@ -3370,7 +3383,8 @@
           { prev: "Welcome to the Hotel California",    words: ["Such","A","Lovely","Place","Such","A","Lovely","Place"], next: "Such a lovely face" },
           { prev: "Such a lovely face",                 words: ["Plenty","Of","Room","At","The","Hotel","California"],    next: "Any time of year (any time of year)" },
           { prev: "Any time of year (any time of year)", words: ["You","Can","Find","It","Here"],                         next: "Her mind is Tiffany-twisted, she got the Mercedes-Benz" },
-        ]
+        ],
+        lineTimes: [0.0, 5.61, 12.64, 22.1],
       },
       {
         title: "September", artist: "Earth, Wind & Fire",
@@ -3381,7 +3395,8 @@
           { prev: "Ba-de-ya, dancing in September", words: ["Ba-de-ya","Never","Was","A","Cloudy","Day"],        next: "Ba-du-du, ba-du-du, ba-du-du, ba-du-du" },
           { prev: "Ba-du-du, ba-du-du, ba-du-du, ba-du-du", words: ["Ba-du-du","Ba-du-du","Ba-du-du","Ba-du-du"], next: "Ba-du-du, ba-du-du, ba-do-da" },
           { prev: "Ba-du-du, ba-du-du, ba-do-da",  words: ["My","Thoughts","Are","With","You","Holding","Hands","With"], next: "" },
-        ]
+        ],
+        lineTimes: [0.0, 3.46, 15.35, 25.68],
       },
       {
         title: "Africa", artist: "Toto",
@@ -3391,7 +3406,8 @@
           { prev: "I bless the rains down in Africa",  words: ["We're","Gonna","Take","Some","Time","To","Do","The"],         next: "Ooh-hoo" },
           { prev: "We're gonna take some time to do the things we never had", words: ["Ooh-hoo"],                              next: "The wild dogs cry out in the night" },
           { prev: "The wild dogs cry out in the night", words: ["As","They","Grow","Restless","Longing","For","Some","Solitary"], next: "" },
-        ]
+        ],
+        lineTimes: [0.0, 4.91, 12.11, 26.11],
       },
       {
         title: "Eye of the Tiger", artist: "Survivor",
@@ -3401,7 +3417,8 @@
           { prev: "It's the eye of the tiger",       words: ["It's","The","Thrill","Of","The","Fight"],               next: "Rising up to the challenge of our rival" },
           { prev: "It's the thrill of the fight",    words: ["Rising","Up","To","The","Challenge","Of","Our","Rival"], next: "And the last known survivor" },
           { prev: "Rising up to the challenge of our rival", words: ["And","The","Last","Known","Survivor"],           next: "Stalks his prey in the night" },
-        ]
+        ],
+        // Eye of the Tiger: calibration found wrong window (3:20 outro, all identical lines) — using equal-slot timing
       },
       {
         title: "Shape of You", artist: "Ed Sheeran",
@@ -3411,7 +3428,8 @@
           { prev: "(mm-mm)",                            words: ["I'm","In","Love","With","The","Shape","Of","You"],   next: "We push and pull like a magnet do" },
           { prev: "Although my heart is falling too",   words: ["I'm","In","Love","With","Your","Body"],              next: "Last night you were in my room" },
           { prev: "And now my bed sheets smell like you", words: ["Every","Day","Discovering","Something","Brand","New"], next: "Oh, I'm in love with your body" },
-        ]
+        ],
+        lineTimes: [0.0, 5.44, 12.84, 20.03],
       },
       {
         title: "Take On Me", artist: "a-ha",
@@ -3421,7 +3439,8 @@
           { prev: "Take on me (take on me)",  words: ["Take","Me","On","Take","On","Me"],           next: "I'll be gone" },
           { prev: "I'll be gone",             words: ["In","A","Day","Or","Two"],                   next: "So needless to say" },
           { prev: "So needless to say",       words: ["I'm","Odds","And","Ends"],                   next: "But I'll be stumbling away" },
-        ]
+        ],
+        lineTimes: [0.0, 5.67, 16.1, 25.36],
       },
       {
         title: "Waterloo", artist: "ABBA",
@@ -3431,7 +3450,8 @@
           { prev: "I was defeated, you won the war", words: ["Waterloo"],                                        next: "Promise to love you forevermore" },
           { prev: "Waterloo",                        words: ["Couldn't","Escape","If","I","Wanted","To"],        next: "Waterloo" },
           { prev: "Waterloo",                        words: ["Knowing","My","Fate","Is","To","Be","With","You"], next: "Wa-wa-wa-wa-Waterloo" },
-        ]
+        ],
+        lineTimes: [0.0, 6.45, 14.54, 20.91],
       },
       {
         title: "Lose Yourself", artist: "Eminem",
@@ -3441,7 +3461,8 @@
           { prev: "Lose yourself in the music, the moment",    words: ["You","Own","It","You","Better","Never","Let","It"],        next: "You only get one shot, do not miss your chance to blow" },
           { prev: "This opportunity comes once in a lifetime",  words: ["You","Better","Lose","Yourself","In","The","Music","The"], next: "You own it, you better never let it go" },
           { prev: "You only get one shot, do not miss your chance to blow", words: ["This","Opportunity","Comes","Once","In","A","Lifetime"], next: "You better" },
-        ]
+        ],
+        lineTimes: [0.0, 2.97, 11.28, 19.71],
       },
     ];
 
@@ -3662,7 +3683,7 @@
       const lineSlot   = (PREVIEW_S - 1) / lines.length; // fallback equal-slot
       let audioLineIdx = -1;
       let rafActive    = false;
-      let lineTimes    = null; // per-line start times (seconds into preview), set by LRC calibration
+      let lineTimes    = song.lineTimes || null; // per-line start times; pre-calibrated static data, optionally overridden by LRC fetch
 
       // ── LRC calibration: fetch real timestamps and align to Deezer preview ──
       // Runs in parallel with blob fetch; audioSyncTick falls back to lineSlot if it fails.
@@ -3789,7 +3810,7 @@
           // Replaces song.lines for audio-synced playback (song.lines is kept
           // for the pre-play visual carousel and the equal-slot fallback).
           function _lrcWords(text) {
-            return text.replace(/[,!?.;:()\[\]]/g,'').split(/\s+/).filter(Boolean)
+            return text.replace(/[",!?.;:()\[\]]/g,'').split(/\s+/).filter(Boolean)
               .slice(0, 8)
               .map(function(w){ return w.charAt(0).toUpperCase() + w.slice(1); });
           }
