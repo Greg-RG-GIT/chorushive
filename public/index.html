@@ -3667,7 +3667,7 @@
       }
 
       // ── Single source of truth: rAF starts/stops via audio play/pause events.
-      // Covers ALL play paths: autoplay, pill tap, fxPlayBtn, onFirstInteraction, etc.
+      // Covers ALL play paths: pill tap, fxPlayBtn, programmatic play calls.
       audio.addEventListener('play', () => {
         if (!rafActive) {
           rafActive = true;
@@ -3695,46 +3695,35 @@
         pillText.textContent = 'Tap to hear demo';
       }
 
-      function startPlayback() {
-        audio.play().then(() => {
-          setPillPlaying();
-        }).catch(() => {
-          setPillTap();
-          function onFirstInteraction() {
-            audio.play().then(() => { setPillPlaying(); }).catch(() => {});
-          }
-          document.addEventListener('click', onFirstInteraction, { once: true });
-          document.addEventListener('touchstart', onFirstInteraction, { once: true });
-        });
-      }
-
       if (pill) {
-        // Tap to play; tap again to pause
+        // Proxy URL: server-side fetch bypasses Deezer CDN hotlink protection
+        const previewApiUrl = '/api/audio-preview?artist=' + encodeURIComponent(song.artist) + '&title=' + encodeURIComponent(song.title);
+        let audioLoaded = false;
+        // Fallback: if proxy errors, restart timed interval so lyrics still advance
+        audio.addEventListener('error', function() {
+          demoIntervalId = setInterval(function() {
+            lineIdx = (lineIdx + 1) % lines.length;
+            runLine(lines[lineIdx], false);
+          }, LINE_INTERVAL);
+        }, { once: true });
+        // Load audio ONLY on first tap (inside trusted user gesture).
+        // Chrome suspends media loading when play() is called without a gesture,
+        // so we defer src assignment until the user actually taps.
         pill.addEventListener('click', () => {
+          if (!audioLoaded) {
+            audioLoaded = true;
+            clearInterval(demoIntervalId);
+            audio.src = previewApiUrl;
+            audio.load();
+          }
           if (audio.paused) {
-            audio.play().then(() => { setPillPlaying(); }).catch(() => {});
+            audio.play().then(() => { setPillPlaying(); }).catch(() => { setPillTap(); });
           } else {
             audio.pause();
             setPillTap();
           }
         });
       }
-
-      // Stream a 30s MP3 preview via our server-side proxy.
-      // The proxy fetches and pipes the audio bytes — browser loads from our domain,
-      // bypassing Deezer CDN hotlink protection and CORS restrictions.
-      const previewApiUrl = '/api/audio-preview?artist=' + encodeURIComponent(song.artist) + '&title=' + encodeURIComponent(song.title);
-
-      // If audio can't load (proxy error, network), restart demo interval so lyrics still advance
-      audio.addEventListener('error', function() {
-        demoIntervalId = setInterval(function() {
-          lineIdx = (lineIdx + 1) % lines.length;
-          runLine(lines[lineIdx], false);
-        }, LINE_INTERVAL);
-      }, { once: true });
-
-      audio.src = previewApiUrl;
-      startPlayback();
     })();
 
   // ── EFFECT MODE SWITCHER ──
