@@ -3711,23 +3711,20 @@
       }
 
       if (pill) {
-        // Proxy URL: server-side fetch bypasses Deezer CDN hotlink protection
-        const previewApiUrl = '/api/audio-preview?artist=' + encodeURIComponent(song.artist) + '&title=' + encodeURIComponent(song.title);
-
         // ── Blob-URL preload strategy ──
-        // Chrome's <audio> element sends Range requests. Our proxy returns 200 (not 206),
-        // causing Chrome to retry in a stall-loop — audio never buffers.
-        // Fix: fetch() the MP3 up front (no range requests), create a Blob URL,
-        // set audio.src to the blob. Then play() on tap is instant and reliable.
+        // Use song.previewUrl (iTunes CDN) directly — lyrics are timed to these exact clips.
+        // The Deezer proxy clips a different 30s window, so lyrics go out of sync.
+        // iTunes CDN allows CORS fetch from browser. We fetch → Blob URL to avoid
+        // Chrome's <audio> Range-request stall-loop (audio element retries 200 as 206 mismatch).
         let blobReady = false;
-        fetch(previewApiUrl)
+        fetch(song.previewUrl)
           .then(function(r) { return r.ok ? r.blob() : Promise.reject(r.status); })
           .then(function(blob) {
             audio.src = URL.createObjectURL(blob);
             blobReady = true;
           })
           .catch(function() {
-            // Proxy failed — interval keeps running as visual-only demo, nothing to do
+            // iTunes URL failed — interval keeps running as visual-only demo
           });
 
         pill.addEventListener('click', () => {
