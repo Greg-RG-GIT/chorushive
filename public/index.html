@@ -3698,21 +3698,49 @@
             .replace(/[',\-]/g,' ').split(/\s+/)
             .filter(function(w){ return w.length > 1 && !_stopW.has(w); });
 
-          var bestWinScore = -Infinity, bestWinStart = -1;
-          for (var _i = 0; _i < lrc.length; _i++) {
-            var _gap = _i === 0 ? Infinity : lrc[_i].time - lrc[_i - 1].time;
-            if (_i > 0 && _gap < 3.0) continue;          // section boundaries only
-            var _end = lrc[_i].time + WINDOW_S;
-            var _winLen = 0;
-            var _wText = '';
-            for (var _j = _i; _j < lrc.length && lrc[_j].time <= _end; _j++) {
-              _winLen++;
-              _wText += ' ' + lrc[_j].text;
+          // ── Find the line where title words are most dominant ──────────────
+          // e.g. the standalone "Dancing Queen" or "Billie Jean" line scores
+          // 100% — far higher than "dig in the dancing queen" (40%) or a
+          // late-song outro repeat.  We walk backwards from that line to the
+          // nearest section boundary (gap ≥ 2 s) to get the window start.
+          // This reliably picks the first-chorus section that streaming
+          // services preview, without needing preview_start_ms.
+          var _bestDensity = 0, _bestDensityIdx = -1;
+          for (var _ti = 0; _ti < lrc.length; _ti++) {
+            var _tWords = lrc[_ti].text.split(/\s+/).filter(Boolean);
+            var _tHits = _tWords.filter(function(w){ return _titleWords.includes(w); }).length;
+            var _tDensity = _tHits / Math.max(1, _tWords.length);
+            if (_tDensity > _bestDensity) { _bestDensity = _tDensity; _bestDensityIdx = _ti; }
+          }
+
+          // Anchor: highest-density line, else first line containing any title word
+          var _anchorIdx = _bestDensityIdx >= 0 ? _bestDensityIdx
+            : lrc.findIndex(function(l){
+                return _titleWords.some(function(w){ return l.text.includes(w); });
+              });
+
+          var bestWinStart = -1;
+          if (_anchorIdx >= 0) {
+            for (var _bi = _anchorIdx; _bi >= 0; _bi--) {
+              var _bGap = _bi === 0 ? 999 : lrc[_bi].time - lrc[_bi - 1].time;
+              if (_bGap >= 2.0) { bestWinStart = lrc[_bi].time; break; }
             }
-            if (_winLen < 4) continue;
-            var _tHits = _titleWords.filter(function(w){ return _wText.includes(w); }).length;
-            var _score = _winLen + _tHits * 3 - (lrc[_i].time < 10 ? 5 : 0);
-            if (_score > bestWinScore) { bestWinScore = _score; bestWinStart = lrc[_i].time; }
+            if (bestWinStart < 0) bestWinStart = lrc[_anchorIdx].time;
+          }
+
+          // Fallback: density scoring for songs whose title isn't in the lyrics
+          if (bestWinStart < 0) {
+            var bestWinScore = -Infinity;
+            for (var _i = 0; _i < lrc.length; _i++) {
+              var _gap = _i === 0 ? Infinity : lrc[_i].time - lrc[_i - 1].time;
+              if (_i > 0 && _gap < 3.0) continue;
+              var _end = lrc[_i].time + WINDOW_S;
+              var _winLen = 0;
+              for (var _j = _i; _j < lrc.length && lrc[_j].time <= _end; _j++) { _winLen++; }
+              if (_winLen < 4) continue;
+              var _score = _winLen - (lrc[_i].time < 15 ? 8 : 0);
+              if (_score > bestWinScore) { bestWinScore = _score; bestWinStart = lrc[_i].time; }
+            }
           }
           if (bestWinStart < 0) return;
 
