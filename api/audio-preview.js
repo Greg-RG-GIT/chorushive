@@ -1,12 +1,14 @@
 /**
  * /api/audio-preview
  * Server-side proxy that streams a Deezer 30s MP3 preview directly to the browser.
- * The proxy fetches and pipes the audio bytes — no CORS or CDN hotlink issues.
+ * The proxy pipes bytes through — no CORS or CDN hotlink issues.
  * audio.src = '/api/audio-preview?artist=...&title=...'
  *
  * Query params: artist, title
  * Returns: audio/mpeg byte stream
  */
+import { Readable } from 'stream';
+
 export default async function handler(req, res) {
   const { artist, title } = req.query;
   if (!artist || !title) {
@@ -36,7 +38,7 @@ export default async function handler(req, res) {
       return res.status(404).json({ error: 'no preview found' });
     }
 
-    // 2. Fetch the MP3 bytes server-side — bypasses CDN hotlink protection
+    // 2. Open a streaming fetch to the CDN — bypasses hotlink protection
     const audioRes = await fetch(match.preview, {
       signal: AbortSignal.timeout(20000),
       headers: {
@@ -49,15 +51,17 @@ export default async function handler(req, res) {
       return res.status(audioRes.status).json({ error: 'audio fetch failed' });
     }
 
-    // Buffer the full MP3 (~480KB for 30s preview) then send in one shot
-    const buffer = Buffer.from(await audioRes.arrayBuffer());
-
-    // Cache at CDN for 1 hour — MP3 bytes are stable
+    // 3. Forward headers then pipe bytes — browser starts buffering immediately
+    //    (no need to wait for the full MP3 before sending the first byte)
+    const contentLength = audioRes.headers.get('content-length');
     res.setHeader('Content-Type', 'audio/mpeg');
-    res.setHeader('Content-Length', String(buffer.byteLength));
+    if (contentLength) res.setHeader('Content-Length', contentLength);
+    // Cache at CDN edge for 1 hour so repeat visitors get instant response
     res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate=86400');
     res.setHeader('Accept-Ranges', 'bytes');
-    res.status(200).end(buffer);
+    res.status(200);
+
+    Readable.fromWeb(audioRes.body).pipe(res);
   } catch (err) {
     console.error('audio-preview error:', err);
     if (!res.headersSent) {
