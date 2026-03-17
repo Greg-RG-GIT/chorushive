@@ -6,7 +6,9 @@ export default async function handler(req, res) {
   const { spotify_id, email, plan } = req.body;
   if (!spotify_id) return res.status(400).json({ error: 'spotify_id required' });
 
-  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+    httpClient: Stripe.createFetchHttpClient(),
+  });
   const priceId =
     plan === 'annual'
       ? process.env.STRIPE_PRICE_ANNUAL
