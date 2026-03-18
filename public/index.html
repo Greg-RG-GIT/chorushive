@@ -4820,7 +4820,7 @@
     async function checkSubscription() {
       if (!session?.spotify_id) return;
       try {
-        const r = await fetch(`/api/subscription-status?spotify_id=${encodeURIComponent(session.spotify_id)}`);
+        const r = await fetch(`/api/subscription-status?spotify_id=${encodeURIComponent(session.spotify_id)}${session.email ? '&email=' + encodeURIComponent(session.email) : ''}`);
         const data = await r.json();
         isPro = data.isPro === true;
       } catch(e) { isPro = false; }

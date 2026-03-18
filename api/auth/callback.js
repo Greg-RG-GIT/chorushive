@@ -36,6 +36,22 @@ export default async function handler(req, res) {
     });
     const profile = await profileRes.json();
 
+    // If a pre-granted record exists keyed on this email (e.g. ambassador), claim it
+    if (profile.email) {
+      await fetch(
+        `${process.env.SUPABASE_URL}/rest/v1/chorushive_subscriptions?spotify_id=eq.${encodeURIComponent('pending:' + profile.email)}`,
+        {
+          method: 'PATCH',
+          headers: {
+            apikey: process.env.SUPABASE_SERVICE_ROLE_KEY,
+            Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ spotify_id: profile.id }),
+        }
+      );
+    }
+
     // Upsert user in Supabase (creates free tier record on first visit)
     await fetch(
       `${process.env.SUPABASE_URL}/rest/v1/chorushive_subscriptions`,
@@ -63,6 +79,7 @@ export default async function handler(req, res) {
           access_token: tokens.access_token,
           refresh_token: tokens.refresh_token,
           spotify_id: profile.id,
+          email: profile.email || null,
           display_name: profile.display_name || profile.id,
           expires_at: Date.now() + tokens.expires_in * 1000,
         })
