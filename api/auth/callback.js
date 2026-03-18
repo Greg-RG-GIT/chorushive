@@ -27,6 +27,7 @@ export default async function handler(req, res) {
 
     const tokens = await tokenRes.json();
     if (!tokens.access_token) {
+      console.error('Token exchange failed:', JSON.stringify({ error: tokens.error, error_description: tokens.error_description, redirect_uri: redirectUri, client_id: clientId }));
       return res.redirect(`/?error=${encodeURIComponent(tokens.error || 'token_error')}`);
     }
 
