@@ -3101,7 +3101,7 @@
       <div class="pricing-toggle-row">
         <span>Monthly</span>
         <span style="color:var(--white)">·</span>
-        <span>Annual <span class="save-chip">Save 52%</span></span>
+        <span>Annual <span class="save-chip">Save 35%</span></span>
       </div>
       <div class="pricing-cards">
         <!-- Free -->
@@ -4778,7 +4778,7 @@
       <p class="upgrade-sub">Get all 8 themes, all 6 backgrounds, and typography control. The full experience, for less than a coffee a month.</p>
       <div class="plan-toggle">
         <button class="plan-btn active" id="planMonthly">Monthly</button>
-        <button class="plan-btn" id="planAnnual">Annual — save 52%</button>
+        <button class="plan-btn" id="planAnnual">Annual — save 35%</button>
       </div>
       <div class="plan-price" id="planPrice">$4.99<span>/mo</span></div>
       <div class="plan-note" id="planNote">Cancel anytime</div>
@@ -4869,10 +4869,10 @@
       document.getElementById('planAnnual').classList.toggle('active', !monthly);
       document.getElementById('planPrice').innerHTML = monthly
         ? '$4.99<span>/mo</span>'
-        : '$2.42<span>/mo</span>';
+        : '$3.25<span>/mo</span>';
       document.getElementById('planNote').textContent = monthly
         ? 'Cancel anytime'
-        : '$29 billed annually — save $30/yr';
+        : '$39 billed annually — save $21/yr';
     }
 
     async function startCheckout() {
