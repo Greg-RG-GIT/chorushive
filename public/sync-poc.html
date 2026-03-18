@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sync POC — Timer vs Word Karaoke</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #06000e; color: #fff; font-family: 'Space Mono', monospace; height: 100vh; overflow: hidden; }
+
+    /* ── HEADER ── */
+    .hdr {
+      position: fixed; top: 0; left: 0; right: 0; height: 52px; z-index: 200;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 18px;
+      background: rgba(6,0,14,0.95); border-bottom: 1px solid rgba(255,255,255,0.07);
+    }
+    .hdr-left { display: flex; align-items: center; gap: 14px; }
+    .hdr-title { font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(255,255,255,0.3); }
+    .tabs { display: flex; gap: 4px; }
+    .tab {
+      padding: 4px 10px; font-family: 'Space Mono', monospace; font-size: 8px;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      background: transparent; border: 1px solid rgba(255,255,255,0.1);
+      color: rgba(255,255,255,0.38); cursor: pointer; border-radius: 2px; transition: all 0.15s;
+    }
+    .tab:hover { border-color: rgba(255,255,255,0.22); color: rgba(255,255,255,0.65); }
+    .tab.on { background: rgba(29,185,84,0.1); border-color: rgba(29,185,84,0.4); color: #1db954; }
+    .hdr-right { display: flex; align-items: center; gap: 8px; }
+    .adot { width: 7px; height: 7px; border-radius: 50%; background: rgba(255,255,255,0.18); flex-shrink: 0; }
+    .adot.loading { background: #f59e0b; animation: blink 0.5s infinite; }
+    .adot.playing { background: #1db954; animation: blink 1.6s infinite; }
+    .adot.sim     { background: #818cf8; animation: blink 2s infinite; }
+    .adot.error   { background: rgba(255,255,255,0.18); }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+    .atxt { font-size: 8px; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255,255,255,0.3); min-width: 110px; }
+
+    /* ── PANELS ── */
+    .panels { display: grid; grid-template-columns: 1fr 1fr; height: calc(100vh - 52px); margin-top: 52px; }
+    .panel  { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; }
+    .panel-a { border-right: 1px solid rgba(255,255,255,0.06); }
+
+    /* ── BACKGROUNDS ── */
+    .pbg { position: absolute; inset: -30%; z-index: 0; filter: blur(40px) saturate(2) brightness(0.6); animation: bgr 30s linear infinite; }
+    .panel-a .pbg { background: radial-gradient(ellipse at 28% 38%, #7c3aed 0%, transparent 52%), radial-gradient(ellipse at 72% 62%, #a855f7 0%, transparent 48%), #03000a; }
+    .panel-b .pbg { background: radial-gradient(ellipse at 28% 38%, #0369a1 0%, transparent 52%), radial-gradient(ellipse at 72% 62%, #0e7490 0%, transparent 48%), #000a12; animation-direction: reverse; animation-duration: 22s; }
+    @keyframes bgr { from{transform:rotate(0deg) scale(1.3)} to{transform:rotate(360deg) scale(1.3)} }
+
+    /* ── PANEL LABELS ── */
+    .plabel {
+      position: absolute; top: 16px; left: 50%; transform: translateX(-50%);
+      z-index: 10; display: flex; flex-direction: column; align-items: center; gap: 3px;
+    }
+    .badge { font-size: 7px; letter-spacing: 0.16em; text-transform: uppercase; padding: 4px 11px; border-radius: 2px; white-space: nowrap; }
+    .panel-a .badge { background: rgba(124,58,237,0.16); border: 1px solid rgba(167,85,247,0.35); color: #c084fc; }
+    .panel-b .badge { background: rgba(3,105,161,0.16); border: 1px solid rgba(56,189,248,0.35); color: #38bdf8; }
+    .bsub { font-size: 7px; letter-spacing: 0.09em; text-transform: uppercase; color: rgba(255,255,255,0.22); }
+
+    /* ── LYRICS ── */
+    .lwrap { position: relative; z-index: 5; display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 76px 36px 120px; text-align: center; width: 100%; }
+    .ll { font-family: 'Bebas Neue', sans-serif; text-align: center; line-height: 1.05; letter-spacing: 0.04em; }
+    .ll-prev, .ll-next { font-size: clamp(12px, 1.6vw, 20px); color: rgba(255,255,255,0.25); }
+    .ll-active { font-size: clamp(24px, 4vw, 56px); color: #fff; min-height: 1.15em; }
+
+    .word { display: inline; color: rgba(255,255,255,0.14); transition: color 0.1s, text-shadow 0.1s; }
+    .word.done { color: rgba(255,255,255,0.68); text-shadow: none; }
+    .panel-a .word.lit { color: #c084fc; text-shadow: 0 0 16px rgba(192,132,252,0.5); }
+    .panel-b .word.lit { color: #38bdf8; text-shadow: 0 0 16px rgba(56,189,248,0.5); }
+
+    /* ── METERS ── */
+    .meter { position: absolute; bottom: 20px; left: 22px; right: 22px; z-index: 10; }
+    .mrow { display: flex; justify-content: space-between; margin-bottom: 5px; }
+    .mlabel { font-size: 7px; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.25); }
+    .mval   { font-size: 8px; letter-spacing: 0.05em; font-variant-numeric: tabular-nums; color: rgba(255,255,255,0.3); }
+    .mtrack { height: 2px; background: rgba(255,255,255,0.06); border-radius: 1px; overflow: hidden; margin-bottom: 9px; }
+    .mfill  { height: 100%; border-radius: 1px; will-change: width; transition: width 0.05s linear; }
+    .panel-a .mfill { background: #c084fc; }
+    .panel-b .mfill { background: #38bdf8; }
+    .ldots { display: flex; justify-content: center; gap: 8px; }
+    .ldot  { width: 5px; height: 5px; border-radius: 50%; background: rgba(255,255,255,0.1); transition: background 0.2s, transform 0.2s; }
+    .panel-a .ldot.on { background: #c084fc; transform: scale(1.5); }
+    .panel-b .ldot.on { background: #38bdf8; transform: scale(1.5); }
+
+    /* ── MODE BADGE on panel B ── */
+    .mode-badge {
+      position: absolute; bottom: 88px; left: 50%; transform: translateX(-50%);
+      z-index: 10; font-size: 7px; letter-spacing: 0.1em; text-transform: uppercase;
+      padding: 3px 9px; border-radius: 2px; white-space: nowrap;
+    }
+    .mode-badge.cal { background: rgba(29,185,84,0.08); border: 1px solid rgba(29,185,84,0.22); color: rgba(29,185,84,0.65); }
+    .mode-badge.sim { background: rgba(129,140,248,0.08); border: 1px solid rgba(129,140,248,0.22); color: rgba(129,140,248,0.65); }
+    .mode-badge.est { background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.22); color: rgba(245,158,11,0.6); }
+
+    /* ── PLAY OVERLAY ── */
+    .overlay {
+      position: fixed; inset: 52px 0 0; z-index: 150;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(6,0,14,0.55); backdrop-filter: blur(3px); cursor: pointer;
+      transition: opacity 0.35s;
+    }
+    .overlay.gone { opacity: 0; pointer-events: none; }
+    .pbtn { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+    .pcircle {
+      width: 72px; height: 72px; border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.28); display: flex; align-items: center; justify-content: center;
+      background: rgba(0,0,0,0.35); transition: border-color 0.2s, background 0.2s;
+    }
+    .overlay:hover .pcircle { border-color: #1db954; background: rgba(29,185,84,0.15); }
+    .plbl { font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(255,255,255,0.4); }
+
+    /* ── VS ── */
+    .vs-line {
+      position: fixed; top: 52px; bottom: 0; left: 50%; width: 1px;
+      background: rgba(255,255,255,0.06); z-index: 10;
+    }
+    .vs-lbl {
+      position: absolute; top: 22px; left: 50%; transform: translateX(-50%);
+      font-size: 8px; letter-spacing: 0.12em; color: rgba(255,255,255,0.15);
+      background: #06000e; padding: 2px 7px;
+    }
+
+    @media (max-width: 600px) {
+      .panels { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; }
+      .panel-a { border-right: none; border-bottom: 1px solid rgba(255,255,255,0.06); }
+      .vs-line { display: none; }
+      .hdr-title { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-left">
+    <span class="hdr-title">Sync POC</span>
+    <div class="tabs" id="tabs"></div>
+  </div>
+  <div class="hdr-right">
+    <div class="adot" id="adot"></div>
+    <span class="atxt" id="atxt">Loading...</span>
+  </div>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="pbtn">
+    <div class="pcircle">
+      <svg width="18" height="22" viewBox="0 0 18 22" fill="white"><polygon points="0,0 18,11 0,22"/></svg>
+    </div>
+    <div class="plbl">Tap to start</div>
+  </div>
+</div>
+
+<div class="vs-line"><span class="vs-lbl">vs</span></div>
+
+<div class="panels">
+
+  <!-- A: TIMER -->
+  <div class="panel panel-a">
+    <div class="pbg"></div>
+    <div class="plabel">
+      <div class="badge">A — Beat Timer  (current demo)</div>
+      <div class="bsub">setInterval · fixed 4 200 ms · no audio awareness</div>
+    </div>
+    <div class="lwrap">
+      <div class="ll ll-prev" id="prevA"></div>
+      <div class="ll ll-active" id="activeA"></div>
+      <div class="ll ll-next" id="nextA"></div>
+    </div>
+    <div class="meter">
+      <div class="mrow"><span class="mlabel">Line timer</span><span class="mval" id="timerMs">—</span></div>
+      <div class="mtrack"><div class="mfill" id="timerFill" style="width:0%"></div></div>
+      <div class="ldots" id="dotsA"><div class="ldot on"></div><div class="ldot"></div><div class="ldot"></div><div class="ldot"></div></div>
+    </div>
+  </div>
+
+  <!-- B: WORD SYNC -->
+  <div class="panel panel-b">
+    <div class="pbg"></div>
+    <div class="plabel">
+      <div class="badge">B — Word Karaoke  (proposed)</div>
+      <div class="bsub">requestAnimationFrame · per-word timestamps · audio.currentTime</div>
+    </div>
+    <div class="lwrap">
+      <div class="ll ll-prev" id="prevB"></div>
+      <div class="ll ll-active" id="activeB"></div>
+      <div class="ll ll-next" id="nextB"></div>
+    </div>
+    <div class="mode-badge" id="modeBadge"></div>
+    <div class="meter">
+      <div class="mrow"><span class="mlabel">Clock position</span><span class="mval" id="clockPos">0.0 s</span></div>
+      <div class="mtrack"><div class="mfill" id="clockFill" style="width:0%"></div></div>
+      <div class="ldots" id="dotsB"><div class="ldot on"></div><div class="ldot"></div><div class="ldot"></div><div class="ldot"></div></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function() {
+'use strict';
+
+var CLIP = 29;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SONG DATA
+//
+// wordLines: per-line array of {w: word, t: start_seconds_in_clip}
+//   - Shape of You: lineTimes calibrated [0, 5.44, 12.84, 20.03]
+//     word timestamps estimated from those boundaries (±~0.5s from real)
+//   - Others: equal-slot (7.25s/line) with proportional word timing
+//   - After running:  python3 calibrate_words.py
+//     these get replaced with Whisper-measured timestamps
+// ─────────────────────────────────────────────────────────────────────────────
+
+var songs = [
+  {
+    title: "Shape of You", artist: "Ed Sheeran",
+    // lineTimes calibrated — Deezer preview IS the chorus for this song
+    wordLines: [
+      [ {w:"I'm",t:0.0},{w:"in",t:0.52},{w:"love",t:0.88},{w:"with",t:1.36},{w:"your",t:1.76},{w:"body",t:2.22} ],
+      [ {w:"Last",t:5.44},{w:"night",t:6.08},{w:"you",t:6.86},{w:"were",t:7.44},{w:"in",t:8.12},{w:"my",t:9.10},{w:"room",t:9.92} ],
+      [ {w:"Every",t:12.84},{w:"day",t:13.78},{w:"discovering",t:14.50},{w:"something",t:15.88},{w:"brand",t:17.22},{w:"new",t:18.14} ],
+      [ {w:"Oh",t:20.03},{w:"I",t:21.10},{w:"oh",t:22.56},{w:"I",t:23.62},{w:"oh",t:25.08},{w:"I",t:26.44} ],
+    ],
+    display: [
+      { prev:"Oh I, oh I, oh I",                     next:"Although my heart is falling too" },
+      { prev:"I'm in love with your body",            next:"And now my bed sheets smell like you" },
+      { prev:"And now my bed sheets smell like you",  next:"Oh, I'm in love with your body" },
+      { prev:"Every day discovering something brand new", next:"I'm in love with the shape of you" },
+    ],
+    calibrated: true,
+  },
+  {
+    title: "Running Up That Hill", artist: "Kate Bush",
+    // equal-slot: lines at 0, 7.25, 14.5, 21.75
+    wordLines: [
+      [ {w:"And",t:0.0},{w:"if",t:1.2},{w:"I",t:2.0},{w:"only",t:2.9},{w:"could",t:4.1} ],
+      [ {w:"Be",t:7.25},{w:"running",t:8.2},{w:"up",t:9.4},{w:"that",t:10.3},{w:"road",t:11.5} ],
+      [ {w:"Running",t:14.5},{w:"up",t:15.8},{w:"that",t:16.9},{w:"hill",t:18.2} ],
+      [ {w:"With",t:21.75},{w:"no",t:23.2},{w:"problems",t:24.6} ],
+    ],
+    display: [
+      { prev:"Let's exchange the experience",  next:"I'd make a deal with God" },
+      { prev:"And if I only could",             next:"Running up that hill" },
+      { prev:"Be running up that road",         next:"With no problems" },
+      { prev:"Running up that hill",            next:"And if I only could" },
+    ],
+    calibrated: false,
+  },
+  {
+    title: "Blinding Lights", artist: "The Weeknd",
+    wordLines: [
+      [ {w:"No",t:0.0},{w:"one's",t:1.1},{w:"around",t:2.0},{w:"to",t:3.0},{w:"judge",t:3.9},{w:"me",t:4.8} ],
+      [ {w:"I'm",t:7.25},{w:"blinded",t:8.0},{w:"by",t:9.2},{w:"the",t:10.0},{w:"lights",t:10.8} ],
+      [ {w:"I'm",t:14.5},{w:"drowning",t:15.4},{w:"in",t:16.5},{w:"the",t:17.3},{w:"night",t:18.1} ],
+      [ {w:"You're",t:21.75},{w:"the",t:22.8},{w:"one",t:23.5},{w:"I",t:24.4},{w:"trust",t:25.3} ],
+    ],
+    display: [
+      { prev:"Sin City's cold and empty",               next:"I can't see clearly when you're gone" },
+      { prev:"I can't see clearly when you're gone",    next:"No I can't sleep until I feel your touch" },
+      { prev:"No I can't sleep until I feel your touch",next:"When I'm like this you're the one I trust" },
+      { prev:"When I'm like this",                      next:"I'm blinded by the lights" },
+    ],
+    calibrated: false,
+  },
+  {
+    title: "Don't Stop Believin'", artist: "Journey",
+    wordLines: [
+      [ {w:"Don't",t:0.0},{w:"stop",t:1.4},{w:"believin'",t:2.6} ],
+      [ {w:"Hold",t:7.25},{w:"on",t:8.5},{w:"to",t:9.4},{w:"that",t:10.2},{w:"feelin'",t:11.2} ],
+      [ {w:"Don't",t:14.5},{w:"stop",t:15.9},{w:"believin'",t:17.1} ],
+      [ {w:"Streetlights",t:21.75},{w:"people",t:23.6} ],
+    ],
+    display: [
+      { prev:"Hidin', somewhere in the night", next:"Hold on to that feelin'" },
+      { prev:"Don't stop believin'",           next:"Streetlights, people" },
+      { prev:"Streetlights, people",           next:"Hold on" },
+      { prev:"Hold on",                        next:"Don't stop believin'" },
+    ],
+    calibrated: false,
+  },
+];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Try to load Whisper-generated word-data.json (produced by calibrate_words.py)
+// If it exists, it overrides the estimated wordLines above with real timestamps.
+// ─────────────────────────────────────────────────────────────────────────────
+fetch('/word-data.json')
+  .then(function(r) { return r.ok ? r.json() : Promise.reject(); })
+  .then(function(data) {
+    songs.forEach(function(s) {
+      if (data[s.title] && data[s.title].wordLines) {
+        s.wordLines   = data[s.title].wordLines;
+        s.calibrated  = true;
+        console.log('[word-data] loaded Whisper timestamps for:', s.title);
+      }
+    });
+  })
+  .catch(function() {
+    console.log('[word-data] word-data.json not found — using estimated timestamps. Run calibrate_words.py to improve.');
+  });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────────────────────────────────────────
+var cur       = 0;           // current song index
+var started   = false;       // user has tapped
+var audioEl   = null;
+var audioOk   = false;
+var simClock  = 0;           // fallback clock when audio unavailable
+var simRaf    = null;
+var simLast   = null;
+
+// Panel A
+var lineA     = 0;
+var timerA    = null;
+var wordTimA  = null;
+var fillRaf   = null;
+var tStart    = 0;
+var LINE_MS   = 4200;
+
+// Panel B
+var lineB     = -1;
+var rafB      = null;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// UTILS
+// ─────────────────────────────────────────────────────────────────────────────
+function $id(id) { return document.getElementById(id); }
+
+function buildWords(el, wordObjs) {
+  el.innerHTML = '';
+  wordObjs.forEach(function(wo, i) {
+    if (i > 0) el.appendChild(document.createTextNode(' '));
+    var sp = document.createElement('span');
+    sp.className = 'word';
+    sp.textContent = wo.w;
+    el.appendChild(sp);
+  });
+}
+
+function setDots(id, idx) {
+  $id(id).querySelectorAll('.ldot').forEach(function(d, i) { d.classList.toggle('on', i === idx); });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PANEL A — BEAT TIMER (fixed interval, sub-timer words)
+// ─────────────────────────────────────────────────────────────────────────────
+function renderA(idx, instant) {
+  var s    = songs[cur];
+  var wl   = s.wordLines[idx];
+  var disp = s.display[idx];
+
+  if (wordTimA) { clearInterval(wordTimA); wordTimA = null; }
+
+  function apply() {
+    $id('prevA').textContent = disp.prev;
+    $id('nextA').textContent = disp.next;
+    buildWords($id('activeA'), wl);
+    setDots('dotsA', idx);
+
+    var els      = $id('activeA').querySelectorAll('.word');
+    var interval = Math.max(160, Math.floor((LINE_MS * 0.76) / els.length));
+    var wi = 0;
+    wordTimA = setInterval(function() {
+      if (wi < els.length) {
+        if (wi > 0) { els[wi-1].classList.remove('lit'); els[wi-1].classList.add('done'); }
+        els[wi].classList.add('lit');
+        wi++;
+      } else {
+        clearInterval(wordTimA); wordTimA = null;
+        if (els[wi-1]) { els[wi-1].classList.remove('lit'); els[wi-1].classList.add('done'); }
+      }
+    }, interval);
+  }
+
+  if (instant) { apply(); } else { $id('activeA').style.opacity='0.15'; setTimeout(function(){ $id('activeA').style.opacity='1'; apply(); }, 120); }
+}
+
+function startA() {
+  if (timerA) { clearInterval(timerA); timerA = null; }
+  if (fillRaf){ cancelAnimationFrame(fillRaf); fillRaf = null; }
+  if (wordTimA){ clearInterval(wordTimA); wordTimA = null; }
+  lineA = 0;
+  $id('timerMs').textContent = LINE_MS + ' ms / line';
+  renderA(0, true);
+  tStart = performance.now();
+
+  (function animFill() {
+    var pct = Math.min(100, ((performance.now() - tStart) / LINE_MS) * 100);
+    $id('timerFill').style.width = pct + '%';
+    fillRaf = requestAnimationFrame(animFill);
+  })();
+
+  timerA = setInterval(function() {
+    lineA = (lineA + 1) % 4;
+    renderA(lineA, false);
+    tStart = performance.now();
+  }, LINE_MS);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PANEL B — WORD KARAOKE (reads clock position, lights each word at its timestamp)
+// ─────────────────────────────────────────────────────────────────────────────
+function getClock() {
+  if (audioEl && audioOk && !audioEl.paused) return audioEl.currentTime;
+  return simClock;
+}
+
+function getLineIdx(t, wordLines) {
+  // line starts = first word of each line
+  var starts = wordLines.map(function(wl) { return wl.length ? wl[0].t : 0; });
+  var idx = 0;
+  for (var i = 1; i < starts.length; i++) {
+    if (t >= starts[i]) idx = i; else break;
+  }
+  return idx;
+}
+
+function tickB() {
+  var s  = songs[cur];
+  var t  = getClock();
+  var wl = s.wordLines;
+  var idx = getLineIdx(t, wl);
+
+  // Update progress bar
+  var pct = Math.min(100, (t / CLIP) * 100);
+  $id('clockFill').style.width = pct + '%';
+  $id('clockPos').textContent  = t.toFixed(2) + ' s';
+
+  // Re-render line if changed
+  if (idx !== lineB) {
+    lineB = idx;
+    var disp = s.display[idx];
+    $id('prevB').textContent = disp.prev;
+    $id('nextB').textContent = disp.next;
+    buildWords($id('activeB'), wl[idx]);
+    setDots('dotsB', idx);
+  }
+
+  // Word highlighting — each word lights at its timestamp
+  var lineWords = wl[idx];
+  var activeEls = $id('activeB').querySelectorAll('.word');
+  activeEls.forEach(function(el, i) {
+    var wo   = lineWords[i];
+    var next = lineWords[i + 1];
+    var wEnd = next ? next.t : (wl[idx + 1] ? wl[idx + 1][0].t : CLIP);
+    el.classList.remove('lit', 'done');
+    if (t >= wEnd)  el.classList.add('done');
+    else if (t >= wo.t) el.classList.add('lit');
+  });
+
+  rafB = requestAnimationFrame(tickB);
+}
+
+function startB() {
+  if (rafB) { cancelAnimationFrame(rafB); rafB = null; }
+  lineB = -1;
+  var s = songs[cur];
+  // Show first line immediately
+  var disp = s.display[0];
+  $id('prevB').textContent = disp.prev;
+  $id('nextB').textContent = disp.next;
+  buildWords($id('activeB'), s.wordLines[0]);
+  setDots('dotsB', 0);
+  updateModeBadge();
+  rafB = requestAnimationFrame(tickB);
+}
+
+function updateModeBadge() {
+  var s   = songs[cur];
+  var el  = $id('modeBadge');
+  var aud = audioEl && audioOk;
+  if (s.calibrated && aud) {
+    el.textContent = '✓ Whisper-calibrated · live audio';
+    el.className   = 'mode-badge cal';
+  } else if (s.calibrated && !aud) {
+    el.textContent = '✓ Whisper-calibrated · simulated clock';
+    el.className   = 'mode-badge sim';
+  } else if (!s.calibrated && aud) {
+    el.textContent = '~ Equal-slot timing · live audio';
+    el.className   = 'mode-badge est';
+  } else {
+    el.textContent = '~ Equal-slot timing · simulated clock';
+    el.className   = 'mode-badge sim';
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SIMULATED CLOCK — counts 0→29s then resets, used when audio unavailable
+// ─────────────────────────────────────────────────────────────────────────────
+function tickSim(ts) {
+  if (simLast !== null) {
+    var dt = (ts - simLast) / 1000;
+    simClock = (simClock + dt) % CLIP;
+  }
+  simLast = ts;
+  simRaf  = requestAnimationFrame(tickSim);
+}
+
+function startSim() {
+  if (simRaf) cancelAnimationFrame(simRaf);
+  simRaf = requestAnimationFrame(tickSim);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AUDIO
+// ─────────────────────────────────────────────────────────────────────────────
+function initAudio() {
+  if (audioEl) return;
+  audioEl = document.createElement('audio');
+  audioEl.volume = 0.6;
+  document.body.appendChild(audioEl);
+
+  audioEl.addEventListener('canplay', function() {
+    audioOk = true;
+    setStatus('ready');
+    if (started) audioEl.play().catch(function(){});
+  });
+  audioEl.addEventListener('play',    function() { setStatus('playing'); updateModeBadge(); });
+  audioEl.addEventListener('pause',   function() { setStatus('paused');  updateModeBadge(); });
+  audioEl.addEventListener('ended',   function() { audioEl.currentTime = 0; audioEl.play().catch(function(){}); });
+  audioEl.addEventListener('error',   function() { audioOk = false; setStatus('error'); });
+}
+
+function loadAudio(song) {
+  initAudio();
+  audioOk = false;
+  setStatus('loading');
+  var url = '/api/audio-preview?artist=' + encodeURIComponent(song.artist) + '&title=' + encodeURIComponent(song.title);
+  fetch(url)
+    .then(function(r) { return r.ok ? r.blob() : Promise.reject(r.status); })
+    .then(function(blob) {
+      var old = audioEl.src;
+      audioEl.src = URL.createObjectURL(blob);
+      if (old) URL.revokeObjectURL(old);
+      if (started) audioEl.play().catch(function(){});
+    })
+    .catch(function(e) {
+      console.warn('Audio failed:', e, '— using simulated clock');
+      audioOk = false;
+      setStatus('sim');
+      updateModeBadge();
+    });
+}
+
+function setStatus(state) {
+  var dot = $id('adot'), txt = $id('atxt');
+  dot.className = 'adot';
+  if (state === 'loading') { dot.classList.add('loading'); txt.textContent = 'Loading audio...'; }
+  else if (state === 'ready')   { txt.textContent = 'Ready — tap to play'; }
+  else if (state === 'playing') { dot.classList.add('playing'); txt.textContent = 'Playing'; }
+  else if (state === 'paused')  { txt.textContent = 'Paused — tap to resume'; }
+  else if (state === 'error' || state === 'sim') {
+    txt.textContent = 'Simulated clock (no audio)';
+    dot.classList.add('sim');
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TABS + SONG SELECTION
+// ─────────────────────────────────────────────────────────────────────────────
+function buildTabs() {
+  var c = $id('tabs');
+  c.innerHTML = '';
+  songs.forEach(function(s, i) {
+    var b = document.createElement('button');
+    b.className = 'tab' + (i === 0 ? ' on' : '');
+    b.textContent = s.title;
+    b.addEventListener('click', function(e) { e.stopPropagation(); selectSong(i); });
+    c.appendChild(b);
+  });
+}
+
+function selectSong(i) {
+  if (i === cur) return;
+  cur = i;
+  document.querySelectorAll('.tab').forEach(function(t, j) { t.classList.toggle('on', j === i); });
+  simClock = 0; simLast = null;
+  if (audioEl) { audioEl.pause(); audioOk = false; }
+  startA();
+  startB();
+  loadAudio(songs[i]);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// START
+// ─────────────────────────────────────────────────────────────────────────────
+$id('overlay').addEventListener('click', function() {
+  started = true;
+  $id('overlay').classList.add('gone');
+  if (audioEl && audioOk) { audioEl.play().catch(function(){}); }
+  else { startSim(); }
+});
+
+// If audio loads and user already tapped, start playing
+document.addEventListener('audioReady', function() {
+  if (started && audioEl && audioOk) audioEl.play().catch(function(){});
+});
+
+buildTabs();
+startA();
+startB();
+startSim();   // always run sim clock in background as fallback
+loadAudio(songs[0]);
+
+})();
+</script>
+</body>
+</html>

@@ -106,7 +106,15 @@ The play button requires a real user gesture. Automated browser testing via MCP 
 
 ---
 
-## ✅ Completed next session (commits `908473b`, `8295ff6`)
+## ✅ Completed third session (commit `73f0270`)
+
+| What | Details |
+|------|---------|
+| Fixed word sync timing | `previewStart` was hardcoded to `times[0]` (first demo line's LRC timestamp). Deezer previews start at section boundaries (LRC gap >2.5s), not at the first lyric. New code scans backwards from `times[0]` for the most recent section boundary within 10s and uses that as `previewStart`. Words now align with audio correctly. |
+
+---
+
+## ✅ Completed second session (commits `908473b`, `8295ff6`)
 
 | What | Details |
 |------|---------|
@@ -127,9 +135,61 @@ Line 3 is `["Oh-I-oh-I-oh-I-oh-I"]` — single phonetic token, won't match any L
 
 ---
 
+---
+
+## ✅ Completed session 2026-03-17 — Sync investigation + word karaoke groundwork
+
+### Root cause found: demo.html has no sync at all
+The 880-test suite was testing `index.html` (the Spotify-connected app). `demo.html` — the public demo page — runs on a fixed `setInterval(4200ms)` with no awareness of audio playback. Lines and words tick mechanically regardless of what's playing. This is why sync felt broken on the demo page despite all tests passing.
+
+### What was built
+
+| File | What |
+|------|------|
+| `public/sync-poc.html` | Side-by-side POC: Panel A = current 4200ms timer, Panel B = word-level karaoke via `requestAnimationFrame` + per-word timestamps. Runs on a simulated 29s clock when audio unavailable. Auto-upgrades to real `audio.currentTime` on tap. |
+| `calibrate_words.py` | Runs Whisper (`word_timestamps=True`) on each song's Deezer preview. Outputs `public/word-data.json` with per-word timestamps. `sync-poc.html` and `demo.html` fetch this at runtime and replace estimated timestamps with Whisper-measured ones. |
+
+### How to run calibration (one-time, ~5 min)
+
+```bash
+cd ~/work/team-brain/projects/spotify-karaoke
+python3 calibrate_words.py              # all 18 songs (whisper-tiny)
+python3 calibrate_words.py "Shape of You"  # one song to test first
+python3 calibrate_words.py --model small   # higher accuracy, slower
+```
+
+Output: `public/word-data.json` — commit this and Vercel will serve it.
+
+### How word-level sync works
+
+```
+calibrate_words.py:
+  Deezer preview MP3 → Whisper (word_timestamps=True)
+  → {w: "I'm", t: 0.0, e: 0.4}, {w: "in", t: 0.52, e: 0.76}, ...
+  → grouped into 4 lines by lineTimes boundaries
+  → saved to word-data.json
+
+demo / sync-poc at runtime:
+  fetch('/word-data.json') → load wordLines per song
+  requestAnimationFrame loop → audio.currentTime
+  → for each word: if t >= word.t → classList.add('lit')
+  → if t >= nextWord.t → classList.remove('lit'), add('done')
+```
+
+### What the POC shows
+- **Panel A (purple):** current demo behavior. Timer fires every 4200ms. Words spread equally across that window. Completely independent of audio.
+- **Panel B (blue):** word karaoke. Each word lights at its specific timestamp. Stays locked to the audio. With `word-data.json` present, this is real karaoke. Without it, uses estimated timestamps (still visually better than Panel A for Shape of You which has calibrated lineTimes).
+
+### Next step to ship word karaoke on demo.html
+1. Run `calibrate_words.py` → commit `public/word-data.json`
+2. Update `demo.html` to use the same word-sync loop from `sync-poc.html` Panel B (replace the `setInterval` + timer-based `runLine` with the `requestAnimationFrame` + `wordLines` approach)
+
+---
+
 ## Next tasks
 
-- [ ] None — all handoff items complete. ✅
+- [ ] Run `calibrate_words.py` and commit `word-data.json`
+- [ ] Replace `demo.html` timer loop with audio-driven word sync from `sync-poc.html`
 
 ---
 
