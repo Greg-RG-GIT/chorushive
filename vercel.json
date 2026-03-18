@@ -2,23 +2,60 @@
   "outputDirectory": "public",
   "buildCommand": "",
   "functions": {
-    "api/audio-preview.js": { "maxDuration": 25 }
+    "api/audio-preview.js": {
+      "maxDuration": 25
+    }
   },
   "rewrites": [
-    { "source": "/auth/login", "destination": "/api/auth/login" },
-    { "source": "/auth/callback", "destination": "/api/auth/callback" },
-    { "source": "/auth/refresh", "destination": "/api/auth/refresh" },
-    { "source": "/demo", "destination": "/demo.html" }
+    {
+      "source": "/auth/login",
+      "destination": "/api/auth/login"
+    },
+    {
+      "source": "/auth/callback",
+      "destination": "/api/auth/callback"
+    },
+    {
+      "source": "/auth/refresh",
+      "destination": "/api/auth/refresh"
+    },
+    {
+      "source": "/demo",
+      "destination": "/demo.html"
+    },
+    {
+      "source": "/privacy",
+      "destination": "/privacy.html"
+    },
+    {
+      "source": "/terms",
+      "destination": "/terms.html"
+    }
   ],
   "headers": [
     {
       "source": "/(.*)",
       "headers": [
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "X-Frame-Options", "value": "SAMEORIGIN" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
-        { "key": "X-XSS-Protection", "value": "1; mode=block" },
-        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" }
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "SAMEORIGIN"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(), geolocation=()"
+        }
       ]
     }
   ]
