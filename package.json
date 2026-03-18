@@ -3,8 +3,10 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "test": "node tests/sync.test.js",
-    "test:offline": "SKIP_NETWORK=1 node tests/sync.test.js"
+    "test": "node tests/sync.test.js && node tests/data.test.js",
+    "test:deezer": "node tests/deezer.test.js",
+    "test:alignment": "python3 tests/alignment.py",
+    "test:offline": "SKIP_NETWORK=1 node tests/sync.test.js && node tests/data.test.js"
   },
   "dependencies": {
     "node-fetch": "^2.6.7",

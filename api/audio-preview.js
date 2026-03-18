@@ -25,13 +25,12 @@ export default async function handler(req, res) {
     const data = await deezerRes.json();
     const results = data.data || [];
 
+    // Deezer now returns signed CDN URLs with query strings (?hdnea=exp=...~hmac=...)
+    // so .endsWith('.mp3') no longer works — check the path portion instead.
+    const hasPreview = r => r.preview && r.preview.split('?')[0].endsWith('.mp3');
     const match =
-      results.find(r =>
-        r.title.toLowerCase().includes(title.toLowerCase()) &&
-        r.preview &&
-        r.preview.endsWith('.mp3')
-      ) ||
-      results.find(r => r.preview && r.preview.endsWith('.mp3')) ||
+      results.find(r => r.title.toLowerCase().includes(title.toLowerCase()) && hasPreview(r)) ||
+      results.find(hasPreview) ||
       results[0];
 
     if (!match || !match.preview) {
