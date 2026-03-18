@@ -3687,7 +3687,10 @@
 
       // ── LRC calibration: fetch real timestamps and align to Deezer preview ──
       // Runs in parallel with blob fetch; audioSyncTick falls back to lineSlot if it fails.
+      // Skip if song already has pre-calibrated lineTimes — runtime LRC would overwrite
+      // the curated song.lines with raw LRC text mid-playback, causing display jumps.
       (async function tryCalibrateLrc() {
+        if (song.lineTimes) return;
         try {
           const r = await fetch(
             'https://lrclib.net/api/search?track_name=' + encodeURIComponent(song.title) +
