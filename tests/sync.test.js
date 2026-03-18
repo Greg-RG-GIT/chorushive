@@ -128,10 +128,13 @@ for (const block of songBlocks) {
 
 const allLineTimes = songsWithLineTimes.map(s => s.lineTimes);
 
+// Only Shape of You has proven lineTimes (validated by whisper alignment test:
+// Deezer's preview positions don't match the LRC winStart for other songs).
+// All others use equal-slot fallback intentionally.
 assert(
-  allLineTimes.length >= 18,
-  `at least 18 songs have lineTimes (found ${allLineTimes.length})`,
-  'Expected 18/20 songs to have hardcoded lineTimes (Eye of the Tiger and Mr. Brightside deliberately skipped)'
+  allLineTimes.length >= 1,
+  `at least 1 song has lineTimes (found ${allLineTimes.length})`,
+  'Shape of You should always have lineTimes — only song with confirmed Deezer alignment'
 );
 
 // Per-array checks
