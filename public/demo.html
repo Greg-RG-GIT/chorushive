@@ -767,7 +767,14 @@
         syncLine  = li;
         lineIdx   = li;
         var lineData = song.lines[li];
-        if (lineData) runLine(lineData, li === 0);
+        if (lineData) {
+          // Use Whisper words as display words so DOM spans match wordLines exactly (1:1 timing)
+          var whisperWords = wl.wordLines[li];
+          if (whisperWords && whisperWords.length > 0) {
+            lineData = { prev: lineData.prev, next: lineData.next, words: whisperWords.map(function(w) { return w.w; }) };
+          }
+          runLine(lineData, li === 0);
+        }
       }
 
       // Word highlighting from audio.currentTime
