@@ -655,17 +655,32 @@
   var themeIdx  = 0;
   var songIdx   = 0;
   var lineIdx   = 0;
-  var wordTimer = null;
   var lineTimer = null;
   var themeTimer = null;
   var LINE_INTERVAL  = 4200;
   var THEME_INTERVAL = 10000;
   var audioReady = false;
 
+  // ── WORD SYNC STATE ──
+  var wordData   = {};    // populated from /word-data.json when available
+  var syncRaf    = null;
+  var syncLine   = -1;    // last line index rendered by syncTick
+  var lineStartMs = Date.now(); // when the current line began (fallback clock)
+
   // ── AUDIO ──
   var audio = document.createElement('audio');
   audio.volume = 0.5;
   document.body.appendChild(audio);
+
+  // Load Whisper-calibrated word timestamps. If missing, syncTick falls back to
+  // a smooth elapsed-time estimate — still better than the old sub-timer.
+  fetch('/word-data.json')
+    .then(function(r) { return r.ok ? r.json() : Promise.reject(); })
+    .then(function(d) { wordData = d; })
+    .catch(function() {});
+
+  // Reset line pointer when audio restarts (new song loaded or replay)
+  audio.addEventListener('play', function() { syncLine = -1; });
 
   // Shuffle songs
   function shuffle(arr) {
@@ -691,7 +706,6 @@
 
   // ── RUN LINE ──
   function runLine(lineData, instant) {
-    if (wordTimer) clearInterval(wordTimer);
 
     function apply() {
       prevEl.textContent = lineData.prev;
@@ -712,28 +726,9 @@
       lyricsStage.style.opacity   = '1';
       lyricsStage.style.transform = 'translateY(0)';
 
-      var wordEls = activeEl.querySelectorAll('.lyric-word');
-      var totalMs = LINE_INTERVAL * 0.78;
-      var wordInterval = Math.min(640, Math.max(220, Math.floor(totalMs / wordEls.length)));
-      var wi = 0;
-      wordTimer = setInterval(function() {
-        if (wi < wordEls.length) {
-          if (wi > 0) {
-            wordEls[wi - 1].classList.remove('lit');
-            wordEls[wi - 1].classList.add('done');
-          }
-          wordEls[wi].classList.add('lit');
-          wi++;
-        } else {
-          clearInterval(wordTimer);
-          setTimeout(function() {
-            if (wordEls[wi - 1]) {
-              wordEls[wi - 1].classList.remove('lit');
-              wordEls[wi - 1].classList.add('done');
-            }
-          }, wordInterval);
-        }
-      }, wordInterval);
+      // Word highlighting is handled by syncTick (audio-driven or elapsed-time).
+      // Record when this line started so the fallback clock works correctly.
+      lineStartMs = Date.now();
     }
 
     if (instant) {
@@ -743,6 +738,66 @@
       lyricsStage.style.transform = 'translateY(8px)';
       setTimeout(apply, 230);
     }
+  }
+
+  // ── SYNC TICK — drives word highlighting every animation frame ──
+  //
+  // Mode A (audio + wordData): audio.currentTime + Whisper timestamps
+  //   → advances lines AND words exactly when they're sung
+  // Mode B (fallback): elapsed time since lineStartMs / LINE_INTERVAL
+  //   → smooth proportional progress, no mechanical sub-timer jumps
+  //
+  function syncTick() {
+    var song = shuffledSongs[songIdx];
+    var wl   = wordData[song.title];
+
+    if (wl && wl.wordLines && audioReady && !audio.paused) {
+      // ── MODE A: audio-driven ──────────────────────────────────────────────
+      var t          = audio.currentTime;
+      var lineStarts = wl.wordLines.map(function(l) { return l.length ? l[0].t : 0; });
+
+      // Which line are we in?
+      var li = 0;
+      for (var i = 1; i < lineStarts.length; i++) {
+        if (t >= lineStarts[i]) li = i; else break;
+      }
+
+      // Advance to next line if changed
+      if (li !== syncLine) {
+        syncLine  = li;
+        lineIdx   = li;
+        var lineData = song.lines[li];
+        if (lineData) runLine(lineData, li === 0);
+      }
+
+      // Word highlighting from audio.currentTime
+      var wordEls   = activeEl.querySelectorAll('.lyric-word');
+      var lineWords = wl.wordLines[li] || [];
+      wordEls.forEach(function(el, i) {
+        var wo   = lineWords[i];
+        if (!wo) return;
+        var next = lineWords[i + 1];
+        var wEnd = next ? next.t : (wl.wordLines[li + 1] ? wl.wordLines[li + 1][0].t : 29);
+        el.classList.remove('lit', 'done');
+        if (t >= wEnd)      el.classList.add('done');
+        else if (t >= wo.t) el.classList.add('lit');
+      });
+
+    } else {
+      // ── MODE B: elapsed-time fallback ────────────────────────────────────
+      var elapsed  = Math.max(0, (Date.now() - lineStartMs));
+      var progress = Math.min(0.98, elapsed / LINE_INTERVAL);
+      var wordEls  = activeEl.querySelectorAll('.lyric-word');
+      var n        = wordEls.length;
+      var litIdx   = Math.floor(progress * n);
+      wordEls.forEach(function(el, i) {
+        el.classList.remove('lit', 'done');
+        if (i < litIdx)        el.classList.add('done');
+        else if (i === litIdx) el.classList.add('lit');
+      });
+    }
+
+    syncRaf = requestAnimationFrame(syncTick);
   }
 
   // ── SWITCH THEME (with transition + new song) ──
@@ -757,7 +812,8 @@
       var song = shuffledSongs[songIdx];
       trackNameEl.textContent  = song.title;
       trackArtistEl.textContent = song.artist;
-      lineIdx = 0;
+      lineIdx  = 0;
+      syncLine = -1;
       runLine(song.lines[0], true);
       loadAudioForSong(song);
 
@@ -766,11 +822,17 @@
   }
 
   // ── LINE CYCLING ──
+  // When audio + wordData are available, syncTick drives line changes.
+  // The timer fires as a safety net for songs without calibrated wordData.
   function startLineCycle() {
     if (lineTimer) clearInterval(lineTimer);
     lineTimer = setInterval(function() {
       var song = shuffledSongs[songIdx];
+      var wl   = wordData[song.title];
+      // Skip timer if audio-driven sync is active for this song
+      if (wl && wl.wordLines && audioReady && !audio.paused) return;
       lineIdx = (lineIdx + 1) % song.lines.length;
+      lineStartMs = Date.now();
       runLine(song.lines[lineIdx], false);
     }, LINE_INTERVAL);
   }
@@ -825,6 +887,7 @@
 
   startLineCycle();
   startThemeCycle();
+  syncRaf = requestAnimationFrame(syncTick);
 })();
 </script>
 
